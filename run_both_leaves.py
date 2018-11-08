@@ -13,6 +13,7 @@ from math import pi, cos, sin, exp, sqrt, acos, asin
 import random
 from weather_generator import WeatherGenerator
 from big_leaf import CoupledModel as BigLeaf
+from two_leaf import CoupledModel as TwoLeaf
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -56,24 +57,73 @@ def main():
     SW_abs = 0.8 # use canopy absorptance of solar radiation
 
     ##
-    ### Run Big-lead
+    ### Run Big-leaf
     ##
 
-    C = BigLeaf(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
+    B = BigLeaf(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
                 deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
                 gs_model="medlyn")
 
-    An = np.zeros(48)
-    gsw = np.zeros(48)
-    et = np.zeros(48)
+    An_bl = np.zeros(48)
+    gsw_bl = np.zeros(48)
+    et_bl = np.zeros(48)
 
     for i in range(len(par)):
 
-        (An[i], gsw[i], et[i]) = C.main(tair[i], par[i], vpd[i],
+        (An_bl[i], gsw_bl[i], et_bl[i]) = B.main(tair[i], par[i], vpd[i],
+                                                 wind, pressure, Ca)
+
+
+    ##
+    ### Run 2-leaf
+    ##
+
+    T = TwoLeaf(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
+                deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
+                gs_model="medlyn")
+
+    An_tl = np.zeros(48)
+    gsw_tl = np.zeros(48)
+    et_tl = np.zeros(48)
+
+    for i in range(len(par)):
+
+        (An_tl[i], gsw_tl[i], et_tl[i]) = T.main(tair[i], par[i], vpd[i],
                                                   wind, pressure, Ca)
 
+    fig = plt.figure(figsize=(9,6))
+    fig.subplots_adjust(hspace=0.1)
+    fig.subplots_adjust(wspace=0.3)
+    plt.rcParams['text.usetex'] = False
+    plt.rcParams['font.family'] = "sans-serif"
+    plt.rcParams['font.sans-serif'] = "Helvetica"
+    plt.rcParams['axes.labelsize'] = 14
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['legend.fontsize'] = 14
+    plt.rcParams['xtick.labelsize'] = 14
+    plt.rcParams['ytick.labelsize'] = 14
 
-    plt.plot(An * LAI)
+    almost_black = '#262626'
+    # change the tick colors also to the almost black
+    plt.rcParams['ytick.color'] = almost_black
+    plt.rcParams['xtick.color'] = almost_black
+
+    # change the text colors also to the almost black
+    plt.rcParams['text.color'] = almost_black
+
+    # Change the default axis colors from black to a slightly lighter black,
+    # and a little thinner (0.5 instead of 1)
+    plt.rcParams['axes.edgecolor'] = almost_black
+    plt.rcParams['axes.labelcolor'] = almost_black
+
+    ax1 = fig.add_subplot(111)
+
+    ax1.plot(An_bl * LAI, label="Big leaf")
+    ax1.plot(An_tl * LAI, label="Two leaf")
+    ax1.legend(numpoints=1, loc="best")
+    ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
+    ax1.set_xlabel("Hour of day")
+
     plt.show()
 
 
