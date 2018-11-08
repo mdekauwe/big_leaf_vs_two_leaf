@@ -95,50 +95,66 @@ class CoupledModel(object):
         #print "Start: %.3f %.3f %.3f" % (Cs, Tleaf, dleaf)
         #print
 
+        # calculates diffuse frac from half-hourly incident radiation
+        #unpack_solar_geometry(cw, c)
 
-        iter = 0
-        while True:
-            (An, gsc, Ci) = F.calc_photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
-                                                  Jmax25=self.Jmax25,
-                                                  Vcmax25=self.Vcmax25,
-                                                  Q10=self.Q10, Eaj=self.Eaj,
-                                                  Eav=self.Eav,
-                                                  deltaSj=self.deltaSj,
-                                                  deltaSv=self.deltaSv,
-                                                  Rd25=self.Rd25, Hdv=self.Hdv,
-                                                  Hdj=self.Hdj, vpd=dleaf)
+        # Is the sun up?
+        if elevation > 0.0 and par > 20.0:
+            calculate_absorbed_radiation(cw, p, s, m->par)
+            calculate_top_of_canopy_leafn(cw, p, s)
+            calc_leaf_to_canopy_scalar(cw, p)
 
-            # Calculate new Tleaf, dleaf, Cs
-            (new_tleaf, et,
-             le_et, gbH, gw) = self.calc_leaf_temp(P, Tleaf, tair, gsc,
-                                                   par, vpd, pressure, wind,
-                                                   rnet=rnet)
+            # sunlit / shaded loop
+            for ileaf in range(2):
 
-            gbc = gbH * c.GBH_2_GBC
-            if gbc > 0.0 and An > 0.0:
-                Cs = Ca - An / gbc # boundary layer of leaf
-            else:
-                Cs = Ca
+                # initialise values of Tleaf, Cs, dleaf at the leaf surface
+                initialise_leaf_surface(cw, m);
 
-            if math.isclose(et, 0.0) or math.isclose(gw, 0.0):
-                dleaf = dair
-            else:
-                dleaf = (et * pressure / gw) * c.PA_2_KPA # kPa
+                iter = 0
+                while True:
+                    (An, gsc, Ci) = F.calc_photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
+                                                          Jmax25=self.Jmax25,
+                                                          Vcmax25=self.Vcmax25,
+                                                          Q10=self.Q10, Eaj=self.Eaj,
+                                                          Eav=self.Eav,
+                                                          deltaSj=self.deltaSj,
+                                                          deltaSv=self.deltaSv,
+                                                          Rd25=self.Rd25, Hdv=self.Hdv,
+                                                          Hdj=self.Hdj, vpd=dleaf)
 
-            # Check for convergence...?
-            if math.fabs(Tleaf - new_tleaf) < 0.02:
-                break
+                    # Calculate new Tleaf, dleaf, Cs
+                    (new_tleaf, et,
+                     le_et, gbH, gw) = self.calc_leaf_temp(P, Tleaf, tair, gsc,
+                                                           par, vpd, pressure, wind,
+                                                           rnet=rnet)
 
-            if iter > self.iter_max:
-                raise Exception('No convergence: %d' % (iter))
+                    gbc = gbH * c.GBH_2_GBC
+                    if gbc > 0.0 and An > 0.0:
+                        Cs = Ca - An / gbc # boundary layer of leaf
+                    else:
+                        Cs = Ca
 
-            # Update temperature & do another iteration
-            Tleaf = new_tleaf
-            Tleaf_K = Tleaf + c.DEG_2_KELVIN
+                    if math.isclose(et, 0.0) or math.isclose(gw, 0.0):
+                        dleaf = dair
+                    else:
+                        dleaf = (et * pressure / gw) * c.PA_2_KPA # kPa
 
-            iter += 1
+                    # Check for convergence...?
+                    if math.fabs(Tleaf - new_tleaf) < 0.02:
+                        break
 
-        gsw = gsc * c.GSC_2_GSW
+                    if iter > self.iter_max:
+                        raise Exception('No convergence: %d' % (iter))
+
+                    # Update temperature & do another iteration
+                    Tleaf = new_tleaf
+                    Tleaf_K = Tleaf + c.DEG_2_KELVIN
+
+                    iter += 1
+
+            scale_leaf_to_canopy(c, cw, s)
+
+            gsw = gsc * c.GSC_2_GSW
 
         if et < 0.0:
             raise Exception("ET shouldn't be negative, issue in energy balance")
