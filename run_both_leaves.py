@@ -126,7 +126,7 @@ def main():
     ax1 = fig.add_subplot(111)
 
     ax1.plot(An_bl * LAI, label="Big leaf")
-    ax1.plot(An_tl * LAI, label="Two leaf")
+    ax1.plot(An_tl, label="Two leaf")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
     ax1.set_xlabel("Hour of day")

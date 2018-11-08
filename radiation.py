@@ -6,6 +6,7 @@ Various radiation funcs needed for the two-leaf approximation
 import sys
 import numpy as np
 import math
+import constants as c
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -319,8 +320,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     k_dash_d = 0.719                  # diffuse & scattered PAR extinction coeff
     lad = 0                           # NB. default is to assume spherical LAD=0
 
-    SUNLIT = 0
-    SHADED = 1
     apar_leaf = np.zeros(2) # sunlit, shaded
     lai_leaf = np.zeros(2)  # sunlit, shaded
     #
@@ -359,13 +358,13 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     total_canopy_irradiance = arg1 + arg2
 
     # Irradiance absorbed by the sunlit fraction of the canopy
-    apar_leaf[SUNLIT] = beam + scattered + shaded
+    apar_leaf[c.SUNLIT] = beam + scattered + shaded
 
     # Irradiance absorbed by the shaded fraction of the canopy
-    apar_leaf[SHADED] = total_canopy_irradiance - apar_leaf[SUNLIT]
+    apar_leaf[c.SHADED] = total_canopy_irradiance - apar_leaf[c.SUNLIT]
 
     # Calculate sunlit &shdaded LAI of the canopy - de P * F eqn 18
-    lai_leaf[SUNLIT] = (1.0 - np.exp(-kb * lai)) / kb
-    lai_leaf[SHADED] = lai - lai_leaf[SUNLIT]
+    lai_leaf[c.SUNLIT] = (1.0 - np.exp(-kb * lai)) / kb
+    lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
 
-    return (apar_leaf, lai_leaf)
+    return (apar_leaf, lai_leaf, kb)

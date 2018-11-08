@@ -98,12 +98,10 @@ class CoupledModel(object):
                        g1=self.g1, D0=self.D0, alpha=self.alpha)
         P = PenmanMonteith(self.leaf_width, self.SW_abs)
 
-        # set initialise values
-        dleaf = vpd
-        dair = vpd
-        Cs = Ca
-        Tleaf = tair
-        Tleaf_K = Tleaf + c.DEG_2_KELVIN
+        An = np.zeros(2) # sunlit, shaded
+        gsc = np.zeros(2)  # sunlit, shaded
+        Ci = np.zeros(2) # sunlit, shaded
+        et = np.zeros(2) # sunlit, shaded
 
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
@@ -117,58 +115,58 @@ class CoupledModel(object):
         if elevation > 0.0 and par > 20.0:
 
             (apar_leaf,
-             lai_leaf) = calculate_absorbed_radiation(par, cos_zenith, lai,
+             lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
                                                       direct_frac,
                                                       diffuse_frac)
-            print(apar_leaf[0], apar_leaf[1])
-        """
 
-        # Is the sun up?
-        if elevation > 0.0 and par > 20.0:
-
-            (apar_leaf,
-             lai_leaf) = calculate_absorbed_radiation(par, cos_zenith, lai,
-                                                      direct_frac,
-                                                      diffuse_frac):
-
-            calculate_absorbed_radiation(cw, p, s, par)
-            calculate_top_of_canopy_leafn(cw, p, s)
-            calc_leaf_to_canopy_scalar(cw, p)
+            cscalar = calc_leaf_to_canopy_scalar(lai_leaf, kb)
 
             # sunlit / shaded loop
             for ileaf in range(2):
 
                 # initialise values of Tleaf, Cs, dleaf at the leaf surface
-                initialise_leaf_surface(cw, m);
+                dleaf = vpd
+                dair = vpd
+                Cs = Ca
+                Tleaf = tair
+                Tleaf_K = Tleaf + c.DEG_2_KELVIN
+
+
 
                 iter = 0
                 while True:
-                    (An, gsc, Ci) = F.calc_photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
-                                                          Jmax25=self.Jmax25,
-                                                          Vcmax25=self.Vcmax25,
-                                                          Q10=self.Q10, Eaj=self.Eaj,
-                                                          Eav=self.Eav,
-                                                          deltaSj=self.deltaSj,
-                                                          deltaSv=self.deltaSv,
-                                                          Rd25=self.Rd25, Hdv=self.Hdv,
-                                                          Hdj=self.Hdj, vpd=dleaf)
+                    (An[ileaf],
+                     gsc[ileaf],
+                     Ci[ileaf]) = F.calc_photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
+                                                     Par=apar_leaf[ileaf],
+                                                     Jmax25=self.Jmax25,
+                                                     Vcmax25=self.Vcmax25,
+                                                     Q10=self.Q10, Eaj=self.Eaj,
+                                                     Eav=self.Eav,
+                                                     deltaSj=self.deltaSj,
+                                                     deltaSv=self.deltaSv,
+                                                     Rd25=self.Rd25,
+                                                     Hdv=self.Hdv,
+                                                     Hdj=self.Hdj, vpd=dleaf)
 
                     # Calculate new Tleaf, dleaf, Cs
-                    (new_tleaf, et,
-                     le_et, gbH, gw) = self.calc_leaf_temp(P, Tleaf, tair, gsc,
-                                                           par, vpd, pressure, wind,
-                                                           rnet=rnet)
+                    (new_tleaf, et[ileaf],
+                     le_et, gbH, gw) = self.calc_leaf_temp(P, Tleaf, tair,
+                                                           gsc[ileaf],
+                                                           apar_leaf[ileaf],
+                                                           vpd, pressure,
+                                                           wind, rnet=rnet)
 
                     gbc = gbH * c.GBH_2_GBC
-                    if gbc > 0.0 and An > 0.0:
-                        Cs = Ca - An / gbc # boundary layer of leaf
+                    if gbc > 0.0 and An[ileaf] > 0.0:
+                        Cs = Ca - An[ileaf] / gbc # boundary layer of leaf
                     else:
                         Cs = Ca
 
-                    if math.isclose(et, 0.0) or math.isclose(gw, 0.0):
+                    if math.isclose(et[ileaf], 0.0) or math.isclose(gw, 0.0):
                         dleaf = dair
                     else:
-                        dleaf = (et * pressure / gw) * c.PA_2_KPA # kPa
+                        dleaf = (et[ileaf] * pressure / gw) * c.PA_2_KPA # kPa
 
                     # Check for convergence...?
                     if math.fabs(Tleaf - new_tleaf) < 0.02:
@@ -183,16 +181,17 @@ class CoupledModel(object):
 
                     iter += 1
 
-            scale_leaf_to_canopy(c, cw, s)
+            # scale leaf to canopy
+            an_canopy = np.sum(An)
+            gsw_canopy = np.sum(gsc) * c.GSC_2_GSW
+            et_canopy = np.sum(et)
+        else:
+            an_canopy = 0.0
+            gsw_canopy = 0.0
+            et_canopy = 0.0
 
-            gsw = gsc * c.GSC_2_GSW
+        return (an_canopy, gsw_canopy, et_canopy)
 
-        if et < 0.0:
-            raise Exception("ET shouldn't be negative, issue in energy balance")
-        return (An, gsw, et)
-        """
-
-        return (0.0, 0.0, 0.0)
 
     def calc_leaf_temp(self, P=None, tleaf=None, tair=None, gsc=None, par=None,
                        vpd=None, pressure=None, wind=None, rnet=None):
@@ -265,3 +264,44 @@ class CoupledModel(object):
         new_Tleaf = tair + H / (c.CP * air_density * (gh / cmolar))
 
         return (new_Tleaf, et, le_et, gbH, gw)
+
+def calc_leaf_to_canopy_scalar(lai_leaf, kb):
+    """
+    Calculate scalar to transform leaf Vcmax and Jmax values to big leaf
+    values. Following Wang & Leuning, as long as sunlit and shaded
+    leaves are treated seperately, values of parameters in the coupled
+    model for the two big leaves can be closely approximated by
+    integrating values for individual leaves.
+    - Inserting eqn C6 & C7 into B5
+    per unit ground area
+
+    Parameters:
+    ----------
+    canopy_wk : structure
+        various canopy values: in this case the sunlit or shaded LAI &
+        cos_zenith angle.
+    scalar_sun : float
+        scalar for sunlit leaves, values returned in unit ground area
+        (returned)
+    scalar_sha : float
+        scalar for shaded leaves, values returned in unit ground area
+        (returned)
+
+    References:
+    ----------
+    * Wang and Leuning (1998) AFm, 91, 89-111; particularly the Appendix.
+    """
+
+    cscalar = np.zeros(2)
+    # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
+    # default which comes half Belinda's head and is supported by fig 10 in
+    # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
+    kn = 0.3
+
+    lai_sun = lai_leaf[c.SUNLIT]
+    lai_sha = lai_leaf[c.SHADED]
+
+    cscalar[c.SUNLIT] = (1.0 - np.exp(-(kb + kn) * lai_sun)) / (kb + kn)
+    cscalar[c.SHADED] = (1.0 - np.exp(-kn * lai_sha)) / kn - cscalar[c.SUNLIT]
+
+    return (cscalar)
