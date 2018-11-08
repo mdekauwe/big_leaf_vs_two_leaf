@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from math import pi, cos, sin, exp, sqrt, acos, asin
 import random
 from weather_generator import WeatherGenerator
+from big_leaf import CoupledModel as BigLeaf
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -20,7 +21,61 @@ __email__   = "mdekauwe@gmail.com"
 
 def main():
 
+    #
+    ## Met data ...
+    #
     (par, tair, vpd) = get_met_data()
+    wind = 2.5
+    pressure = 101325.0
+    Ca = 400.0
+
+    #
+    ## Parameters
+    #
+    g0 = 0.001
+    g1 = 4.0
+    D0 = 1.5 # kpa
+    Vcmax25 = 60.0
+    Jmax25 = Vcmax25 * 1.67
+    Rd25 = 2.0
+    Eaj = 30000.0
+    Eav = 60000.0
+    deltaSj = 650.0
+    deltaSv = 650.0
+    Hdv = 200000.0
+    Hdj = 200000.0
+    Q10 = 2.0
+    gamma = 0.0
+    leaf_width = 0.02
+    LAI = 1.5
+    # Cambell & Norman, 11.5, pg 178
+    # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
+    # with canopies (~0.8) from Table 11.2 reveals a surprising difference.
+    # The higher absorptivityof canopies arises because of multiple reflections
+    # among leaves in a canopy and depends on the architecture of the canopy.
+    SW_abs = 0.8 # use canopy absorptance of solar radiation
+
+    ##
+    ### Run Big-lead
+    ##
+
+    C = BigLeaf(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
+                deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
+                gs_model="medlyn")
+
+    An = np.zeros(48)
+    gsw = np.zeros(48)
+    et = np.zeros(48)
+
+    for i in range(len(par)):
+
+        (An[i], gsw[i], et[i]) = C.main(tair[i], par[i], vpd[i],
+                                                  wind, pressure, Ca)
+
+
+    plt.plot(An * LAI)
+    plt.show()
+
 
 def get_met_data():
 
@@ -50,10 +105,6 @@ def get_met_data():
     tair = WG.estimate_diurnal_temp(doy, tmin, tmax)
 
     vpd = WG.estimate_diurnal_vpd(vpd09, vpd15, vpd09_next, vpd15_prev)
-
-    plt.plot(hours, vpd, "r-")
-
-    plt.show()
 
     return (par, tair, vpd)
 
