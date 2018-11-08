@@ -14,7 +14,7 @@ import math
 import constants as c
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
-from radiation import calculate_solar_geometry
+from radiation import calculate_solar_geometry, spitters
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -102,10 +102,13 @@ class CoupledModel(object):
         Tleaf = tair
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
-
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+        sw_rad = par * c.PAR_2_SW # W m-2
 
-        print(cos_zenith)
+        # get diffuse/beam frac
+        (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
+
+        print(cos_zenith, sw_rad, diffuse_frac, direct_frac)
 
         sys.exit()
         # calculates diffuse frac from half-hourly incident radiation

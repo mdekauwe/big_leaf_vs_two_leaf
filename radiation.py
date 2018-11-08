@@ -12,6 +12,72 @@ __version__ = "1.0 (09.11.2018)"
 __email__   = "mdekauwe@gmail.com"
 
 
+def spitters(doy, sw_rad, cos_zenith):
+
+    """
+    Spitters algorithm to estimate the diffuse component from the measured
+    irradiance.
+
+    Eqn 20a-d.
+
+    Parameters:
+    ----------
+    doy : int
+        day of year
+    sw_rad : double
+        total incident radiation [J m-2 s-1]
+
+    Returns:
+    -------
+    diffuse : double
+        diffuse component of incoming radiation (returned in cw structure)
+
+    References:
+    ----------
+    * Spitters, C. J. T., Toussaint, H. A. J. M. and Goudriaan, J. (1986)
+      Separating the diffuse and direct component of global radiation and
+      its implications for modeling canopy photosynthesis. Part I.
+      Components of incoming radiation. Agricultural Forest Meteorol.,
+      38:217-229.
+    """
+
+    #sine of the elev of the sun above the horizon is the same as cos_zen
+    So = calc_extra_terrestrial_rad(doy, cos_zenith)
+
+    # atmospheric transmisivity
+    tau = estimate_clearness(sw_rad, So);
+
+    cos_zen_sq = cos_zenith * cos_zenith
+
+    # For zenith angles > 80 degrees, diffuse_frac = 1.0
+    if cos_zenith > 0.17:
+
+        # Spitters formula
+        R = 0.847 - 1.61 * cos_zenith + 1.04 * cos_zen_sq
+        K = (1.47 - R) / 1.66
+        if tau <= 0.22:
+            diffuse_frac = 1.0
+        elif tau > 0.22 and tau <= 0.35:
+            diffuse_frac = 1.0 - 6.4 * (tau - 0.22) * (tau - 0.22)
+        elif tau > 0.35 and tau <= K:
+            diffuse_frac = 1.47 - 1.66 * tau
+        else:
+            diffuse_frac = R
+
+    else:
+        diffuse_frac = 1.0
+
+    # doubt we need this, should check
+    if diffuse_frac <= 0.0:
+        diffuse_frac = 0.0
+    elif diffuse_frac >= 1.0:
+        diffuse_frac = 1.0
+
+    direct_frac = 1.0 - diffuse_frac
+
+    return (diffuse_frac, direct_frac)
+
+
 def calculate_solar_geometry(doy, hod, latitude, longitude):
     """
     The solar zenith angle is the angle between the zenith and the centre
