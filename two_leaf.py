@@ -110,7 +110,7 @@ class CoupledModel(object):
 
         print(cos_zenith, sw_rad, diffuse_frac, direct_frac)
 
-        sys.exit()
+        """
         # calculates diffuse frac from half-hourly incident radiation
         #unpack_solar_geometry(cw, c)
 
@@ -174,8 +174,10 @@ class CoupledModel(object):
 
         if et < 0.0:
             raise Exception("ET shouldn't be negative, issue in energy balance")
-
         return (An, gsw, et)
+        """
+
+        return (0.0, 0.0, 0.0)
 
     def calc_leaf_temp(self, P=None, tleaf=None, tair=None, gsc=None, par=None,
                        vpd=None, pressure=None, wind=None, rnet=None):

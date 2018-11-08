@@ -45,7 +45,7 @@ def spitters(doy, sw_rad, cos_zenith):
     So = calc_extra_terrestrial_rad(doy, cos_zenith)
 
     # atmospheric transmisivity
-    tau = estimate_clearness(sw_rad, So);
+    tau = estimate_clearness(sw_rad, So)
 
     cos_zen_sq = cos_zenith * cos_zenith
 
@@ -76,6 +76,30 @@ def spitters(doy, sw_rad, cos_zenith):
     direct_frac = 1.0 - diffuse_frac
 
     return (diffuse_frac, direct_frac)
+
+def estimate_clearness(sw_rad, So):
+    """
+    Estimate atmospheric transmisivity - the amount of diffuse radiation
+    is a function of the amount of haze and/or clouds in the sky. Estimate
+    a proxy for this, i.e. the ratio between global solar radiation on a
+    horizontal surface at the ground and the extraterrestrial solar
+    radiation
+    """
+
+    # catch possible divide by zero when zenith = 90.
+    if So <= 0.0:
+        tau = 0.0;
+    else:
+        tau = sw_rad / So
+
+
+    if tau > 1.0:
+        tau = 1.0;
+    elif tau < 0.0:
+        tau = 0.0;
+
+
+    return (tau)
 
 
 def calculate_solar_geometry(doy, hod, latitude, longitude):
