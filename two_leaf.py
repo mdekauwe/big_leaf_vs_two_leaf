@@ -103,13 +103,13 @@ class CoupledModel(object):
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+        zenith_angle = np.rad2deg(np.arccos(cos_zenith))
+        elevation = 90.0 - zenith_angle
         sw_rad = par * c.PAR_2_SW # W m-2
 
         # get diffuse/beam frac
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
-
-        print(cos_zenith, sw_rad, diffuse_frac, direct_frac)
-
+        print(elevation)
         """
         # calculates diffuse frac from half-hourly incident radiation
         #unpack_solar_geometry(cw, c)
