@@ -22,10 +22,13 @@ __email__   = "mdekauwe@gmail.com"
 
 def main():
 
+    lat = -23.575001
+    lon = 152.524994
+    doy = 180.0
     #
     ## Met data ...
     #
-    (par, tair, vpd) = get_met_data()
+    (par, tair, vpd) = get_met_data(lat, lon, doy)
     wind = 2.5
     pressure = 101325.0
     Ca = 400.0
@@ -86,10 +89,14 @@ def main():
     gsw_tl = np.zeros(48)
     et_tl = np.zeros(48)
 
+    hod = 0
     for i in range(len(par)):
 
         (An_tl[i], gsw_tl[i], et_tl[i]) = T.main(tair[i], par[i], vpd[i],
-                                                  wind, pressure, Ca)
+                                                  wind, pressure, Ca, doy, hod,
+                                                  lat, lon)
+
+        hod += 1
 
     fig = plt.figure(figsize=(9,6))
     fig.subplots_adjust(hspace=0.1)
@@ -127,15 +134,11 @@ def main():
     plt.show()
 
 
-def get_met_data():
+def get_met_data(lat, lon, doy):
 
-    lat = -23.575001
-    lon = 152.524994
     sw_rad_day = 20.5 # mj m-2 d-1
     tmin = 2.0
     tmax = 24.0
-    doy = 180.0
-    lat = 50.0
     rain = 10.0
     vpd09 = 1.4
     vpd09_next = 1.8

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-
+Two-leaf approximation
 """
 
 import sys
@@ -14,6 +14,7 @@ import math
 import constants as c
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
+from radiation import calculate_solar_geometry
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -51,7 +52,8 @@ class CoupledModel(object):
         self.emissivity_leaf = 0.99   # emissivity of leaf (-)
 
 
-    def main(self, tair, par, vpd, wind, pressure, Ca, rnet=None):
+    def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod, lat, lon,
+             rnet=None):
         """
         Parameters:
         ----------
@@ -68,6 +70,14 @@ class CoupledModel(object):
             air pressure (using constant) (Pa)
         Ca : float
             ambient CO2 concentration
+        doy : float
+            day of day
+        hod : float
+            hour of day
+        lat : float
+            latitude
+        lon : float
+            longitude
 
         Returns:
         --------
@@ -92,15 +102,18 @@ class CoupledModel(object):
         Tleaf = tair
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
-        #print "Start: %.3f %.3f %.3f" % (Cs, Tleaf, dleaf)
-        #print
 
+        cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+
+        print(cos_zenith)
+
+        sys.exit()
         # calculates diffuse frac from half-hourly incident radiation
         #unpack_solar_geometry(cw, c)
 
         # Is the sun up?
         if elevation > 0.0 and par > 20.0:
-            calculate_absorbed_radiation(cw, p, s, m->par)
+            calculate_absorbed_radiation(cw, p, s, par)
             calculate_top_of_canopy_leafn(cw, p, s)
             calc_leaf_to_canopy_scalar(cw, p)
 

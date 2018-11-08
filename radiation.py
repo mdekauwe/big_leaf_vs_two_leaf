@@ -1,3 +1,17 @@
+#!/usr/bin/env python
+"""
+Various radiation funcs needed for the two-leaf approximation
+"""
+
+import sys
+import numpy as np
+import math
+
+__author__  = "Martin De Kauwe"
+__version__ = "1.0 (09.11.2018)"
+__email__   = "mdekauwe@gmail.com"
+
+
 def calculate_solar_geometry(doy, hod, latitude, longitude):
     """
     The solar zenith angle is the angle between the zenith and the centre
