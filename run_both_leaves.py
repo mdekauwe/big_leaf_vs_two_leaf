@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """
+For a synthetic 48 half hour time window, calculate GPP/E using a big-leaf and
+2-leaf approximation.
 
+This is the wrapper script that calls both leaves and makes a plot ...
 """
 
 import sys
