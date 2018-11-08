@@ -94,7 +94,7 @@ def main():
 
         (An_tl[i], gsw_tl[i], et_tl[i]) = T.main(tair[i], par[i], vpd[i],
                                                  wind, pressure, Ca, doy, hod,
-                                                 lat, lon)
+                                                 lat, lon, LAI)
 
         hod += 1
 

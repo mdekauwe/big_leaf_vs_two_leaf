@@ -15,6 +15,7 @@ import constants as c
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
 from radiation import calculate_solar_geometry, spitters
+from radiation import calculate_absorbed_radiation
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -53,7 +54,7 @@ class CoupledModel(object):
 
 
     def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod, lat, lon,
-             rnet=None):
+             lai, rnet=None):
         """
         Parameters:
         ----------
@@ -78,6 +79,8 @@ class CoupledModel(object):
             latitude
         lon : float
             longitude
+        lai : floar
+            leaf area index
 
         Returns:
         --------
@@ -109,13 +112,25 @@ class CoupledModel(object):
 
         # get diffuse/beam frac
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
-        print(elevation)
-        """
-        # calculates diffuse frac from half-hourly incident radiation
-        #unpack_solar_geometry(cw, c)
 
         # Is the sun up?
         if elevation > 0.0 and par > 20.0:
+
+            (apar_leaf,
+             lai_leaf) = calculate_absorbed_radiation(par, cos_zenith, lai,
+                                                      direct_frac,
+                                                      diffuse_frac)
+            print(apar_leaf[0], apar_leaf[1])
+        """
+
+        # Is the sun up?
+        if elevation > 0.0 and par > 20.0:
+
+            (apar_leaf,
+             lai_leaf) = calculate_absorbed_radiation(par, cos_zenith, lai,
+                                                      direct_frac,
+                                                      diffuse_frac):
+
             calculate_absorbed_radiation(cw, p, s, par)
             calculate_top_of_canopy_leafn(cw, p, s)
             calc_leaf_to_canopy_scalar(cw, p)
