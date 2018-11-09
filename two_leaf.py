@@ -369,7 +369,7 @@ if __name__ == "__main__":
 
     fig = plt.figure(figsize=(14,5))
     fig.subplots_adjust(hspace=0.1)
-    fig.subplots_adjust(wspace=0.3)
+    fig.subplots_adjust(wspace=0.2)
     plt.rcParams['text.usetex'] = False
     plt.rcParams['font.family'] = "sans-serif"
     plt.rcParams['font.sans-serif'] = "Helvetica"
@@ -397,10 +397,9 @@ if __name__ == "__main__":
 
     ax1.plot(np.arange(48)/2., An_tl)
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
-    ax1.set_xlabel("Hour of day")
+    ax1.set_xlabel("Hour of day", position=(1.1, 0.5))
 
     ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Big leaf")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
-    ax2.set_xlabel("Hour of day")
 
     plt.show()
