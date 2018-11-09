@@ -272,16 +272,12 @@ class CoupledModel(object):
 
 def calc_leaf_to_canopy_scalar(lai, kb):
     """
-    Calculate scalar to transform leaf Vcmax and Jmax values to big leaf
-    values. Following Wang & Leuning, as long as sunlit and shaded
-    leaves are treated seperately, values of parameters in the coupled
-    model for the two big leaves can be closely approximated by
-    integrating values for individual leaves.
+    Calculate scalar to transform leaf Vcmax, Jmax and Rd values to big leaf
+    values.
 
     - Inserting eqn C6 & C7 into B5
 
-    per unit ground area
-
+    I've aligned logic with cable_radiation.F90
 
     References:
     ----------
