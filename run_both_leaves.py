@@ -4,7 +4,7 @@ For a synthetic 48 half hour time window, solve 30-minute coupled A-gs(E) using
 a big-leaf and 2-leaf approximation and make a comparison plot
 
 """
-
+import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -155,7 +155,8 @@ def main():
     ax2.locator_params(nbins=6, axis="y")
 
     plt.show()
-
+    fig.savefig("/Users/%s/Desktop/A_E_Tcan.pdf" % (os.getlogin()),
+                bbox_inches='tight', pad_inches=0.1)
 
 if __name__ == "__main__":
 
