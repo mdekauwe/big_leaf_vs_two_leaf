@@ -133,7 +133,6 @@ class CoupledModel(object):
 
                 # initialise values of Tleaf, Cs, dleaf at the leaf surface
                 dleaf = vpd
-                dair = vpd
                 Cs = Ca
                 Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
@@ -170,7 +169,7 @@ class CoupledModel(object):
                         Cs = Ca
 
                     if math.isclose(et[ileaf], 0.0) or math.isclose(gw, 0.0):
-                        dleaf = dair
+                        dleaf = vpd
                     else:
                         dleaf = (et[ileaf] * pressure / gw) * c.PA_2_KPA # kPa
 
