@@ -333,7 +333,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     k_dash_d = 0.719                  # diffuse & scattered PAR extinction coeff
     lad = 0                           # NB. default is to assume spherical LAD=0
 
-    apar_leaf = np.zeros(2) # sunlit, shaded
+    apar = np.zeros(2) # sunlit, shaded
     lai_leaf = np.zeros(2)  # sunlit, shaded
     #
     # Ross-Goudriaan function is the ratio of the projected area of leaves
@@ -371,13 +371,13 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     total_canopy_irradiance = arg1 + arg2
 
     # Irradiance absorbed by the sunlit fraction of the canopy
-    apar_leaf[c.SUNLIT] = beam + scattered + shaded
+    apar[c.SUNLIT] = beam + scattered + shaded
 
     # Irradiance absorbed by the shaded fraction of the canopy
-    apar_leaf[c.SHADED] = total_canopy_irradiance - apar_leaf[c.SUNLIT]
+    apar[c.SHADED] = total_canopy_irradiance - apar[c.SUNLIT]
 
     # Calculate sunlit &shdaded LAI of the canopy - de P * F eqn 18
     lai_leaf[c.SUNLIT] = (1.0 - np.exp(-kb * lai)) / kb
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
 
-    return (apar_leaf, lai_leaf, kb)
+    return (apar, lai_leaf, kb)

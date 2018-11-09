@@ -37,7 +37,7 @@ def main():
     ## Parameters
     #
     g0 = 0.001
-    g1 = 4.0
+    g1 = 2.0
     D0 = 1.5 # kpa
     Vcmax25 = 60.0
     Jmax25 = Vcmax25 * 1.67

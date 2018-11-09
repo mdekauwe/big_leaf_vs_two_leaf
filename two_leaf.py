@@ -120,7 +120,7 @@ class CoupledModel(object):
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
 
-            (apar_leaf,
+            (apar,
              lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
                                                           direct_frac,
                                                           diffuse_frac)
@@ -141,7 +141,7 @@ class CoupledModel(object):
                 while True:
                     (An[ileaf],
                      gsc[ileaf]) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
-                                                    Par=apar_leaf[ileaf],
+                                                    Par=apar[ileaf],
                                                     Jmax25=self.Jmax25,
                                                     Vcmax25=self.Vcmax25,
                                                     Q10=self.Q10, Eaj=self.Eaj,
@@ -157,7 +157,7 @@ class CoupledModel(object):
                     (new_tleaf, et[ileaf],
                      le_et, gbH, gw) = self.calc_leaf_temp(P, Tleaf, tair,
                                                            gsc[ileaf],
-                                                           apar_leaf[ileaf],
+                                                           apar[ileaf],
                                                            vpd, pressure,
                                                            wind, rnet=rnet,
                                                            lai=lai_leaf[ileaf])
