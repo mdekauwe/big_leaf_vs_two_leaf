@@ -138,12 +138,12 @@ class FarquharC3(object):
         self.D0 = D0
         self.adjust_Vcmax_Jmax_for_low_temp = adjust_Vcmax_Jmax_for_low_temp
 
-    def calc_photosynthesis(self, Cs=None, Tleaf=None, Par=None,
-                            Jmax=None, Vcmax=None, Jmax25=None, Vcmax25=None,
-                            Rd=None, Rd25=None, Q10=None, Eaj=None, Eav=None,
-                            deltaSj=None, deltaSv=None, Hdv=200000.0,
-                            Hdj=200000.0, Ear=None, vpd=None, mult=None,
-                            scalex=None):
+    def photosynthesis(self, Cs=None, Tleaf=None, Par=None,
+                       Jmax=None, Vcmax=None, Jmax25=None, Vcmax25=None,
+                       Rd=None, Rd25=None, Q10=None, Eaj=None, Eav=None,
+                       deltaSj=None, deltaSv=None, Hdv=200000.0,
+                       Hdj=200000.0, Ear=None, vpd=None, mult=None,
+                       scalex=None):
         """
         Parameters
         ----------

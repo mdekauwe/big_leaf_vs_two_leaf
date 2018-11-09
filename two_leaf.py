@@ -143,18 +143,18 @@ class CoupledModel(object):
                 while True:
                     (An[ileaf],
                      gsc[ileaf],
-                     Ci[ileaf]) = F.calc_photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
-                                                     Par=apar_leaf[ileaf],
-                                                     Jmax25=self.Jmax25,
-                                                     Vcmax25=self.Vcmax25,
-                                                     Q10=self.Q10, Eaj=self.Eaj,
-                                                     Eav=self.Eav,
-                                                     deltaSj=self.deltaSj,
-                                                     deltaSv=self.deltaSv,
-                                                     Rd25=self.Rd25,
-                                                     Hdv=self.Hdv,
-                                                     Hdj=self.Hdj, vpd=dleaf,
-                                                     scalex=scalex[ileaf])
+                     Ci[ileaf]) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
+                                                   Par=apar_leaf[ileaf],
+                                                   Jmax25=self.Jmax25,
+                                                   Vcmax25=self.Vcmax25,
+                                                   Q10=self.Q10, Eaj=self.Eaj,
+                                                   Eav=self.Eav,
+                                                   deltaSj=self.deltaSj,
+                                                   deltaSv=self.deltaSv,
+                                                   Rd25=self.Rd25,
+                                                   Hdv=self.Hdv,
+                                                   Hdj=self.Hdj, vpd=dleaf,
+                                                   scalex=scalex[ileaf])
 
                     # Calculate new Tleaf, dleaf, Cs
                     (new_tleaf, et[ileaf],
