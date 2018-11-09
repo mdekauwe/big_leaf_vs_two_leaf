@@ -1,5 +1,14 @@
+#!/usr/bin/env python
+"""
+Generate a days timeseries of met forcing to run the model.
+"""
+
 import numpy as np
 from weather_generator import WeatherGenerator
+
+__author__  = "Martin De Kauwe"
+__version__ = "1.0 (09.11.2018)"
+__email__   = "mdekauwe@gmail.com"
 
 def get_met_data(lat, lon, doy):
 
