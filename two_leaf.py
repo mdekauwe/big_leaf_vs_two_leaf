@@ -292,8 +292,8 @@ def calc_leaf_to_canopy_scalar(lai_leaf, kb):
     * Wang and Leuning (1998) AFm, 91, 89-111; particularly the Appendix.
     """
     scalex = np.zeros(2)
-    transb = np.zeros(2)
-    cf2n = np.zeros(2)
+    #transb = np.zeros(2)
+    #cf2n = np.zeros(2)
 
     # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
     # default which comes half Belinda's head and is supported by fig 10 in
@@ -302,22 +302,29 @@ def calc_leaf_to_canopy_scalar(lai_leaf, kb):
 
     lai_sun = lai_leaf[c.SUNLIT]
     lai_sha = lai_leaf[c.SHADED]
+    lai = np.sum(lai_leaf)
 
     #scalex[c.SUNLIT] = (1.0 - np.exp(-(kb + kn) * lai_sun)) / (kb + kn)
     #scalex[c.SHADED] = (1.0 - np.exp(-kn * lai_sha)) / kn - cscalar[c.SUNLIT]
 
+
     # Define fraction of SW beam tranmitted through canopy:
-    transb[c.SUNLIT] = np.exp(-kb * lai_leaf[c.SUNLIT])
-    transb[c.SHADED] = np.exp(-kb * lai_leaf[c.SHADED])
+    transb = np.exp(-kb * lai)
+    #transb[c.SUNLIT] = np.exp(-kb * lai_leaf[c.SUNLIT])
+    #transb[c.SHADED] = np.exp(-kb * lai_leaf[c.SHADED])
 
     # Relative leaf nitrogen concentration within canopy:
-    cf2n[c.SUNLIT] = np.exp(-kn * lai_leaf[c.SUNLIT])
-    cf2n[c.SHADED] = np.exp(-kn * lai_leaf[c.SHADED])
+    #cf2n[c.SUNLIT] = np.exp(-kn * lai_leaf[c.SUNLIT])
+    #cf2n[c.SHADED] = np.exp(-kn * lai_leaf[c.SHADED])
+    cf2n = np.exp(-kn * lai)
+
 
     # Scaling from single leaf to canopy, see Wang & Leuning 1998 appendix C:
-    scalex[c.SUNLIT] = (1.0 - transb[c.SUNLIT] * cf2n[c.SUNLIT]) / (kb + kn)
-    scalex[c.SHADED] = (1.0 - transb[c.SHADED] * cf2n[c.SHADED]) / (kb + kn)
-
+    #scalex[c.SUNLIT] = (1.0 - transb[c.SUNLIT] * cf2n[c.SUNLIT]) / (kb + kn)
+    #scalex[c.SHADED] = (1.0 - transb[c.SHADED] * cf2n[c.SHADED]) / (kb + kn)
+    scalex[c.SUNLIT] = (1.0 - transb * cf2n) / (kb + kn)
+    scalex[c.SHADED] = (1.0 - cf2n) / kn - scalex[c.SUNLIT]
+    
     return scalex
 
 if __name__ == "__main__":
@@ -381,7 +388,7 @@ if __name__ == "__main__":
                                                  lat, lon, LAI)
 
         hod += 1
-    
+
     fig = plt.figure(figsize=(14,5))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.2)
