@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from math import pi, cos, sin, exp, sqrt, acos, asin
 import random
 from big_leaf import CoupledModel as BigLeaf
+#from big_leaf_depFarq import CoupledModel as BigLeaf
+
 from two_leaf import CoupledModel as TwoLeaf
 import constants as c
 from get_days_met_forcing import get_met_data

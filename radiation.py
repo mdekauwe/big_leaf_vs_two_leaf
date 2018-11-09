@@ -422,3 +422,54 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
 
     return (apar, lai_leaf, kb)
+
+
+def calculate_absorbed_radiation_big_leaf(par, cos_zenith, lai, direct_frac,
+                                          diffuse_frac):
+    """
+    Calculate absorded irradiance of sunlit and shaded fractions of
+    the canopy. The total irradiance absorbed by the canopy and the
+    sunlit/shaded components are all expressed on a ground-area basis!
+    NB:  sin_beta == cos_zenith
+
+    References:
+    -----------
+    * De Pury & Farquhar (1997) PCE, 20, 537-557.
+    but see also:
+    * Wang and Leuning (1998) AFm, 91, 89-111.
+    * Dai et al. (2004) Journal of Climate, 17, 2281-2299.
+    """
+
+    rho_cd = 0.036                    # canopy reflect coeff for diffuse PAR
+    rho_cb = 0.029                    # canopy reflect coeff for direct PAR
+    omega = 0.15                      # leaf scattering coefficient of PAR
+    k_dash_b = 0.46 / cos_zenith      # beam & scat PAR ext coef
+    k_dash_d = 0.719                  # diffuse & scattered PAR extinction coeff
+    lad = 0                           # NB. default is to assume spherical LAD=0
+
+    apar = np.zeros(2) # sunlit, shaded
+    lai_leaf = np.zeros(2)  # sunlit, shaded
+    #
+    # Ross-Goudriaan function is the ratio of the projected area of leaves
+    # in the direction perpendicular to the direction of incident solar
+    # radiation and the actual leaf area. See Sellers (1985), eqn 13/
+    # note this is taken from CABLE code (Kowalczyk '06, eqn 28/29)
+    #
+    psi1 = 0.5 - 0.633 * lad
+    psi2 = 0.877 * (1.0 - 2.0 * psi1)
+    Gross = psi1 + psi2 * cos_zenith
+
+    # beam extinction coefficient for black leaves
+    kb = Gross / cos_zenith
+
+    # de P & F, eqn 13
+
+    # Direct-beam irradiance absorbed by sunlit leaves
+    Ib = par * direct_frac
+    Id = par * diffuse_frac
+
+    arg1 = (1.0 - rho_cb) * Ib * (1.0 - np.exp(-k_dash_b * lai)) / k_dash_b
+    arg2 = (1.0 - rho_cd) * Id * (1.0 - np.exp(-k_dash_d * lai)) / k_dash_d
+    apar = arg1 + arg2
+
+    return (apar, lai_leaf, kb)
