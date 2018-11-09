@@ -12,7 +12,7 @@ __email__   = "mdekauwe@gmail.com"
 
 def get_met_data(lat, lon, doy):
 
-    sw_rad_day = 20.5 # mj m-2 d-1
+    sw_rad_day = 25.5 # mj m-2 d-1
     tmin = 2.0
     tmax = 24.0
     rain = 10.0

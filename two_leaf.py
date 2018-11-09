@@ -279,7 +279,9 @@ def calc_leaf_to_canopy_scalar(lai_leaf, kb):
     leaves are treated seperately, values of parameters in the coupled
     model for the two big leaves can be closely approximated by
     integrating values for individual leaves.
+
     - Inserting eqn C6 & C7 into B5
+
     per unit ground area
 
     Parameters:
@@ -298,8 +300,8 @@ def calc_leaf_to_canopy_scalar(lai_leaf, kb):
     ----------
     * Wang and Leuning (1998) AFm, 91, 89-111; particularly the Appendix.
     """
-
     cscalar = np.zeros(2)
+
     # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
     # default which comes half Belinda's head and is supported by fig 10 in
     # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
