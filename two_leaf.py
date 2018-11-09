@@ -125,7 +125,8 @@ class CoupledModel(object):
              lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
                                                           direct_frac,
                                                           diffuse_frac)
-
+            # Calculate scaling term to go from a single leaf to canopy,
+            # see Wang & Leuning 1998 appendix C
             scalex = calc_leaf_to_canopy_scalar(lai, kb)
 
             # sunlit / shaded loop
@@ -137,7 +138,7 @@ class CoupledModel(object):
                 Cs = Ca
                 Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
-                
+
                 iter = 0
                 while True:
                     (An[ileaf],

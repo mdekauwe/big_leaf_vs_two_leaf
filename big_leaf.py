@@ -113,14 +113,17 @@ class CoupledModel(object):
 
             iter = 0
             while True:
-                (An, gsc, Ci) = F.calc_photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
+                (An,
+                 gsc, Ci) = F.calc_photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
                                                       Jmax25=self.Jmax25,
                                                       Vcmax25=self.Vcmax25,
-                                                      Q10=self.Q10, Eaj=self.Eaj,
+                                                      Q10=self.Q10,
+                                                      Eaj=self.Eaj,
                                                       Eav=self.Eav,
                                                       deltaSj=self.deltaSj,
                                                       deltaSv=self.deltaSv,
-                                                      Rd25=self.Rd25, Hdv=self.Hdv,
+                                                      Rd25=self.Rd25,
+                                                      Hdv=self.Hdv,
                                                       Hdj=self.Hdj, vpd=dleaf)
 
                 # Calculate new Tleaf, dleaf, Cs
