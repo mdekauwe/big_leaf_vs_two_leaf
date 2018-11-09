@@ -117,14 +117,14 @@ class CoupledModel(object):
 
         # get diffuse/beam frac
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
-
+        
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
 
             (apar_leaf,
              lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
-                                                      direct_frac,
-                                                      diffuse_frac)
+                                                          direct_frac,
+                                                          diffuse_frac)
 
             cscalar = calc_leaf_to_canopy_scalar(lai_leaf, kb)
 
@@ -137,8 +137,10 @@ class CoupledModel(object):
                 Cs = Ca
                 Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
-                jmax25 = self.Jmax25 * cscalar[ileaf]
-                vcmax25 = self.Vcmax25 * cscalar[ileaf]
+                #jmax25 = self.Jmax25 * cscalar[ileaf]
+                #vcmax25 = self.Vcmax25 * cscalar[ileaf]
+                jmax25 = self.Jmax25
+                vcmax25 = self.Vcmax25
 
                 iter = 0
                 while True:
@@ -376,7 +378,7 @@ if __name__ == "__main__":
                                                  lat, lon, LAI)
 
         hod += 1
-
+    sys.exit()
     fig = plt.figure(figsize=(14,5))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.2)
