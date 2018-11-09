@@ -86,19 +86,16 @@ def estimate_clearness(sw_rad, So):
     horizontal surface at the ground and the extraterrestrial solar
     radiation
     """
-
     # catch possible divide by zero when zenith = 90.
     if So <= 0.0:
         tau = 0.0;
     else:
         tau = sw_rad / So
 
-
     if tau > 1.0:
         tau = 1.0;
     elif tau < 0.0:
         tau = 0.0;
-
 
     return (tau)
 
@@ -111,18 +108,21 @@ def calculate_solar_geometry(doy, hod, latitude, longitude):
     Since these two angles are complementary, the cosine of either one of
     them equals the sine of the other, i.e. cos theta = sin beta. I will
     use cos_zen throughout code for simplicity.
+
     Arguments:
     ----------
     doy : double
         day of year
     hod : double:
         hour of the day [0.5 to 24]
+
     Returns:
     --------
     cos_zen : double
         cosine of the zenith angle of the sun in degrees (returned)
     elevation : double
         solar elevation (degrees) (returned)
+
     References:
     -----------
     * De Pury & Farquhar (1997) PCE, 20, 537-557.
@@ -142,6 +142,7 @@ def calculate_solar_geometry(doy, hod, latitude, longitude):
     sin_beta = np.sin(rlat) * np.sin(rdec) + np.cos(rlat) * \
                 np.cos(rdec) * np.cos(h)
     cos_zenith = sin_beta # The same thing, going to use throughout
+
     if cos_zenith > 1.0:
         cos_zenith = 1.0
     elif cos_zenith < 0.0:
@@ -152,11 +153,13 @@ def calculate_solar_geometry(doy, hod, latitude, longitude):
 def day_angle(doy):
     """
     Calculation of day angle - De Pury & Farquhar, '97: eqn A18
+
     Reference:
     ----------
     * De Pury & Farquhar (1997) PCE, 20, 537-557.
     * J. W. Spencer (1971). Fourier series representation of the position of
       the sun.
+
     Returns:
     ---------
     gamma - day angle in radians.
@@ -167,16 +170,19 @@ def calculate_solar_declination(doy, gamma):
     """
     Solar Declination Angle is a function of day of year and is indepenent
     of location, varying between 23deg45' to -23deg45'
+
     Arguments:
     ----------
     doy : int
         day of year, 1=jan 1
     gamma : double
         fractional year (radians)
+
     Returns:
     --------
     dec: float
         Solar Declination Angle [radians]
+
     Reference:
     ----------
     * De Pury & Farquhar (1997) PCE, 20, 537-557.
@@ -195,12 +201,14 @@ def calculate_eqn_of_time(gamma):
     """
     Equation of time - correction for the difference btw solar time
     and the clock time.
+
     Arguments:
     ----------
     doy : int
         day of year
     gamma : double
         fractional year (radians)
+
     References:
     -----------
     * De Pury & Farquhar (1997) PCE, 20, 537-557.
@@ -212,8 +220,6 @@ def calculate_eqn_of_time(gamma):
       "The Equation of Time", Monthly Notices of the Royal Astronomical
       Society 238: 1529–1535
     """
-
-
     #
     # from Spencer '71. This better matches the de Pury worked example (pg 554)
     # The de Pury version is this essentially with the 229.18 already applied
@@ -231,9 +237,11 @@ def calculate_eqn_of_time(gamma):
 def calculate_solar_noon(et, longitude):
     """
     Calculation solar noon - De Pury & Farquhar, '97: eqn A16
+
     Reference:
     ----------
     * De Pury & Farquhar (1997) PCE, 20, 537-557.
+
     Returns:
     ---------
     t0 - solar noon (hours).
@@ -252,9 +260,11 @@ def round_to_value(number, roundto):
 def calculate_hour_angle(t, t0):
     """
     Calculation solar noon - De Pury & Farquhar, '97: eqn A15
+
     Reference:
     ----------
     * De Pury & Farquhar (1997) PCE, 20, 537-557.
+
     Returns:
     ---------
     h - hour angle (radians).
@@ -267,17 +277,20 @@ def calc_extra_terrestrial_rad(doy, cos_zenith):
     extra-terrestrial radiation. The value varies a little with the earths
     orbit.
     Using formula from Spitters not Leuning!
+
     Arguments:
     ----------
     doy : double
         day of year
     cos_zenith : double
         cosine of zenith angle (radians)
+
     Returns:
     --------
     So : float
         solar radiation normal to the sun's bean outside the Earth's atmosphere
         (J m-2 s-1)
+
     Reference:
     ----------
     * Spitters et al. (1986) AFM, 38, 217-229, equation 1.
