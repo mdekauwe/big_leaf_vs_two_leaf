@@ -14,6 +14,7 @@ import random
 from weather_generator import WeatherGenerator
 from big_leaf import CoupledModel as BigLeaf
 from two_leaf import CoupledModel as TwoLeaf
+import constants as c
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -71,12 +72,14 @@ def main():
     gsw_bl = np.zeros(48)
     et_bl = np.zeros(48)
 
+    hod = 0
     for i in range(len(par)):
 
         (An_bl[i], gsw_bl[i], et_bl[i]) = B.main(tair[i], par[i], vpd[i],
-                                                 wind, pressure, Ca)
+                                                 wind, pressure, Ca, doy, hod,
+                                                 lat, lon, LAI)
 
-
+        hod += 1
     ##
     ### Run 2-leaf
     ##
@@ -126,14 +129,14 @@ def main():
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
 
-    ax1.plot(An_bl * LAI, label="Big leaf")
+    ax1.plot(An_bl, label="Big leaf")
     ax1.plot(An_tl, label="Two leaf")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
     ax1.set_xlabel("Hour of day")
 
-    ax2.plot(et_bl * 1000. * LAI, label="Big leaf")
-    ax2.plot(et_tl * 1000, label="Two leaf")
+    ax2.plot(et_bl * c.MOL_TO_MMOL, label="Big leaf")
+    ax2.plot(et_tl * c.MOL_TO_MMOL, label="Two leaf")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
     ax2.set_xlabel("Hour of day")
 
