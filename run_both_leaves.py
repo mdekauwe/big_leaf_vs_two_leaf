@@ -139,6 +139,8 @@ def main():
     ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
 
+    ax1.locator_params(nbins=6, axis="y")
+    ax2.locator_params(nbins=6, axis="y")
 
     plt.show()
 
