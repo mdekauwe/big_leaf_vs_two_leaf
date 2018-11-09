@@ -51,7 +51,7 @@ def main():
     Q10 = 2.0
     gamma = 0.0
     leaf_width = 0.02
-    LAI = 1.5
+    LAI = 3.
     # Cambell & Norman, 11.5, pg 178
     # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
     # with canopies (~0.8) from Table 11.2 reveals a surprising difference.
@@ -98,7 +98,7 @@ def main():
 
         hod += 1
 
-    fig = plt.figure(figsize=(9,6))
+    fig = plt.figure(figsize=(14,5))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.3)
     plt.rcParams['text.usetex'] = False
@@ -123,13 +123,19 @@ def main():
     plt.rcParams['axes.edgecolor'] = almost_black
     plt.rcParams['axes.labelcolor'] = almost_black
 
-    ax1 = fig.add_subplot(111)
+    ax1 = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
 
     ax1.plot(An_bl * LAI, label="Big leaf")
     ax1.plot(An_tl, label="Two leaf")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
     ax1.set_xlabel("Hour of day")
+
+    ax2.plot(et_bl * 1000. * LAI, label="Big leaf")
+    ax2.plot(et_tl * 1000, label="Two leaf")
+    ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
+    ax2.set_xlabel("Hour of day")
 
     plt.show()
 
