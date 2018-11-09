@@ -221,7 +221,7 @@ class FarquharC3(object):
             else:
                 Jmax = self.arrh(Jmax25, Eaj, Tleaf)
 
-        # leaf to canopy scaling
+        # Scaling from single leaf to canopy, see Wang & Leuning 1998 appendix C
         if scalex is not None:
             Rd *= scalex
             Vcmax *= scalex
