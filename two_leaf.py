@@ -188,7 +188,7 @@ class CoupledModel(object):
 
                     iter += 1
 
-            # scale leaf to canopy
+            # scale leaf to canopy: sum leaves
             an_canopy = np.sum(An)
             gsw_canopy = np.sum(gsc) * c.GSC_2_GSW
             et_canopy = np.sum(et)
