@@ -126,7 +126,7 @@ class CoupledModel(object):
                                                           direct_frac,
                                                           diffuse_frac)
 
-            scalex = calc_leaf_to_canopy_scalar(lai_leaf, kb)
+            scalex = calc_leaf_to_canopy_scalar(lai, kb)
 
             # sunlit / shaded loop
             for ileaf in range(2):
@@ -274,7 +274,7 @@ class CoupledModel(object):
 
         return (new_Tleaf, et, le_et, gbH, gw)
 
-def calc_leaf_to_canopy_scalar(lai_leaf, kb):
+def calc_leaf_to_canopy_scalar(lai, kb):
     """
     Calculate scalar to transform leaf Vcmax and Jmax values to big leaf
     values. Following Wang & Leuning, as long as sunlit and shaded
@@ -300,31 +300,23 @@ def calc_leaf_to_canopy_scalar(lai_leaf, kb):
     # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
     kn = 0.3
 
-    lai_sun = lai_leaf[c.SUNLIT]
-    lai_sha = lai_leaf[c.SHADED]
-    lai = np.sum(lai_leaf)
+    #lai_sun = lai_leaf[c.SUNLIT]
+    #lai_sha = lai_leaf[c.SHADED]
+    #lai = np.sum(lai_leaf)
 
     #scalex[c.SUNLIT] = (1.0 - np.exp(-(kb + kn) * lai_sun)) / (kb + kn)
-    #scalex[c.SHADED] = (1.0 - np.exp(-kn * lai_sha)) / kn - cscalar[c.SUNLIT]
-
+    #scalex[c.SHADED] = (1.0 - np.exp(-kn * lai_sha)) / kn - scalex[c.SUNLIT]
 
     # Define fraction of SW beam tranmitted through canopy:
     transb = np.exp(-kb * lai)
-    #transb[c.SUNLIT] = np.exp(-kb * lai_leaf[c.SUNLIT])
-    #transb[c.SHADED] = np.exp(-kb * lai_leaf[c.SHADED])
 
     # Relative leaf nitrogen concentration within canopy:
-    #cf2n[c.SUNLIT] = np.exp(-kn * lai_leaf[c.SUNLIT])
-    #cf2n[c.SHADED] = np.exp(-kn * lai_leaf[c.SHADED])
     cf2n = np.exp(-kn * lai)
 
-
     # Scaling from single leaf to canopy, see Wang & Leuning 1998 appendix C:
-    #scalex[c.SUNLIT] = (1.0 - transb[c.SUNLIT] * cf2n[c.SUNLIT]) / (kb + kn)
-    #scalex[c.SHADED] = (1.0 - transb[c.SHADED] * cf2n[c.SHADED]) / (kb + kn)
     scalex[c.SUNLIT] = (1.0 - transb * cf2n) / (kb + kn)
     scalex[c.SHADED] = (1.0 - cf2n) / kn - scalex[c.SUNLIT]
-    
+
     return scalex
 
 if __name__ == "__main__":
