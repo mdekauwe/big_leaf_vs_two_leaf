@@ -142,7 +142,8 @@ class FarquharC3(object):
                             Jmax=None, Vcmax=None, Jmax25=None, Vcmax25=None,
                             Rd=None, Rd25=None, Q10=None, Eaj=None, Eav=None,
                             deltaSj=None, deltaSv=None, Hdv=200000.0,
-                            Hdj=200000.0, Ear=None, vpd=None, mult=None):
+                            Hdj=200000.0, Ear=None, vpd=None, mult=None,
+                            scalex=None):
         """
         Parameters
         ----------
@@ -219,6 +220,12 @@ class FarquharC3(object):
                 Jmax = self.peaked_arrh(Jmax25, Eaj, Tleaf, deltaSj, Hdj)
             else:
                 Jmax = self.arrh(Jmax25, Eaj, Tleaf)
+
+        # leaf to canopy scaling
+        if scalex is not None:
+            Rd *= scalex
+            Vcmax *= scalex
+            Jmax *= Jmax
 
         # Rate of electron transport, which is a function of absorbed PAR
         if Par is not None:
