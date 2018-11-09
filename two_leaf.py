@@ -137,8 +137,8 @@ class CoupledModel(object):
                 Cs = Ca
                 Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
-
-
+                jmax25 = self.Jmax25 * cscalar[ileaf]
+                vcmax25 = self.Vcmax25 * cscalar[ileaf]
 
                 iter = 0
                 while True:
@@ -146,8 +146,8 @@ class CoupledModel(object):
                      gsc[ileaf],
                      Ci[ileaf]) = F.calc_photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
                                                      Par=apar_leaf[ileaf],
-                                                     Jmax25=self.Jmax25,
-                                                     Vcmax25=self.Vcmax25,
+                                                     Jmax25=jmax25,
+                                                     Vcmax25=vcmax25,
                                                      Q10=self.Q10, Eaj=self.Eaj,
                                                      Eav=self.Eav,
                                                      deltaSj=self.deltaSj,
