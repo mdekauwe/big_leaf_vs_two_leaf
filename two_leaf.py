@@ -126,7 +126,7 @@ class CoupledModel(object):
                                                           direct_frac,
                                                           diffuse_frac)
 
-            cscalar = calc_leaf_to_canopy_scalar(lai_leaf, kb)
+            scalex = calc_leaf_to_canopy_scalar(lai_leaf, kb)
 
             # sunlit / shaded loop
             for ileaf in range(2):
@@ -137,8 +137,8 @@ class CoupledModel(object):
                 Cs = Ca
                 Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
-                jmax25 = self.Jmax25 * cscalar[ileaf]
-                vcmax25 = self.Vcmax25 * cscalar[ileaf]
+                jmax25 = self.Jmax25 * scalex[ileaf]
+                vcmax25 = self.Vcmax25 * scalex[ileaf]
                 #jmax25 = self.Jmax25
                 #vcmax25 = self.Vcmax25
 
@@ -286,23 +286,12 @@ def calc_leaf_to_canopy_scalar(lai_leaf, kb):
 
     per unit ground area
 
-    Parameters:
-    ----------
-    canopy_wk : structure
-        various canopy values: in this case the sunlit or shaded LAI &
-        cos_zenith angle.
-    scalar_sun : float
-        scalar for sunlit leaves, values returned in unit ground area
-        (returned)
-    scalar_sha : float
-        scalar for shaded leaves, values returned in unit ground area
-        (returned)
 
     References:
     ----------
     * Wang and Leuning (1998) AFm, 91, 89-111; particularly the Appendix.
     """
-    cscalar = np.zeros(2)
+    scalex = np.zeros(2)
     transb = np.zeros(2)
     cf2n = np.zeros(2)
 
@@ -314,9 +303,9 @@ def calc_leaf_to_canopy_scalar(lai_leaf, kb):
     lai_sun = lai_leaf[c.SUNLIT]
     lai_sha = lai_leaf[c.SHADED]
 
-    #cscalar[c.SUNLIT] = (1.0 - np.exp(-(kb + kn) * lai_sun)) / (kb + kn)
-    #cscalar[c.SHADED] = (1.0 - np.exp(-kn * lai_sha)) / kn - cscalar[c.SUNLIT]
-    
+    #scalex[c.SUNLIT] = (1.0 - np.exp(-(kb + kn) * lai_sun)) / (kb + kn)
+    #scalex[c.SHADED] = (1.0 - np.exp(-kn * lai_sha)) / kn - cscalar[c.SUNLIT]
+
     # Define fraction of SW beam tranmitted through canopy:
     transb[c.SUNLIT] = np.exp(-kb * lai_leaf[c.SUNLIT])
     transb[c.SHADED] = np.exp(-kb * lai_leaf[c.SHADED])
@@ -326,10 +315,10 @@ def calc_leaf_to_canopy_scalar(lai_leaf, kb):
     cf2n[c.SHADED] = np.exp(-kn * lai_leaf[c.SHADED])
 
     # Scaling from single leaf to canopy, see Wang & Leuning 1998 appendix C:
-    cscalar[c.SUNLIT] = ( 1.0 - transb[c.SUNLIT] * cf2n[c.SUNLIT] ) / ( kb + kn )
-    cscalar[c.SHADED] = ( 1.0 - transb[c.SHADED] * cf2n[c.SHADED] ) / ( kb + kn )
+    scalex[c.SUNLIT] = (1.0 - transb[c.SUNLIT] * cf2n[c.SUNLIT]) / (kb + kn)
+    scalex[c.SHADED] = (1.0 - transb[c.SHADED] * cf2n[c.SHADED]) / (kb + kn)
 
-    return (cscalar)
+    return scalex
 
 if __name__ == "__main__":
 
@@ -392,7 +381,7 @@ if __name__ == "__main__":
                                                  lat, lon, LAI)
 
         hod += 1
-    sys.exit()
+    
     fig = plt.figure(figsize=(14,5))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.2)
