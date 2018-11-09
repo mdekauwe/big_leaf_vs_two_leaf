@@ -111,7 +111,7 @@ class CoupledModel(object):
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
 
         # Is the sun up?
-        if elevation > 0.0 and par > 20.0:
+        if elevation > 0.0 and par > 50.0:
 
             (apar_leaf,
              lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
@@ -364,7 +364,7 @@ if __name__ == "__main__":
         (An_tl[i], gsw_tl[i], et_tl[i]) = C.main(tair[i], par[i], vpd[i],
                                                  wind, pressure, Ca, doy, hod,
                                                  lat, lon, LAI)
-
+        
         hod += 1
 
     fig = plt.figure(figsize=(14,5))

@@ -108,7 +108,7 @@ class CoupledModel(object):
         elevation = 90.0 - zenith_angle
 
         # Is the sun up?
-        if elevation > 0.0 and par > 20.0:
+        if elevation > 0.0 and par > 50.0:
 
             iter = 0
             while True:
@@ -334,5 +334,5 @@ if __name__ == "__main__":
 
     ax1.locator_params(nbins=6, axis="y")
     ax2.locator_params(nbins=6, axis="y")
-    
+
     plt.show()
