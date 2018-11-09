@@ -107,7 +107,6 @@ class CoupledModel(object):
 
         An = np.zeros(2) # sunlit, shaded
         gsc = np.zeros(2)  # sunlit, shaded
-        Ci = np.zeros(2) # sunlit, shaded
         et = np.zeros(2) # sunlit, shaded
 
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
@@ -142,19 +141,18 @@ class CoupledModel(object):
                 iter = 0
                 while True:
                     (An[ileaf],
-                     gsc[ileaf],
-                     Ci[ileaf]) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
-                                                   Par=apar_leaf[ileaf],
-                                                   Jmax25=self.Jmax25,
-                                                   Vcmax25=self.Vcmax25,
-                                                   Q10=self.Q10, Eaj=self.Eaj,
-                                                   Eav=self.Eav,
-                                                   deltaSj=self.deltaSj,
-                                                   deltaSv=self.deltaSv,
-                                                   Rd25=self.Rd25,
-                                                   Hdv=self.Hdv,
-                                                   Hdj=self.Hdj, vpd=dleaf,
-                                                   scalex=scalex[ileaf])
+                     gsc[ileaf]) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
+                                                    Par=apar_leaf[ileaf],
+                                                    Jmax25=self.Jmax25,
+                                                    Vcmax25=self.Vcmax25,
+                                                    Q10=self.Q10, Eaj=self.Eaj,
+                                                    Eav=self.Eav,
+                                                    deltaSj=self.deltaSj,
+                                                    deltaSv=self.deltaSv,
+                                                    Rd25=self.Rd25,
+                                                    Hdv=self.Hdv,
+                                                    Hdj=self.Hdj, vpd=dleaf,
+                                                    scalex=scalex[ileaf])
 
                     # Calculate new Tleaf, dleaf, Cs
                     (new_tleaf, et[ileaf],
