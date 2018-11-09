@@ -155,12 +155,14 @@ class CoupledModel(object):
             an_canopy = An * LAI
             gsw_canopy = gsc * c.GSC_2_GSW * LAI
             et_canopy = et * LAI
+            tcanopy = Tleaf
         else:
             an_canopy = 0.0
             gsw_canopy = 0.0
             et_canopy = 0.0
+            tcanopy = tair
 
-        return (an_canopy, gsw_canopy, et_canopy)
+        return (an_canopy, gsw_canopy, et_canopy, tcanopy)
 
     def calc_leaf_temp(self, P=None, tleaf=None, tair=None, gsc=None, par=None,
                        vpd=None, pressure=None, wind=None, rnet=None):
@@ -287,17 +289,19 @@ if __name__ == "__main__":
     An_bl = np.zeros(48)
     gsw_bl = np.zeros(48)
     et_bl = np.zeros(48)
+    tcan_bl = np.zeros(48)
 
     hod = 0
     for i in range(len(par)):
 
-        (An_bl[i], gsw_bl[i], et_bl[i]) = C.main(tair[i], par[i], vpd[i],
-                                                 wind, pressure, Ca, doy, hod,
-                                                 lat, lon, LAI)
+        (An_bl[i], gsw_bl[i],
+         et_bl[i], tcan_bl[i]) = C.main(tair[i], par[i], vpd[i],
+                                        wind, pressure, Ca, doy, hod,
+                                        lat, lon, LAI)
 
         hod += 1
 
-    fig = plt.figure(figsize=(14,5))
+    fig = plt.figure(figsize=(16,4))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.2)
     plt.rcParams['text.usetex'] = False
@@ -322,15 +326,21 @@ if __name__ == "__main__":
     plt.rcParams['axes.edgecolor'] = almost_black
     plt.rcParams['axes.labelcolor'] = almost_black
 
-    ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
+    ax1 = fig.add_subplot(131)
+    ax2 = fig.add_subplot(132)
+    ax3 = fig.add_subplot(133)
 
     ax1.plot(np.arange(48)/2, An_bl)
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
-    ax1.set_xlabel("Hour of day", position=(1.1, 0.5))
 
     ax2.plot(np.arange(48)/2, et_bl * c.MOL_TO_MMOL, label="Big leaf")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
+    ax2.set_xlabel("Hour of day")
+
+    ax3.plot(np.arange(48)/2., tair, label="Tair")
+    ax3.plot(np.arange(48)/2., tcan_bl, label="Tcanopy")
+    ax3.set_ylabel("Temperature (deg C)")
+    ax3.legend(numpoints=1, loc="best")
 
     ax1.locator_params(nbins=6, axis="y")
     ax2.locator_params(nbins=6, axis="y")

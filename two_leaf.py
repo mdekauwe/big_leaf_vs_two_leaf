@@ -108,6 +108,7 @@ class CoupledModel(object):
         An = np.zeros(2) # sunlit, shaded
         gsc = np.zeros(2)  # sunlit, shaded
         et = np.zeros(2) # sunlit, shaded
+        Tcan = np.zeros(2) # sunlit, shaded
 
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
@@ -183,6 +184,7 @@ class CoupledModel(object):
                     # Update temperature & do another iteration
                     Tleaf = new_tleaf
                     Tleaf_K = Tleaf + c.DEG_2_KELVIN
+                    Tcan[ileaf] = Tleaf
 
                     iter += 1
 
@@ -190,12 +192,16 @@ class CoupledModel(object):
             an_canopy = np.sum(An)
             gsw_canopy = np.sum(gsc) * c.GSC_2_GSW
             et_canopy = np.sum(et)
+            sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
+            sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
+            tcanopy = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
         else:
             an_canopy = 0.0
             gsw_canopy = 0.0
             et_canopy = 0.0
+            tcanopy = tair
 
-        return (an_canopy, gsw_canopy, et_canopy)
+        return (an_canopy, gsw_canopy, et_canopy, tcanopy)
 
 
     def calc_leaf_temp(self, P=None, tleaf=None, tair=None, gsc=None, par=None,
@@ -354,17 +360,19 @@ if __name__ == "__main__":
     An_tl = np.zeros(48)
     gsw_tl = np.zeros(48)
     et_tl = np.zeros(48)
+    tcan_tl = np.zeros(48)
 
     hod = 0
     for i in range(len(par)):
 
-        (An_tl[i], gsw_tl[i], et_tl[i]) = C.main(tair[i], par[i], vpd[i],
-                                                 wind, pressure, Ca, doy, hod,
-                                                 lat, lon, LAI)
+        (An_tl[i], gsw_tl[i],
+         et_tl[i], tcan_tl[i]) = C.main(tair[i], par[i], vpd[i],
+                                        wind, pressure, Ca, doy, hod,
+                                        lat, lon, LAI)
 
         hod += 1
 
-    fig = plt.figure(figsize=(14,5))
+    fig = plt.figure(figsize=(16,4))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.2)
     plt.rcParams['text.usetex'] = False
@@ -389,15 +397,22 @@ if __name__ == "__main__":
     plt.rcParams['axes.edgecolor'] = almost_black
     plt.rcParams['axes.labelcolor'] = almost_black
 
-    ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
+    ax1 = fig.add_subplot(131)
+    ax2 = fig.add_subplot(132)
+    ax3 = fig.add_subplot(133)
 
     ax1.plot(np.arange(48)/2., An_tl)
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
-    ax1.set_xlabel("Hour of day", position=(1.1, 0.5))
+
 
     ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Big leaf")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
+    ax2.set_xlabel("Hour of day")
+
+    ax3.plot(np.arange(48)/2., tair, label="Tair")
+    ax3.plot(np.arange(48)/2., tcan_tl, label="Tcanopy")
+    ax3.set_ylabel("Temperature (deg C)")
+    ax3.legend(numpoints=1, loc="best")
 
     ax1.locator_params(nbins=6, axis="y")
     ax2.locator_params(nbins=6, axis="y")
