@@ -51,7 +51,7 @@ def main():
     Q10 = 2.0
     gamma = 0.0
     leaf_width = 0.02
-    LAI = 1.5
+    LAI = 3.5
 
     # Cambell & Norman, 11.5, pg 178
     # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
