@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 """
-For a synthetic 48 half hour time window, calculate GPP/E using a big-leaf and
-2-leaf approximation.
+For a synthetic 48 half hour time window, solve 30-minute coupled A-gs(E) using
+a big-leaf and 2-leaf approximation and make a comparison plot
 
-This is the wrapper script that calls both leaves and makes a plot ...
 """
 
 import sys

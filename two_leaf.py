@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 """
-Two-leaf approximation
+Solve 30-minute coupled A-gs(E) using a two-leaf approximation roughly following
+Wang and Leuning.
+
+References:
+----------
+* Wang & Leuning (1998) Agricultural & Forest Meterorology, 91, 89-111.
+* Dai et al. (2004) Journal of Climate, 17, 2281-2299.
+* De Pury & Farquhar (1997) PCE, 20, 537-557.
+
 """
 
 import sys
@@ -364,7 +372,7 @@ if __name__ == "__main__":
         (An_tl[i], gsw_tl[i], et_tl[i]) = C.main(tair[i], par[i], vpd[i],
                                                  wind, pressure, Ca, doy, hod,
                                                  lat, lon, LAI)
-        
+
         hod += 1
 
     fig = plt.figure(figsize=(14,5))

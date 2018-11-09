@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-Big-leaf appoximation
+Solve 30-minute coupled A-gs(E) using a big-leaf approximation, i.e. simply
+multiplying leaf-level fluxes by LAI.
 """
 
 import sys
