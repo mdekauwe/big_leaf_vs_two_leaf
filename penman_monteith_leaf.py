@@ -112,7 +112,7 @@ class PenmanMonteith(object):
 
         return (et, LE)
 
-    def calc_conductances(self, tair_k, tleaf, tair, wind, gsc, cmolar):
+    def calc_conductances(self, tair_k, tleaf, tair, wind, gsc, cmolar, lai=None):
         """
         Both forced and free convection contribute to exchange of heat and mass
         through leaf boundary layers at the wind speeds typically encountered
@@ -171,6 +171,14 @@ class PenmanMonteith(object):
             # boundary layer conductance for heat: single sided, free convection
             # (mol m-2 s-1)
             gbHf = 0.5 * c.DHEAT * grashof_num**0.25 / self.leaf_width * cmolar
+
+            if lai is None:
+                gbHf = 0.5 * c.DHEAT * \
+                        grashof_num**0.25 / self.leaf_width * cmolar
+            else:
+                # Cable uses the leaf LAI to adjust this for the 2-leaf
+                gbHf = lai * 0.5 * c.DHEAT * \
+                        grashof_num**0.25 / self.leaf_width * cmolar
 
         # total boundary layer conductance for heat
         gbH = gbHw + gbHf

@@ -164,7 +164,8 @@ class CoupledModel(object):
                                                            gsc[ileaf],
                                                            apar_leaf[ileaf],
                                                            vpd, pressure,
-                                                           wind, rnet=rnet)
+                                                           wind, rnet=rnet,
+                                                           lai=lai_leaf[ileaf])
 
                     gbc = gbH * c.GBH_2_GBC
                     if gbc > 0.0 and An[ileaf] > 0.0:
@@ -203,7 +204,7 @@ class CoupledModel(object):
 
 
     def calc_leaf_temp(self, P=None, tleaf=None, tair=None, gsc=None, par=None,
-                       vpd=None, pressure=None, wind=None, rnet=None):
+                       vpd=None, pressure=None, wind=None, rnet=None, lai=None):
         """
         Resolve leaf temp
 
@@ -251,7 +252,7 @@ class CoupledModel(object):
             rnet = P.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
 
         (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
-                                                 wind, gsc, cmolar)
+                                                 wind, gsc, cmolar, lai)
         if math.isclose(gsc, 0.0):
             et = 0.0
             le_et = 0.0
@@ -292,20 +293,11 @@ def calc_leaf_to_canopy_scalar(lai, kb):
     * Wang and Leuning (1998) AFm, 91, 89-111; particularly the Appendix.
     """
     scalex = np.zeros(2)
-    #transb = np.zeros(2)
-    #cf2n = np.zeros(2)
 
     # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
     # default which comes half Belinda's head and is supported by fig 10 in
     # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
     kn = 0.3
-
-    #lai_sun = lai_leaf[c.SUNLIT]
-    #lai_sha = lai_leaf[c.SHADED]
-    #lai = np.sum(lai_leaf)
-
-    #scalex[c.SUNLIT] = (1.0 - np.exp(-(kb + kn) * lai_sun)) / (kb + kn)
-    #scalex[c.SHADED] = (1.0 - np.exp(-kn * lai_sha)) / kn - scalex[c.SUNLIT]
 
     # Define fraction of SW beam tranmitted through canopy:
     transb = np.exp(-kb * lai)
