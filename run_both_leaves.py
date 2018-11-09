@@ -129,14 +129,14 @@ def main():
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
 
-    ax1.plot(An_bl, label="Big leaf")
-    ax1.plot(An_tl, label="Two leaf")
+    ax1.plot(np.arange(48)/2., An_bl, label="Big leaf")
+    ax1.plot(np.arange(48)/2., An_tl, label="Two leaf")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
     ax1.set_xlabel("Hour of day")
 
-    ax2.plot(et_bl * c.MOL_TO_MMOL, label="Big leaf")
-    ax2.plot(et_tl * c.MOL_TO_MMOL, label="Two leaf")
+    ax2.plot(np.arange(48)/2., et_bl * c.MOL_TO_MMOL, label="Big leaf")
+    ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
     ax2.set_xlabel("Hour of day")
 
