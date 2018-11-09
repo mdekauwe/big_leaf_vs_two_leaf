@@ -348,6 +348,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # beam extinction coefficient for black leaves
     kb = Gross / cos_zenith
 
+    """
     # Direct-beam irradiance absorbed by sunlit leaves - de P & F, eqn 20b
     Ib = par * direct_frac
     beam = Ib * (1.0 - omega) * (1.0 - np.exp(-kb * lai))
@@ -375,43 +376,46 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
     # Irradiance absorbed by the shaded fraction of the canopy
     apar[c.SHADED] = total_canopy_irradiance - apar[c.SUNLIT]
-
     """
-    # Or written as in W&L '98, B3b and B4, the answer is identical
+
+    # W&L '98, B3b and B4, the answer is identical de P & F
+
+    # Direct-beam irradiance absorbed by sunlit leaves
     Ib = par * direct_frac
     Id = par * diffuse_frac
 
     z = k_dash_d + kb
-    arg1 = Id * (1.0 - rho_cd) * k_dash_d * (1.0 - np.exp(-z * lai)) / z
+    cf1 = (1.0 - np.exp(-z * lai)) / z
 
     z = k_dash_b + kb
-    arg2 = Ib * (1.0 - rho_cb) * k_dash_b * (1.0 - np.exp(-z * lai)) / z
+    cf2 = (1.0 - np.exp(-z * lai)) / z
 
     z = kb
     zz = 2.0 * kb
-    argx = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
-    arg3 = Ib * (1.0 - omega) * kb * argx
+    cf3 = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
 
+    arg1 = Id * (1.0 - rho_cd) * k_dash_d * cf1
+    arg2 = Ib * (1.0 - rho_cb) * k_dash_b * cf2
+    arg3 = Ib * (1.0 - omega) * kb * cf3
     apar[c.SUNLIT] = arg1 + arg2 + arg3
 
-
+    # Diffuse irradiance absorbed by sunlit leaves
     z = k_dash_d
     zz = k_dash_d + kb
-    argx = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
-    arg1 = Id * (1.0 - rho_cd) * k_dash_d * argx
+    cf1 = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
 
     z = k_dash_b
     zz = k_dash_b + kb
-    argx = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
-    arg2 = Ib * (1.0 - rho_cb) * k_dash_b * argx
+    cf2 = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
 
     z = kb
     zz = 2.0 * kb
-    argx = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
-    arg3 = Ib * (1.0 - omega) * kb * argx
+    cf3 = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
 
+    arg1 = Id * (1.0 - rho_cd) * k_dash_d * cf1
+    arg2 = Ib * (1.0 - rho_cb) * k_dash_b * cf2
+    arg3 = Ib * (1.0 - omega) * kb * cf3
     apar[c.SHADED] = arg1 + arg2 - arg3
-    """
 
     # Calculate sunlit &shdaded LAI of the canopy - de P * F eqn 18
     lai_leaf[c.SUNLIT] = (1.0 - np.exp(-kb * lai)) / kb
