@@ -278,12 +278,17 @@ class CoupledModel(object):
 
 def calc_leaf_to_canopy_scalar(lai, kb):
     """
-    Calculate scalar to transform leaf Vcmax, Jmax and Rd values to big leaf
-    values.
+    Calculate scalar to transform beam/diffuse leaf Vcmax, Jmax and Rd values
+    to big leaf values.
 
-    - Inserting eqn C6 & C7 into B5
+    - Insert eqn C6 & C7 into B5
 
-    I've aligned logic with cable_radiation.F90
+    Parameters:
+    ----------
+    lai : float
+        leaf area index
+    kb : float
+        beam extinction coefficient for black leaves
 
     References:
     ----------
@@ -296,15 +301,9 @@ def calc_leaf_to_canopy_scalar(lai, kb):
     # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
     kn = 0.3
 
-    # Define fraction of SW beam tranmitted through canopy:
-    transb = np.exp(-kb * lai)
-
-    # Relative leaf nitrogen concentration within canopy:
-    cf2n = np.exp(-kn * lai)
-
-    # Scaling from single leaf to canopy, see Wang & Leuning 1998 appendix C:
-    scalex[c.SUNLIT] = (1.0 - transb * cf2n) / (kb + kn)
-    scalex[c.SHADED] = (1.0 - cf2n) / kn - scalex[c.SUNLIT]
+    # Parameters to scale up from single leaf to the big leaves
+    scalex[c.SUNLIT] = (1.0 - exp(-(kb + kn) * lai)) / (kb + kn)
+    scalex[c.SHADED] = (1.0 - exp(-kn * lai)) / kn - scalex[c.SUNLIT]
 
     return scalex
 
