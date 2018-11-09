@@ -11,10 +11,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import pi, cos, sin, exp, sqrt, acos, asin
 import random
-from weather_generator import WeatherGenerator
 from big_leaf import CoupledModel as BigLeaf
 from two_leaf import CoupledModel as TwoLeaf
 import constants as c
+from get_days_met_forcing import get_met_data
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -52,7 +52,7 @@ def main():
     Q10 = 2.0
     gamma = 0.0
     leaf_width = 0.02
-    LAI = 3.
+    LAI = 1.5
     # Cambell & Norman, 11.5, pg 178
     # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
     # with canopies (~0.8) from Table 11.2 reveals a surprising difference.
@@ -141,34 +141,6 @@ def main():
     ax2.set_xlabel("Hour of day")
 
     plt.show()
-
-
-def get_met_data(lat, lon, doy):
-
-    sw_rad_day = 20.5 # mj m-2 d-1
-    tmin = 2.0
-    tmax = 24.0
-    rain = 10.0
-    vpd09 = 1.4
-    vpd09_next = 1.8
-    vpd15 = 2.3
-    vpd15_prev = 3.4
-
-    hours = np.arange(48) / 2.0
-
-    WG = WeatherGenerator(lat, lon)
-
-    # MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 #
-    #par_day = sw_rad_day * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
-    #          UMOL_TO_J * J_TO_MJ * SEC_2_DAY
-    par_day = sw_rad_day * WG.SW_2_PAR_MJ
-    par = WG.estimate_dirunal_par(par_day, doy)
-
-    tair = WG.estimate_diurnal_temp(doy, tmin, tmax)
-
-    vpd = WG.estimate_diurnal_vpd(vpd09, vpd15, vpd09_next, vpd15_prev)
-
-    return (par, tair, vpd)
 
 
 if __name__ == "__main__":
