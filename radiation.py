@@ -316,6 +316,90 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     Calculate absorded irradiance of sunlit and shaded fractions of
     the canopy. The total irradiance absorbed by the canopy and the
     sunlit/shaded components are all expressed on a ground-area basis!
+
+    NB:  sin_beta == cos_zenith
+
+    References:
+    -----------
+    * Wang and Leuning (1998) AFm, 91, 89-111. B3b and B4, the answer is
+                              identical de P & F
+    * De Pury & Farquhar (1997) PCE, 20, 537-557.
+    * Dai et al. (2004) Journal of Climate, 17, 2281-2299.
+    """
+
+    rho_cd = 0.036                   # canopy reflect coeff for diffuse PAR
+    rho_cb = 0.029                   # canopy reflect coeff for direct PAR
+    omega = 0.15                     # leaf scattering coefficient of PAR
+    k_dash_b = 0.46 / cos_zenith     # beam & scat PAR ext coef
+    k_dash_d = 0.719                 # diffuse & scattered PAR extinction coeff
+    lad = 0                          # NB. default is to assume spherical LAD=0
+
+    apar = np.zeros(2)      # sunlit, shaded
+    lai_leaf = np.zeros(2)  # sunlit, shaded
+
+    # Ross-Goudriaan function is the ratio of the projected area of leaves
+    # in the direction perpendicular to the direction of incident solar
+    # radiation and the actual leaf area. See Sellers (1985), eqn 13/
+    # note this is taken from CABLE code (Kowalczyk '06, eqn 28/29)
+    psi1 = 0.5 - 0.633 * lad
+    psi2 = 0.877 * (1.0 - 2.0 * psi1)
+    Gross = psi1 + psi2 * cos_zenith
+
+    # beam extinction coefficient for black leaves
+    kb = Gross / cos_zenith
+
+    # Direct-beam irradiance absorbed by sunlit leaves
+    Ib = par * direct_frac
+
+    # Diffuse irradiance absorbed by sunlit leaves
+    Id = par * diffuse_frac
+
+    # Irradiance absorbed by the sunlit fraction of the canopy
+    cf1 = psi_func(k_dash_d + kb, lai)
+    cf2 = psi_func(k_dash_b + kb, lai)
+    cf3 = psi_func(kb, lai) - psi_func(2.0 * kb, lai)
+
+    arg1 = Id * (1.0 - rho_cd) * k_dash_d * cf1
+    arg2 = Ib * (1.0 - rho_cb) * k_dash_b * cf2
+    arg3 = Ib * (1.0 - omega) * kb * cf3
+    apar[c.SUNLIT] = arg1 + arg2 + arg3
+
+    # Irradiance absorbed by the shaded fraction of the canopy
+    cf1 = psi_func(k_dash_d, lai) - psi_func(k_dash_d + kb, lai)
+    cf2 = psi_func(k_dash_b, lai) - psi_func(k_dash_b + kb, lai)
+    cf3 = psi_func(kb, lai) - psi_func(2.0 * kb, lai)
+
+    arg1 = Id * (1.0 - rho_cd) * k_dash_d * cf1
+    arg2 = Ib * (1.0 - rho_cb) * k_dash_b * cf2
+    arg3 = Ib * (1.0 - omega) * kb * cf3
+    apar[c.SHADED] = arg1 + arg2 - arg3
+
+    # Calculate sunlit &shdaded LAI of the canopy - de P * F eqn 18
+    lai_leaf[c.SUNLIT] = (1.0 - np.exp(-kb * lai)) / kb
+    lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
+
+    return (apar, lai_leaf, kb)
+
+def psi_func(z, lai):
+    """
+    B5 function from Wang and Leuning which integrates property passed via
+    arg list over the canopy space
+
+    References:
+    -----------
+    * Wang and Leuning (1998) AFm, 91, 89-111. Page 106
+    """
+    return ( (1.0 - np.exp(-z * lai)) / z )
+
+def calculate_absorbed_radiation_deP_F(par, cos_zenith, lai, direct_frac,
+                                      diffuse_frac):
+    """
+    Following De Pury and Farquhard -- not used, it gives an identical result
+    to Wang & Leuning version above, I'm leaving this here for now.
+
+    Calculate absorded irradiance of sunlit and shaded fractions of
+    the canopy. The total irradiance absorbed by the canopy and the
+    sunlit/shaded components are all expressed on a ground-area basis!
     NB:  sin_beta == cos_zenith
 
     References:
@@ -348,7 +432,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # beam extinction coefficient for black leaves
     kb = Gross / cos_zenith
 
-    """
     # Direct-beam irradiance absorbed by sunlit leaves - de P & F, eqn 20b
     Ib = par * direct_frac
     beam = Ib * (1.0 - omega) * (1.0 - np.exp(-kb * lai))
@@ -376,53 +459,13 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
     # Irradiance absorbed by the shaded fraction of the canopy
     apar[c.SHADED] = total_canopy_irradiance - apar[c.SUNLIT]
-    """
 
-    # W&L '98, B3b and B4, the answer is identical de P & F
-
-    # Direct-beam irradiance absorbed by sunlit leaves
-    Ib = par * direct_frac
-    Id = par * diffuse_frac
-
-    z = k_dash_d + kb
-    cf1 = (1.0 - np.exp(-z * lai)) / z
-
-    z = k_dash_b + kb
-    cf2 = (1.0 - np.exp(-z * lai)) / z
-
-    z = kb
-    zz = 2.0 * kb
-    cf3 = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
-
-    arg1 = Id * (1.0 - rho_cd) * k_dash_d * cf1
-    arg2 = Ib * (1.0 - rho_cb) * k_dash_b * cf2
-    arg3 = Ib * (1.0 - omega) * kb * cf3
-    apar[c.SUNLIT] = arg1 + arg2 + arg3
-
-    # Diffuse irradiance absorbed by sunlit leaves
-    z = k_dash_d
-    zz = k_dash_d + kb
-    cf1 = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
-
-    z = k_dash_b
-    zz = k_dash_b + kb
-    cf2 = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
-
-    z = kb
-    zz = 2.0 * kb
-    cf3 = ( (1.0 - np.exp(-z * lai)) / z ) - ( (1.0 - np.exp(-zz * lai)) / zz )
-
-    arg1 = Id * (1.0 - rho_cd) * k_dash_d * cf1
-    arg2 = Ib * (1.0 - rho_cb) * k_dash_b * cf2
-    arg3 = Ib * (1.0 - omega) * kb * cf3
-    apar[c.SHADED] = arg1 + arg2 - arg3
 
     # Calculate sunlit &shdaded LAI of the canopy - de P * F eqn 18
     lai_leaf[c.SUNLIT] = (1.0 - np.exp(-kb * lai)) / kb
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
 
     return (apar, lai_leaf, kb)
-
 
 def calculate_absorbed_radiation_big_leaf(par, cos_zenith, lai, direct_frac,
                                           diffuse_frac):
