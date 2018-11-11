@@ -348,14 +348,16 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # beam extinction coefficient for black leaves
     kb = Gross / cos_zenith
 
+    # beam and diffuse fracs
+    Ib = par * direct_frac
+    Id = par * diffuse_frac
+
     #
     ## By substituting eq. B2 or B3 into Eq B1 and then integrating we get ...
     #
-    
+
     # Direct or beam irradiance absorbed by sunlit fraction of the canopy
     # Eqn B3b
-    Ib = par * direct_frac
-
     cf1 = psi_func(k_dash_d + kb, lai)
     cf2 = psi_func(k_dash_b + kb, lai)
     cf3 = psi_func(kb, lai) - psi_func(2.0 * kb, lai)
@@ -367,8 +369,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
     # Diffuse irradiance absorbed by shaded fraction of the canopy
     # Eqn B4
-    Id = par * diffuse_frac
-
     cf1 = psi_func(k_dash_d, lai) - psi_func(k_dash_d + kb, lai)
     cf2 = psi_func(k_dash_b, lai) - psi_func(k_dash_b + kb, lai)
     cf3 = psi_func(kb, lai) - psi_func(2.0 * kb, lai)
