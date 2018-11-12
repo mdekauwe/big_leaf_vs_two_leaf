@@ -188,7 +188,7 @@ class CoupledModel(object):
                     iter += 1
 
 
-            # scale to canopy: sum contributions from beam and diffuse leaves
+            # scale to canopy: weighted contrib from beam and diffuse leaves
             an_canopy = (An[c.SUNLIT] * scalex[c.SUNLIT]) + \
                         (An[c.SHADED] * scalex[c.SHADED])
             gsw_canopy = ( (gsc[c.SUNLIT] * scalex[c.SUNLIT]) + \
