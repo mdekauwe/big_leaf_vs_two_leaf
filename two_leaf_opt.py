@@ -127,7 +127,7 @@ class CoupledModel(object):
                                                           diffuse_frac)
             # Calculate scaling term to go from a single leaf to canopy,
             # see Wang & Leuning 1998 appendix C
-            #scalex = calc_leaf_to_canopy_scalar(lai, kb)
+            scalex = calc_leaf_to_canopy_scalar(lai, kb)
 
             # sunlit / shaded loop
             for ileaf in range(2):
@@ -188,15 +188,14 @@ class CoupledModel(object):
 
                     iter += 1
 
-            scalexx = calc_leaf_to_canopy_scalar(lai, kb)
-            print(scalexx[c.SUNLIT], scalexx[c.SHADED])
+
             # scale to canopy: sum contributions from beam and diffuse leaves
-            an_canopy = (An[c.SUNLIT] * scalexx[c.SUNLIT]) + \
-                        (An[c.SHADED] * scalexx[c.SHADED])
-            gsw_canopy = ( (gsc[c.SUNLIT] * scalexx[c.SUNLIT]) + \
-                           (gsc[c.SHADED] * scalexx[c.SHADED]) ) * c.GSC_2_GSW
-            et_canopy = (et[c.SUNLIT] * lai_leaf[c.SUNLIT]) + \
-                        (et[c.SHADED] * lai_leaf[c.SHADED])
+            an_canopy = (An[c.SUNLIT] * scalex[c.SUNLIT]) + \
+                        (An[c.SHADED] * scalex[c.SHADED])
+            gsw_canopy = ( (gsc[c.SUNLIT] * scalex[c.SUNLIT]) + \
+                           (gsc[c.SHADED] * scalex[c.SHADED]) ) * c.GSC_2_GSW
+            et_canopy = (et[c.SUNLIT] * scalex[c.SUNLIT]) + \
+                        (et[c.SHADED] * scalex[c.SHADED])
             sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
             sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
             tcanopy = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
