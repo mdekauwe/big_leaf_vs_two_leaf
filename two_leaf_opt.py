@@ -160,8 +160,7 @@ class CoupledModel(object):
                                                            gsc[ileaf],
                                                            apar[ileaf],
                                                            vpd, pressure,
-                                                           wind, rnet=rnet,
-                                                           lai=lai_leaf[ileaf])
+                                                           wind, rnet=rnet)
 
                     gbc = gbH * c.GBH_2_GBC
                     if gbc > 0.0 and An[ileaf] > 0.0:
