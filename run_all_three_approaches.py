@@ -14,6 +14,7 @@ from big_leaf import CoupledModel as BigLeaf
 #from big_leaf_depFarq import CoupledModel as BigLeaf
 
 from two_leaf import CoupledModel as TwoLeaf
+from two_leaf_opt import CoupledModel as TwoLeafOpt
 import constants as c
 from get_days_met_forcing import get_met_data
 
@@ -107,6 +108,28 @@ def main():
 
         hod += 1
 
+    ##
+    ### Run 2-leaf opt
+    ##
+
+    T = TwoLeafOpt(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
+                deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
+                gs_model="medlyn")
+
+    An_tlo = np.zeros(48)
+    gsw_tlo = np.zeros(48)
+    et_tlo = np.zeros(48)
+    tcan_tlo = np.zeros(48)
+
+    hod = 0
+    for i in range(len(par)):
+
+        (An_tlo[i], gsw_tlo[i],
+         et_tlo[i], tcan_tlo[i]) = T.main(tair[i], par[i], vpd[i],
+                                        wind, pressure, Ca, doy, hod,
+                                        lat, lon, LAI)
+
+        hod += 1
 
     fig = plt.figure(figsize=(16,4))
     fig.subplots_adjust(hspace=0.1)
@@ -137,18 +160,20 @@ def main():
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
 
-    ax1.plot(np.arange(48)/2., An_bl, label="Big leaf")
+    #ax1.plot(np.arange(48)/2., An_bl, label="Big leaf")
     ax1.plot(np.arange(48)/2., An_tl, label="Two leaf")
+    ax1.plot(np.arange(48)/2., An_tlo, label="Two leaf Opt")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
 
-    ax2.plot(np.arange(48)/2., et_bl * c.MOL_TO_MMOL, label="Big leaf")
+    #ax2.plot(np.arange(48)/2., et_bl * c.MOL_TO_MMOL, label="Big leaf")
     ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
+    ax2.plot(np.arange(48)/2., et_tlo * c.MOL_TO_MMOL, label="Two leaf opt")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
     ax2.set_xlabel("Hour of day")
 
 
-    ax3.plot(np.arange(48)/2., tcan_bl, label="Tcanopy$_{1leaf}$")
+    #ax3.plot(np.arange(48)/2., tcan_bl, label="Tcanopy$_{1leaf}$")
     ax3.plot(np.arange(48)/2., tcan_tl, label="Tcanopy$_{2leaf}$")
     ax3.plot(np.arange(48)/2., tair, label="Tair")
     ax3.set_ylabel("Temperature (deg C)")
