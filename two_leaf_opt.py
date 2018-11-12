@@ -307,6 +307,14 @@ def calc_leaf_to_canopy_scalar(lai, kb):
     # Parameters to scale up from single leaf to the big leaves
     scalex[c.SUNLIT] = (1.0 - exp(-(kb + kn) * lai)) / (kb + kn)
     scalex[c.SHADED] = (1.0 - exp(-kn * lai)) / kn - scalex[c.SUNLIT]
+    #print(scalex[c.SUNLIT], scalex[c.SHADED])
+
+    # de P and F
+    #scalex[c.SUNLIT] = (1.0 - exp(-kn - kb * lai)) / (kn + kb)
+    #scalex[c.SHADED] = lai * (1.0 - exp(-kn)) / kn - scalex[c.SUNLIT]
+    #print(scalex[c.SUNLIT], scalex[c.SHADED])
+    #sys.exit()
+
 
     return scalex
 
