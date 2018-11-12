@@ -128,7 +128,7 @@ class CoupledModel(object):
             # Calculate scaling term to go from a single leaf to canopy,
             # see Wang & Leuning 1998 appendix C
             #scalex = calc_leaf_to_canopy_scalar(lai, kb)
-            scalex = np.ones(2)
+            #scalex = np.ones(2)
 
             # sunlit / shaded loop
             for ileaf in range(2):
@@ -153,7 +153,7 @@ class CoupledModel(object):
                                                     Rd25=self.Rd25,
                                                     Hdv=self.Hdv,
                                                     Hdj=self.Hdj, vpd=dleaf,
-                                                    scalex=scalex[ileaf])
+                                                    scalex=None)
 
                     # Calculate new Tleaf, dleaf, Cs
                     (new_tleaf, et[ileaf],
