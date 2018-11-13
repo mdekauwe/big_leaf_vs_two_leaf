@@ -191,10 +191,19 @@ class CoupledModel(object):
             # scale to canopy: weighted contrib from beam and diffuse leaves
             an_canopy = (An[c.SUNLIT] * scalex[c.SUNLIT]) + \
                         (An[c.SHADED] * scalex[c.SHADED])
+
+            #an_canopy = (An[c.SUNLIT] * lai_leaf[c.SUNLIT]) + \
+            #            (An[c.SHADED] * lai_leaf[c.SHADED])
+
             gsw_canopy = ( (gsc[c.SUNLIT] * scalex[c.SUNLIT]) + \
                            (gsc[c.SHADED] * scalex[c.SHADED]) ) * c.GSC_2_GSW
             et_canopy = (et[c.SUNLIT] * scalex[c.SUNLIT]) + \
                         (et[c.SHADED] * scalex[c.SHADED])
+
+            #et_canopy = (et[c.SUNLIT] * lai_leaf[c.SUNLIT]) + \
+            #            (et[c.SHADED] * lai_leaf[c.SHADED])
+
+
             sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
             sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
             tcanopy = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
