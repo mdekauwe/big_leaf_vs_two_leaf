@@ -187,16 +187,17 @@ def main():
             p.deltaSv = deltaSv
             p.deltaSj = deltaSj
             p.max_leaf_width = leaf_width
+            p.gamstar25 = 42.75 / 101.25
+
             _, _, fscale2can = absorbed_radiation_2_leaves(p)
             p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
 
-
+            print(p)
+            sys.exit()
             try:
-                _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo=photo,
-                                                           res=res,
-                                                           case=case)
-                print(Ao[i])
-
+                _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo='Farquhar',
+                                                           res='low',
+                                                           case=2)
             except ValueError:
                 (Eo[i], gso[i], Ao[i]) = (0., 0., 0.)
 
@@ -281,10 +282,5 @@ def declared_params():
 
 
 if __name__ == "__main__":
-
-    # run mode
-    res = 'low'
-    photo = 'Farquhar'
-    case = 2
 
     main()
