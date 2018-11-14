@@ -241,7 +241,7 @@ class FarquharC3(object):
 
         if self.gs_model == "leuning":
             g0 = self.g0 * c.GSW_2_GSC
-            gs_over_a = self.g1 / (Cs - self.gamma) / (1.0 + vpd / self.D0)
+            gs_over_a = self.g1 / (Cs - gamma_star) / (1.0 + vpd / self.D0)
 
             # conductance to CO2
             gs_over_a *= c.GSW_2_GSC
@@ -318,7 +318,7 @@ class FarquharC3(object):
             An = 0.0 - Rd
             gsc = 0.0
             Ci = Cs
-            
+
         return (An, gsc)
 
     def calc_electron_transport_rate(self, Par, Jmax):

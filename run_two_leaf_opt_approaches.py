@@ -153,12 +153,8 @@ def main():
 
 
     ##
-    ### Run 2-leaf Manomn
+    ### Run 2-leaf Manon
     ##
-
-    T = TwoLeafOpt(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
-                deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
-                gs_model="medlyn")
 
     Ao = np.zeros(48)
     gso = np.zeros(48)
@@ -187,12 +183,11 @@ def main():
         p.Ev = Eav
         p.deltaSv = deltaSv
         p.deltaSj = deltaSj
-        p.gamstar25 = 0. # check that that's right
         p.max_leaf_width = leaf_width
         _, _, fscale2can = absorbed_radiation_2_leaves(p)
         p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
 
-
+        """
         try:
             _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo=photo,
                                                        res=res,
@@ -200,6 +195,7 @@ def main():
 
         except ValueError:
             (Eo[i], gso[i], Ao[i]) = (0., 0., 0.)
+        """
         hod += 1
 
 
