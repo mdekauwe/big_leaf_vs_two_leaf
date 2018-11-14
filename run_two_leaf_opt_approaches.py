@@ -165,37 +165,41 @@ def main():
 
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
+        elevation = 90.0 - zenith_angle
+        if elevation > 0.0 and par[i] > 50.0:
 
-        p = declared_params()
 
-        p.PPFD = par[i]
-        p.LAI = LAI
-        p.coszen = cos_zenith
-        p.VPD = vpd[i]
-        p.precip = 0
-        p.Tair = tair[i]
-        p.Vmax25 = Vcmax25
-        p.g1 = g1
-        p.CO2 = Ca / 101.25
-        p.JV = 1.67
-        p.Rlref = Rd25
-        p.Ej = Eaj
-        p.Ev = Eav
-        p.deltaSv = deltaSv
-        p.deltaSj = deltaSj
-        p.max_leaf_width = leaf_width
-        _, _, fscale2can = absorbed_radiation_2_leaves(p)
-        p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
+            p = declared_params()
 
-        """
-        try:
-            _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo=photo,
-                                                       res=res,
-                                                       case=case)
+            p.PPFD = par[i]
+            p.LAI = LAI
+            p.coszen = cos_zenith
+            p.VPD = vpd[i]
+            p.precip = 0
+            p.Tair = tair[i]
+            p.Vmax25 = Vcmax25
+            p.g1 = g1
+            p.CO2 = Ca / 101.25
+            p.JV = 1.67
+            p.Rlref = Rd25
+            p.Ej = Eaj
+            p.Ev = Eav
+            p.deltaSv = deltaSv
+            p.deltaSj = deltaSj
+            p.max_leaf_width = leaf_width
+            _, _, fscale2can = absorbed_radiation_2_leaves(p)
+            p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
 
-        except ValueError:
-            (Eo[i], gso[i], Ao[i]) = (0., 0., 0.)
-        """
+
+            try:
+                _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo=photo,
+                                                           res=res,
+                                                           case=case)
+                print(Ao[i])
+
+            except ValueError:
+                (Eo[i], gso[i], Ao[i]) = (0., 0., 0.)
+
         hod += 1
 
 
