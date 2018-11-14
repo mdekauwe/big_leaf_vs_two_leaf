@@ -197,11 +197,11 @@ class CoupledModel(object):
 
             gsw_canopy = ( (gsc[c.SUNLIT] * scalex[c.SUNLIT]) + \
                            (gsc[c.SHADED] * scalex[c.SHADED]) ) * c.GSC_2_GSW
-            #et_canopy = (et[c.SUNLIT] * scalex[c.SUNLIT]) + \
-            #            (et[c.SHADED] * scalex[c.SHADED])
+            et_canopy = (et[c.SUNLIT] * scalex[c.SUNLIT]) + \
+                        (et[c.SHADED] * scalex[c.SHADED])
 
-            et_canopy = (et[c.SUNLIT] * lai_leaf[c.SUNLIT]) + \
-                        (et[c.SHADED] * lai_leaf[c.SHADED])
+            #et_canopy = (et[c.SUNLIT] * lai_leaf[c.SUNLIT]) + \
+            #            (et[c.SHADED] * lai_leaf[c.SHADED])
 
 
             sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
