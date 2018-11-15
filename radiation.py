@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Various radiation funcs needed for the two-leaf approximation
 """
