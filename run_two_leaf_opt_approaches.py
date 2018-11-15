@@ -216,7 +216,7 @@ def main():
             Eo[i], gso[i], Ao[i], __, __ = solve_std(p, p.fc,
                                                      photo='Farquhar')
 
-            """
+            #"""
             try:
                 fstom_opt_psi, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p,
                                                                photo='Farquhar',
@@ -228,7 +228,7 @@ def main():
             except (ValueError, AttributeError):
                 (Eo[i], gso[i], Ao[i]) = (0., 0., 0.)
 
-            """
+            #"""
 
         hod += 1
 
@@ -266,7 +266,6 @@ def main():
     ax1.plot(np.arange(48)/2., An_tl, label="Two leaf")
     ax1.plot(np.arange(48)/2., An_tlo, label="Two leaf Opt")
     ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon")
-    ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon-Medlyn")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
 
@@ -274,7 +273,6 @@ def main():
     ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
     ax2.plot(np.arange(48)/2., et_tlo * c.MOL_TO_MMOL, label="Two leaf opt")
     ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon")
-    ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon-Medlyn")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
     ax2.set_xlabel("Hour of day")
 
