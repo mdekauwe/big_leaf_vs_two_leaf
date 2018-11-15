@@ -187,13 +187,15 @@ def main():
             p.deltaSv = deltaSv
             p.deltaSj = deltaSj
             p.max_leaf_width = leaf_width
-            p.gamstar25 = 42.75 / 101.25
+            #p.gamstar25 = 42.75 / 101.25
+            #p.Kc25 = 41.000000
+            #p.Ko25 = 28202.000000
 
             _, _, fscale2can = absorbed_radiation_2_leaves(p)
             p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
 
-            print(p)
-            sys.exit()
+            #print(p)
+            #sys.exit()
             try:
                 _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo='Farquhar',
                                                            res='low',
