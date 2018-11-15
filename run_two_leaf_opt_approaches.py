@@ -191,6 +191,13 @@ def main():
             #p.gamstar25 = 42.75 / 101.25
             #p.Kc25 = 41.000000
             #p.Ko25 = 28202.000000
+            p.alpha = 0.24
+            p.Egamstar= 37830.0
+            p.Ec = 79430.0
+            p.Eo = 36380.0
+            p.P50 = 2.400000
+            p.P88 = 3.400000
+            p.kmax = 1.800000
 
             _, _, fscale2can = absorbed_radiation_2_leaves(p)
             p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
