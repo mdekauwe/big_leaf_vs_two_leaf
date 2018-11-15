@@ -86,7 +86,7 @@ def main():
     # among leaves in a canopy and depends on the architecture of the canopy.
     SW_abs = 0.8 # use canopy absorptance of solar radiation
 
-    """
+
     ##
     ### Run Big-leaf
     ##
@@ -132,7 +132,7 @@ def main():
                                         lat, lon, LAI)
 
         hod += 1
-    """
+
 
     ##
     ### Run 2-leaf opt
@@ -161,8 +161,6 @@ def main():
     ##
     ### Run 2-leaf Manon
     ##
-
-    print('Manon')
 
     Ao = np.zeros(48)
     gso = np.zeros(48)
@@ -264,18 +262,18 @@ def main():
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
 
-    #ax1.plot(np.arange(48)/2., An_bl, label="Big leaf")
+    ax1.plot(np.arange(48)/2., An_bl, label="Big leaf")
     ax1.plot(np.arange(48)/2., An_tl, label="Two leaf")
-    #ax1.plot(np.arange(48)/2., An_tlo, label="Two leaf Opt")
-    #ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon")
+    ax1.plot(np.arange(48)/2., An_tlo, label="Two leaf Opt")
+    ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon")
     ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon-Medlyn")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
 
-    #ax2.plot(np.arange(48)/2., et_bl * c.MOL_TO_MMOL, label="Big leaf")
+    ax2.plot(np.arange(48)/2., et_bl * c.MOL_TO_MMOL, label="Big leaf")
     ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
-    #ax2.plot(np.arange(48)/2., et_tlo * c.MOL_TO_MMOL, label="Two leaf opt")
-    #ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon")
+    ax2.plot(np.arange(48)/2., et_tlo * c.MOL_TO_MMOL, label="Two leaf opt")
+    ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon")
     ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon-Medlyn")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
     ax2.set_xlabel("Hour of day")
