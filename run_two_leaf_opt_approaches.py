@@ -59,7 +59,7 @@ def main():
     #plt.plot(vpd)
     #plt.show()
     #sys.exit()
-    
+
     ## Parameters
     #
     g0 = 0.001
@@ -182,7 +182,6 @@ def main():
             p.precip = 0
             p.Tair = tair[i]
             p.Vmax25 = Vcmax25
-            p.gamstar25 = 0.436 # CO2 compensation point @ 25 degC (Pa)
             p.g1 = g1
             p.CO2 = Ca / 101.25
             p.JV = 1.67
