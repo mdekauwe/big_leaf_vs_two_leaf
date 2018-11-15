@@ -188,9 +188,9 @@ def main():
             p.deltaSv = deltaSv
             p.deltaSj = deltaSj
             p.max_leaf_width = leaf_width
-            #p.gamstar25 = 42.75 / 101.25
-            #p.Kc25 = 41.000000
-            #p.Ko25 = 28202.000000
+            p.gamstar25 = 4.36  # 42.75 / 101.25 umol m-2 s-1
+            p.Kc25 = 41.0       # 404.9 umol m-2 s-1
+            p.Ko25 = 28202.0    # 278.4 umol m-2 s-1
             p.alpha = 0.24
             p.Egamstar= 37830.0
             p.Ec = 79430.0
