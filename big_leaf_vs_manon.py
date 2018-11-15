@@ -115,8 +115,6 @@ class CoupledModel(object):
         Tleaf = tair
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
-        print(Tleaf)
-
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
@@ -127,7 +125,7 @@ class CoupledModel(object):
             iter = 0
             while True:
                 (An,
-                 gsc, Aj, Ac, Ci) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
+                 gsc) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
                                          Jmax25=self.Jmax25,
                                          Vcmax25=self.Vcmax25, Q10=self.Q10,
                                          Eaj=self.Eaj, Eav=self.Eav,
@@ -155,7 +153,6 @@ class CoupledModel(object):
 
                 # Check for convergence...?
                 if math.fabs(Tleaf - new_tleaf) < 0.02:
-                    print(Aj, Ac, Ci)
                     break
 
                 if iter > self.iter_max:
@@ -163,8 +160,7 @@ class CoupledModel(object):
                     #raise Exception('No convergence: %d' % (iter))
 
                 # Update temperature & do another iteration
-                #Tleaf = new_tleaf
-                Tleaf = tair
+                Tleaf = new_tleaf
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
                 iter += 1
@@ -229,10 +225,9 @@ class CoupledModel(object):
         if rnet is None:
             rnet = P.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
 
-        print(rnet)
-
         (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
                                                  wind, gsc, cmolar)
+
         if np.isclose(gsc, 0.0):
             et = 0.0
             le_et = 0.0
@@ -351,8 +346,6 @@ if __name__ == "__main__":
     Ao = np.zeros(48)
     gso = np.zeros(48)
     Eo = np.zeros(48)
-
-    print('Manon')
 
     hod = 0
     for i in range(len(par)):

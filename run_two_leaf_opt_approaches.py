@@ -162,8 +162,6 @@ def main():
     ### Run 2-leaf Manon
     ##
 
-    print('Manon')
-
     Ao = np.zeros(48)
     gso = np.zeros(48)
     Eo = np.zeros(48)
@@ -265,16 +263,16 @@ def main():
     ax3 = fig.add_subplot(133)
 
     #ax1.plot(np.arange(48)/2., An_bl, label="Big leaf")
-    ax1.plot(np.arange(48)/2., An_tl, label="Two leaf")
-    #ax1.plot(np.arange(48)/2., An_tlo, label="Two leaf Opt")
+    #ax1.plot(np.arange(48)/2., An_tl, label="Two leaf")
+    ax1.plot(np.arange(48)/2., An_tlo, label="Two leaf Opt")
     #ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon")
     ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon-Medlyn")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
 
     #ax2.plot(np.arange(48)/2., et_bl * c.MOL_TO_MMOL, label="Big leaf")
-    ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
-    #ax2.plot(np.arange(48)/2., et_tlo * c.MOL_TO_MMOL, label="Two leaf opt")
+    #ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
+    ax2.plot(np.arange(48)/2., et_tlo * c.MOL_TO_MMOL, label="Two leaf opt")
     #ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon")
     ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon-Medlyn")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
@@ -282,7 +280,8 @@ def main():
 
 
     #ax3.plot(np.arange(48)/2., tcan_bl, label="Tcanopy$_{1leaf}$")
-    ax3.plot(np.arange(48)/2., tcan_tl, label="Tcanopy$_{2leaf}$")
+    #ax3.plot(np.arange(48)/2., tcan_tl, label="Tcanopy$_{2leaf}$")
+    ax3.plot(np.arange(48)/2., tcan_tlo, label="Tcanopy$_{2leaf}$")
     ax3.plot(np.arange(48)/2., tair, label="Tair")
     ax3.set_ylabel("Temperature (deg C)")
     ax3.legend(numpoints=1, loc="best")
