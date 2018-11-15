@@ -194,7 +194,7 @@ def main():
             p.gamstar25 = 0.422222  # 42.75 / 101.25 umol m-2 s-1
             p.Kc25 = 41.0       # 404.9 umol m-2 s-1
             p.Ko25 = 28202.0    # 278.4 mmol mol-1
-            p.O2 = 20.670000    # 210 mmol mol-1
+            p.O2 = 20.670000    # 210 *1000. / 101.25 210 mmol mol-1
             p.alpha = 0.24
             p.Egamstar= 37830.0
             p.Ec = 79430.0
