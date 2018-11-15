@@ -172,6 +172,7 @@ def main():
             p = declared_params()
 
             p.PPFD = par[i]
+            p.sw_rad_day = par[i] * c.PAR_2_SW
             p.LAI = LAI
             p.coszen = cos_zenith
             p.VPD = vpd[i]
@@ -195,7 +196,10 @@ def main():
             p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
 
             #print(p)
-            #sys.exit()
+            for i in p:
+                print (p)
+
+            sys.exit()
             try:
                 _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo='Farquhar',
                                                            res='low',
