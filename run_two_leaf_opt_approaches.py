@@ -188,7 +188,7 @@ def main():
             p.deltaSv = deltaSv
             p.deltaSj = deltaSj
             p.max_leaf_width = leaf_width
-            p.gamstar25 = 4.36  # 42.75 / 101.25 umol m-2 s-1
+            p.gamstar25 = 0.422222  # 42.75 / 101.25 umol m-2 s-1
             p.Kc25 = 41.0       # 404.9 umol m-2 s-1
             p.Ko25 = 28202.0    # 278.4 mmol mol-1
             p.O2 = 20.670000    # 210 mmol mol-1
@@ -203,9 +203,10 @@ def main():
             _, _, fscale2can = absorbed_radiation_2_leaves(p)
             p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
 
-
+            #print(p)
             #for i in p:
             #    print (p)
+
             #sys.exit()
             try:
                 _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo='Farquhar',
