@@ -23,7 +23,8 @@ from get_days_met_forcing import get_met_data
 from radiation import calculate_solar_geometry
 
 # first make sure that own modules from parent dir can be loaded
-script_dir = '/srv/ccrc/data15/z5153939/two_leaf_optimisation'
+#script_dir = '/srv/ccrc/data15/z5153939/two_leaf_optimisation'
+script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
 sys.path.append(os.path.abspath(script_dir))
 
 from OptModel.CH2OCoupler import profit_psi
@@ -190,6 +191,7 @@ def main():
             p.deltaSv = deltaSv
             p.deltaSj = deltaSj
             p.max_leaf_width = leaf_width
+            p.gamstar25 = 0.422222  # 42.75 / 101.25 umol m-2 s-1
             p.Kc25 = 41.0       # 404.9 umol m-2 s-1
             p.Ko25 = 28202.0    # 278.4 mmol mol-1
             p.O2 = 20.670000    # 210 mmol mol-1
