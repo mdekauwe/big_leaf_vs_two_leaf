@@ -49,16 +49,17 @@ def main():
     pressure = 101325.0
     Ca = 400.0
 
-    #rh = 60.
-    #esat = calc_esat(tair)
-    #ea = rh / 100. * esat
-    #vpd = (esat - ea) * c.PA_2_KPA
-    #vpd = np.where(vpd < 0.05, 0.05, vpd)
+    # more realistic VPD
+    rh = 40.
+    esat = calc_esat(tair)
+    ea = rh / 100. * esat
+    vpd = (esat - ea) * c.PA_2_KPA
+    vpd = np.where(vpd < 0.05, 0.05, vpd)
 
     #plt.plot(vpd)
     #plt.show()
     #sys.exit()
-    #
+    
     ## Parameters
     #
     g0 = 0.001
