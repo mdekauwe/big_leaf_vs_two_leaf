@@ -203,11 +203,10 @@ def main():
             _, _, fscale2can = absorbed_radiation_2_leaves(p)
             p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
 
-            #print(p)
-            for i in p:
-                print (p)
 
-            sys.exit()
+            #for i in p:
+            #    print (p)
+            #sys.exit()
             try:
                 _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo='Farquhar',
                                                            res='low',
