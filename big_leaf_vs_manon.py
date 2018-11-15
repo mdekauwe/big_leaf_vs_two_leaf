@@ -115,8 +115,6 @@ class CoupledModel(object):
         Tleaf = tair
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
-        print(Tleaf)
-
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
@@ -155,7 +153,6 @@ class CoupledModel(object):
 
                 # Check for convergence...?
                 if math.fabs(Tleaf - new_tleaf) < 0.02:
-                    print(Aj, Ac, Ci)
                     break
 
                 if iter > self.iter_max:
@@ -228,8 +225,6 @@ class CoupledModel(object):
         # W m-2 = J m-2 s-1
         if rnet is None:
             rnet = P.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
-
-        print(rnet)
 
         (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
                                                  wind, gsc, cmolar)
@@ -351,8 +346,6 @@ if __name__ == "__main__":
     Ao = np.zeros(48)
     gso = np.zeros(48)
     Eo = np.zeros(48)
-
-    print('Manon')
 
     hod = 0
     for i in range(len(par)):
