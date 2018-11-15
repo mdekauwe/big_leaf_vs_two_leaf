@@ -21,13 +21,12 @@ from utils import calc_esat
 
 
 #first make sure that own modules from parent dir can be loaded
-#script_dir = '/srv/ccrc/data15/z5153939/two_leaf_optimisation'
-script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
+script_dir = '/srv/ccrc/data15/z5153939/optimize_over_time'
+#script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
 sys.path.append(os.path.abspath(script_dir))
 
-from OptModel.CH2OCoupler import profit_psi
+from OptModel.CH2OCoupler import profit_psi, solve_std
 from OptModel.Utils.default_params import default_params
-from OptModel.PlantModel import absorbed_radiation_2_leaves
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -116,6 +115,8 @@ class CoupledModel(object):
         Tleaf = tair
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
+        print(Tleaf)
+
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
@@ -126,7 +127,7 @@ class CoupledModel(object):
             iter = 0
             while True:
                 (An,
-                 gsc) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
+                 gsc, Aj, Ac, Ci) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
                                          Jmax25=self.Jmax25,
                                          Vcmax25=self.Vcmax25, Q10=self.Q10,
                                          Eaj=self.Eaj, Eav=self.Eav,
@@ -154,13 +155,16 @@ class CoupledModel(object):
 
                 # Check for convergence...?
                 if math.fabs(Tleaf - new_tleaf) < 0.02:
+                    print(Aj, Ac, Ci)
                     break
 
                 if iter > self.iter_max:
-                    raise Exception('No convergence: %d' % (iter))
+                    break
+                    #raise Exception('No convergence: %d' % (iter))
 
                 # Update temperature & do another iteration
-                Tleaf = new_tleaf
+                #Tleaf = new_tleaf
+                Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
                 iter += 1
@@ -224,6 +228,8 @@ class CoupledModel(object):
         # W m-2 = J m-2 s-1
         if rnet is None:
             rnet = P.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
+
+        print(rnet)
 
         (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
                                                  wind, gsc, cmolar)
@@ -291,12 +297,12 @@ if __name__ == "__main__":
     #
     ## Parameters
     #
-    g0 = 0.001
+    g0 = 1.e-9
     g1 = 1.5635 # Puechabon
     D0 = 1.5 # kpa
     Vcmax25 = 60.0
     Jmax25 = Vcmax25 * 1.67
-    Rd25 = 2.0
+    Rd25 = 0.
     Eaj = 30000.0
     Eav = 60000.0
     deltaSj = 650.0
@@ -346,6 +352,8 @@ if __name__ == "__main__":
     gso = np.zeros(48)
     Eo = np.zeros(48)
 
+    print('Manon')
+
     hod = 0
     for i in range(len(par)):
 
@@ -365,19 +373,20 @@ if __name__ == "__main__":
             p.Tair = tair[i]
             p.Vmax25 = Vcmax25
             p.g1 = g1
-            p.CO2 = Ca / 101.25
+            p.CO2 = Ca / 1000 * 101.325
             p.JV = 1.67
-            p.Rlref = Rd25
+            p.Rlref = 0.
             p.Ej = Eaj
             p.Ev = Eav
             p.deltaSv = deltaSv
             p.deltaSj = deltaSj
             p.max_leaf_width = leaf_width
-            p.gamstar25 = 0.422222  # 42.75 / 101.25 umol m-2 s-1
-            p.Kc25 = 41.0       # 404.9 umol m-2 s-1
-            p.Ko25 = 28202.0    # 278.4 mmol mol-1
-            p.O2 = 20.670000    # 210 *1000. / 101.25 210 mmol mol-1
-            p.alpha = 0.24
+            p.gamstar25 = 4.33 # 42.75 / 101.25 umol m-2 s-1
+            p.Kc25 = 41.0264925       # 404.9 umol m-2 s-1
+            p.Ko25 = 28208.88    # 278.4 mmol mol-1
+            p.O2 = 21.27825    # 210 *1000. / 101.25 210 mmol mol-1
+            p.alpha = 0.3
+            p.albedo = 0.2
             p.Egamstar= 37830.0
             p.Ec = 79430.0
             p.Eo = 36380.0
@@ -385,10 +394,9 @@ if __name__ == "__main__":
             p.P88 = 4.17
             p.kmax = 0.862457122856143
 
-            # add calls
+            Eo[i], gso[i], Ao[i], __, __ = solve_std(p, p.fc, photo='Farquhar')
 
         hod += 1
-
 
 
 
@@ -422,12 +430,12 @@ if __name__ == "__main__":
     ax3 = fig.add_subplot(133)
 
     ax1.plot(np.arange(48)/2, An_bl, label="Me")
-    ax1.plot(np.arange(48)/2., Ao, label="Manon")
+    ax1.plot(np.arange(48)/2., Ao * LAI, label="Manon")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
 
     ax2.plot(np.arange(48)/2, et_bl * c.MOL_TO_MMOL, label="Me")
-    ax2.plot(np.arange(48)/2., Eo , label="Manon")
+    ax2.plot(np.arange(48)/2., Eo * LAI, label="Manon")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
     ax2.set_xlabel("Hour of day")
 

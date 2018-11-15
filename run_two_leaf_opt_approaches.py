@@ -23,11 +23,11 @@ from get_days_met_forcing import get_met_data
 from radiation import calculate_solar_geometry
 
 # first make sure that own modules from parent dir can be loaded
-#script_dir = '/srv/ccrc/data15/z5153939/two_leaf_optimisation'
-script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
+script_dir = '/srv/ccrc/data15/z5153939/two_leaf_optimisation'
+#script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
 sys.path.append(os.path.abspath(script_dir))
 
-from OptModel.CH2OCoupler import profit_psi
+from OptModel.CH2OCoupler import profit_psi, solve_std
 from OptModel.Utils.default_params import default_params
 from OptModel.PlantModel import absorbed_radiation_2_leaves
 
@@ -86,6 +86,7 @@ def main():
     # among leaves in a canopy and depends on the architecture of the canopy.
     SW_abs = 0.8 # use canopy absorptance of solar radiation
 
+    """
     ##
     ### Run Big-leaf
     ##
@@ -108,6 +109,7 @@ def main():
                                         lat, lon, LAI)
 
         hod += 1
+    
     ##
     ### Run 2-leaf
     ##
@@ -130,6 +132,7 @@ def main():
                                         lat, lon, LAI)
 
         hod += 1
+    """
 
     ##
     ### Run 2-leaf opt
@@ -159,9 +162,15 @@ def main():
     ### Run 2-leaf Manon
     ##
 
+    print('Manon')
+
     Ao = np.zeros(48)
     gso = np.zeros(48)
     Eo = np.zeros(48)
+
+    Aob = np.zeros(48)
+    gsob = np.zeros(48)
+    Eob = np.zeros(48)
 
     hod = 0
     for i in range(len(par)):
@@ -170,7 +179,6 @@ def main():
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
         if elevation > 0.0 and par[i] > 50.0:
-
 
             p = declared_params()
 
@@ -183,7 +191,7 @@ def main():
             p.Tair = tair[i]
             p.Vmax25 = Vcmax25
             p.g1 = g1
-            p.CO2 = Ca / 101.25
+            p.CO2 = Ca / 1000 * 101.325
             p.JV = 1.67
             p.Rlref = Rd25
             p.Ej = Eaj
@@ -191,11 +199,12 @@ def main():
             p.deltaSv = deltaSv
             p.deltaSj = deltaSj
             p.max_leaf_width = leaf_width
-            p.gamstar25 = 0.422222  # 42.75 / 101.25 umol m-2 s-1
-            p.Kc25 = 41.0       # 404.9 umol m-2 s-1
-            p.Ko25 = 28202.0    # 278.4 mmol mol-1
-            p.O2 = 20.670000    # 210 *1000. / 101.25 210 mmol mol-1
-            p.alpha = 0.24
+            p.gamstar25 = 4.33  # 42.75 / 101.25 umol m-2 s-1
+            p.Kc25 = 41.0264925       # 404.9 umol m-2 s-1
+            p.Ko25 = 28208.88    # 278.4 mmol mol-1
+            p.O2 = 21.27825    # 210 *1000. / 101.25 210 mmol mol-1
+            p.alpha = 0.3
+            p.albedo = 0.2
             p.Egamstar= 37830.0
             p.Ec = 79430.0
             p.Eo = 36380.0
@@ -206,10 +215,10 @@ def main():
             _, _, fscale2can = absorbed_radiation_2_leaves(p)
             p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
 
+            Eo[i], gso[i], Ao[i], __, __ = solve_std(p, p.fc,
+                                                     photo='Farquhar')
 
-            #for i in p:
-            #    print (p)
-            #sys.exit()
+            """
             try:
                 fstom_opt_psi, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p,
                                                                photo='Farquhar',
@@ -220,6 +229,8 @@ def main():
 
             except (ValueError, AttributeError):
                 (Eo[i], gso[i], Ao[i]) = (0., 0., 0.)
+
+            """
 
         hod += 1
 
@@ -255,15 +266,17 @@ def main():
 
     #ax1.plot(np.arange(48)/2., An_bl, label="Big leaf")
     ax1.plot(np.arange(48)/2., An_tl, label="Two leaf")
-    ax1.plot(np.arange(48)/2., An_tlo, label="Two leaf Opt")
-    ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon")
+    #ax1.plot(np.arange(48)/2., An_tlo, label="Two leaf Opt")
+    #ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon")
+    ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon-Medlyn")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
 
     #ax2.plot(np.arange(48)/2., et_bl * c.MOL_TO_MMOL, label="Big leaf")
     ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
-    ax2.plot(np.arange(48)/2., et_tlo * c.MOL_TO_MMOL, label="Two leaf opt")
-    ax2.plot(np.arange(48)/2., Eo , label="Two leaf Manon")
+    #ax2.plot(np.arange(48)/2., et_tlo * c.MOL_TO_MMOL, label="Two leaf opt")
+    #ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon")
+    ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon-Medlyn")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
     ax2.set_xlabel("Hour of day")
 
