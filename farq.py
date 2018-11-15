@@ -248,7 +248,7 @@ class FarquharC3(object):
             ci_over_ca = 1.0 - 1.6 * (1.0 + vpd / self.D0) / self.g1
 
         elif self.gs_model == "medlyn":
-            if math.isclose(self.g0, 0.0):
+            if np.isclose(self.g0, 0.0):
                 # I want a zero g0, but zero messes up the convergence,
                 # numerical fix
                 g0 = 1E-09
@@ -259,7 +259,7 @@ class FarquharC3(object):
 
             # 1.6 (from corrigendum to Medlyn et al 2011) is missing here,
             # because we are calculating conductance to CO2!
-            if math.isclose(Cs, 0.0):
+            if np.isclose(Cs, 0.0):
                 gs_over_a = 0.0
             else:
                 gs_over_a = (1.0 + self.g1 / math.sqrt(vpd)) / Cs
@@ -270,7 +270,7 @@ class FarquharC3(object):
             g0 = self.g0 / c.GSC_2_GSW
             gs_over_a = mult / c.GSC_2_GSW
 
-        if ( math.isclose(Par, 0.0) | math.isclose(Vj, 0.0) ):
+        if ( np.isclose(Par, 0.0) | np.isclose(Vj, 0.0) ):
             Cic = Cs
             Cij = Cs
         else:
@@ -314,7 +314,7 @@ class FarquharC3(object):
         else:
             Ci = Cs
 
-        if math.isclose(Cs, 0.0):
+        if np.isclose(Cs, 0.0):
             An = 0.0 - Rd
             gsc = 0.0
             Ci = Cs
@@ -589,18 +589,18 @@ class FarquharC3(object):
         #root2 = np.where(d>0.0, (-b + np.sqrt(d)) / (2.0 * a), d)
 
         if large:
-            if math.isclose(a, 0.0) and b > 0.0:
+            if np.isclose(a, 0.0) and b > 0.0:
                 root = -c / b
-            elif math.isclose(a, 0.0) and math.isclose(b, 0.0):
+            elif np.isclose(a, 0.0) and np.isclose(b, 0.0):
                 root = 0.0
                 if c != 0.0:
                     raise ValueError('Cant solve quadratic')
             else:
                 root = (-b + np.sqrt(d)) / (2.0 * a)
         else:
-            if math.isclose(a, 0.0) and b > 0.0:
+            if np.isclose(a, 0.0) and b > 0.0:
                 root = -c / b
-            elif math.isclose(a, 0.0) and math.isclose(b, 0.0):
+            elif np.isclose(a, 0.0) and np.isclose(b, 0.0):
                 root == 0.0
                 if c != 0.0:
                     raise ValueError('Cant solve quadratic')

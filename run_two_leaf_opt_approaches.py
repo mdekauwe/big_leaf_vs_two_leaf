@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 For a synthetic 48 half hour time window, solve 30-minute coupled A-gs(E) using
 a big-leaf and 2-leaf approximation and make a comparison plot
@@ -22,7 +23,7 @@ from get_days_met_forcing import get_met_data
 from radiation import calculate_solar_geometry
 
 # first make sure that own modules from parent dir can be loaded
-script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
+script_dir = '/srv/ccrc/data15/z5153939/two_leaf_optimisation'
 sys.path.append(os.path.abspath(script_dir))
 
 from OptModel.CH2OCoupler import profit_psi
@@ -60,7 +61,7 @@ def main():
     ## Parameters
     #
     g0 = 0.001
-    g1 = 2.0
+    g1 = 1.5635 # Puechabon
     D0 = 1.5 # kpa
     Vcmax25 = 60.0
     Jmax25 = Vcmax25 * 1.67
@@ -179,6 +180,7 @@ def main():
             p.precip = 0
             p.Tair = tair[i]
             p.Vmax25 = Vcmax25
+            p.gamstar25 = 0.436 # CO2 compensation point @ 25 degC (Pa)
             p.g1 = g1
             p.CO2 = Ca / 101.25
             p.JV = 1.67
@@ -188,7 +190,6 @@ def main():
             p.deltaSv = deltaSv
             p.deltaSj = deltaSj
             p.max_leaf_width = leaf_width
-            p.gamstar25 = 0.422222  # 42.75 / 101.25 umol m-2 s-1
             p.Kc25 = 41.0       # 404.9 umol m-2 s-1
             p.Ko25 = 28202.0    # 278.4 mmol mol-1
             p.O2 = 20.670000    # 210 mmol mol-1
@@ -196,23 +197,26 @@ def main():
             p.Egamstar= 37830.0
             p.Ec = 79430.0
             p.Eo = 36380.0
-            p.P50 = 2.400000
-            p.P88 = 3.400000
-            p.kmax = 1.800000
+            p.P50 = 2.02 # Puechabon
+            p.P88 = 4.17
+            p.kmax = 0.862457122856143
 
             _, _, fscale2can = absorbed_radiation_2_leaves(p)
             p = p.append(pd.Series([np.nansum(fscale2can)], index=['fscale']))
 
-            #print(p)
+
             #for i in p:
             #    print (p)
-
             #sys.exit()
             try:
-                _, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p, photo='Farquhar',
-                                                           res='low',
-                                                           case=2)
-            except ValueError:
+                fstom_opt_psi, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p,
+                                                               photo='Farquhar',
+                                                               res='med',
+                                                               case=2)
+                p = p.append(pd.Series([fstom_opt_psi],
+                             index=['fstom_opt_psi']))
+
+            except (ValueError, AttributeError):
                 (Eo[i], gso[i], Ao[i]) = (0., 0., 0.)
 
         hod += 1

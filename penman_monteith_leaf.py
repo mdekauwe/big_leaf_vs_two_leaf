@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """
 Isothermal Penman-Monteith
@@ -17,6 +18,7 @@ __email__ = "mdekauwe@gmail.com"
 
 
 import math
+import numpy as np
 import sys
 from utils import calc_esat
 import constants as c
@@ -162,7 +164,7 @@ class PenmanMonteith(object):
         # (mol m-2 s-1)
         gbHw = 0.003 * math.sqrt(wind / self.leaf_width) * cmolar
 
-        if math.isclose(tleaf - tair, 0.0):
+        if np.isclose(tleaf - tair, 0.0):
             gbHf = 0.0
         else:
             # grashof number

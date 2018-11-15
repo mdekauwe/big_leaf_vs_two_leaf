@@ -134,7 +134,7 @@ class CoupledModel(object):
                 else:
                     Cs = Ca
 
-                if math.isclose(et, 0.0) or math.isclose(gw, 0.0):
+                if np.isclose(et, 0.0) or np.isclose(gw, 0.0):
                     dleaf = vpd
                 else:
                     dleaf = (et * pressure / gw) * c.PA_2_KPA # kPa
@@ -214,7 +214,7 @@ class CoupledModel(object):
 
         (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
                                                  wind, gsc, cmolar)
-        if math.isclose(gsc, 0.0):
+        if np.isclose(gsc, 0.0):
             et = 0.0
             le_et = 0.0
         else:
