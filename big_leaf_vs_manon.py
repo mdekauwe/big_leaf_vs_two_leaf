@@ -21,8 +21,8 @@ from utils import calc_esat
 
 
 #first make sure that own modules from parent dir can be loaded
-script_dir = '/srv/ccrc/data15/z5153939/optimize_over_time'
-#script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
+#script_dir = '/srv/ccrc/data15/z5153939/optimize_over_time'
+script_dir = '/Users/mdekauwe/src/python/optimize_over_time'
 sys.path.append(os.path.abspath(script_dir))
 
 from OptModel.CH2OCoupler import profit_psi, solve_std
