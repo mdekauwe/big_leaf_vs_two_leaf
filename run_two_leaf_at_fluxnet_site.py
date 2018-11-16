@@ -65,6 +65,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     D0 = 1.5 # kpa
     Vcmax25 = df.Vmax25[0]
     Jmax25 = Vcmax25 * 1.67
+
     Rd25 = 2.0
     Eaj = 30000.0
     Eav = 60000.0
@@ -98,6 +99,10 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     LAI_store = np.zeros(ndays)
 
     An_store = np.zeros(ndays)
+    An_sun_store = np.zeros(ndays)
+    An_sha_store = np.zeros(ndays)
+    par_sun_store = np.zeros(ndays)
+    par_sha_store = np.zeros(ndays)
     E_store = np.zeros(ndays)
 
     gpp_obs = np.zeros(ndays)
@@ -113,6 +118,10 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         hod = 0
 
         Anx = 0.0
+        anxsun = 0.0
+        anxsha = 0.0
+        parxsun = 0.0
+        parxsha = 0.0
         Ex = 0.0
 
         Aobsx = 0.0
@@ -131,12 +140,18 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
                 laix = LAI[cnt-1]
 
             (An, gsw,
-             et, tcan) = T.main(tair[cnt], par[cnt], vpd[cnt], wind[cnt],
+             et, tcan,
+             an_sun, an_sha,
+             par_sun, par_sha) = T.main(tair[cnt], par[cnt], vpd[cnt], wind[cnt],
                                 pressure[cnt], Ca, doy, hod, lat, lon, laix)
 
             lambda_et = (c.H2OLV0 - 2.365E3 * tair[cnt]) * c.H2OMW
 
             Anx += An * an_conv
+            anxsun += an_sun * an_conv
+            anxsha += an_sha * an_conv
+            parxsha += par_sha * an_conv
+            parxsun += par_sun * an_conv
             Ex += et * et_conv
             Aobsx += df_flx.GPP[cnt] * an_conv
             Eobsx += df_flx.Qle[cnt] / lambda_et * et_conv
@@ -155,6 +170,10 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         LAI_store[doy] = Lcabx / 48.
 
         An_store[doy] = Anx
+        An_sun_store[doy] = anxsun
+        An_sha_store[doy] = anxsha
+        par_sun_store[doy] = parxsun
+        par_sha_store[doy] = parxsha
         E_store[doy] = Ex
 
         gpp_obs[doy] = Aobsx
@@ -186,30 +205,65 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     plt.rcParams['xtick.labelsize'] = 14
     plt.rcParams['ytick.labelsize'] = 14
 
-    ax1 = fig.add_subplot(131)
-    ax2 = fig.add_subplot(132)
-    ax3 = fig.add_subplot(133)
+    ax1 = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
 
-    #ax1.plot(gpp_obs, label="Obs")
-    ax1.plot(An_store, label="2-leaf")
-    ax1.plot(Anc_store, label="CABLE")
+
+    ax1.plot(An_sun_store, label="2-leaf - Sun")
+    ax1.plot(Anc_store, label="CABLE - Sun")
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
-
-    #ax2.plot(e_obs)
-    ax2.plot(E_store)
-    ax2.plot(Ec_store, label="CABLE")
-    ax2.set_ylabel("E (mm d$^{-1}$)")
     ax2.set_xlabel("Day of year")
 
-    ax3.plot(lai_obs, lw=4)
-    ax3.plot(LAI_store, lw=1, label="CABLE")
-    ax3.set_ylabel("LAI (m$^{2}$ m$^{-2}$)")
+    #ax2.plot(e_obs)
+    ax2.plot(An_sha_store, label="2-leaf - Shade")
+    ax2.plot(Ec_store, label="CABLE - Shade")
+    ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
+    ax2.set_xlabel("Day of year")
+
 
     ax1.locator_params(nbins=6, axis="y")
     ax2.locator_params(nbins=6, axis="y")
 
     plt.show()
+
+
+    #fig = plt.figure(figsize=(16,4))
+    #fig.subplots_adjust(hspace=0.1)
+    #fig.subplots_adjust(wspace=0.3)
+    #plt.rcParams['text.usetex'] = False
+    #plt.rcParams['font.family'] = "sans-serif"
+    #plt.rcParams['font.sans-serif'] = "Helvetica"
+    #plt.rcParams['axes.labelsize'] = 14
+    #plt.rcParams['font.size'] = 14
+    #plt.rcParams['legend.fontsize'] = 14
+    #plt.rcParams['xtick.labelsize'] = 14
+    #plt.rcParams['ytick.labelsize'] = 14
+
+    #ax1 = fig.add_subplot(131)
+    #ax2 = fig.add_subplot(132)
+    #ax3 = fig.add_subplot(133)
+
+    ##ax1.plot(gpp_obs, label="Obs")
+    #ax1.plot(An_store, label="2-leaf")
+    #ax1.plot(Anc_store, label="CABLE")
+    #ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
+    #ax1.legend(numpoints=1, loc="best")
+
+    ##ax2.plot(e_obs)
+    #ax2.plot(E_store)
+    #ax2.plot(Ec_store, label="CABLE")
+    #ax2.set_ylabel("E (mm d$^{-1}$)")
+    #ax2.set_xlabel("Day of year")
+
+    #ax3.plot(lai_obs, lw=4)
+    #ax3.plot(LAI_store, lw=1, label="CABLE")
+    #ax3.set_ylabel("LAI (m$^{2}$ m$^{-2}$)")
+
+    #ax1.locator_params(nbins=6, axis="y")
+    #ax2.locator_params(nbins=6, axis="y")
+
+    #plt.show()
 
 
 def read_met_file(fname):
@@ -281,7 +335,7 @@ def read_cable_file(fname):
     """ Build a dataframe from the netcdf outputs """
     ds = xr.open_dataset(fname)
 
-    vars_to_keep = ['GPP','Qle','TVeg','Evap','LAI']
+    vars_to_keep = ['GPP','Qle','TVeg','Evap','LAI','A_sun','A_sha']
     df = ds[vars_to_keep].squeeze(dim=["x","y"],
                                   drop=True).to_dataframe()
 
@@ -357,7 +411,7 @@ if __name__ == '__main__':
     flx_fn = os.path.join(fpath, fname)
 
     site = os.path.basename(met_fn).split(".")[0][0:6]
-    
+
     fpath = "/Users/mdekauwe/research/CABLE_runs/runs/FI-Hyy_CMIP6-MOSRS/outputs/"
     fname = "%s_out.nc" %  (site)
     cab_fn = os.path.join(fpath, fname)

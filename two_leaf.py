@@ -195,6 +195,10 @@ class CoupledModel(object):
 
             # scale to canopy: sum contributions from beam and diffuse leaves
             an_canopy = np.sum(An)
+            an_cansun = An[c.SUNLIT]
+            an_cansha = An[c.SHADED]
+            par_sun = apar[c.SUNLIT]
+            par_sha = apar[c.SHADED]
             gsw_canopy = np.sum(gsc) * c.GSC_2_GSW
             et_canopy = np.sum(et)
             sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
@@ -202,11 +206,16 @@ class CoupledModel(object):
             tcanopy = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
         else:
             an_canopy = 0.0
+            an_cansun = 0.0
+            an_cansha = 0.0
             gsw_canopy = 0.0
             et_canopy = 0.0
+            par_sun = 0.0
+            par_sha = 0.0
             tcanopy = tair
 
-        return (an_canopy, gsw_canopy, et_canopy, tcanopy)
+        return (an_canopy, gsw_canopy, et_canopy, tcanopy, an_cansun, an_cansha,
+                par_sun, par_sha)
 
 
     def calc_leaf_temp(self, P=None, tleaf=None, tair=None, gsc=None, par=None,
