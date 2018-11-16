@@ -33,14 +33,19 @@ __version__ = "1.0 (09.11.2018)"
 __email__   = "mdekauwe@gmail.com"
 
 
-def main(met_fn, flx_fn, year_to_run):
+def main(met_fn, flx_fn, cab_fn, year_to_run):
 
     fpath = "/Users/mdekauwe/Downloads/"
-    fname = "Hyytiala_met_and_plant_data_drought_2003.csv"
+    fname = "FI-Hyy_met_and_plant_data_drought_2003.csv"
     fn = os.path.join(fpath, fname)
     df = pd.read_csv(fn, skiprows=range(1,2))
 
-
+    (df_cab) = read_cable_file(cab_fn)
+    df_cab = df_cab[df_cab.index.year == year_to_run]
+    
+    plt.plot(df_cab.LAI)
+    plt.show()
+    sys.exit()
     (df_flx) = read_obs_file(flx_fn)
     df_flx = df_flx[df_flx.index.year == year_to_run]
 
@@ -61,7 +66,7 @@ def main(met_fn, flx_fn, year_to_run):
     g0 = 1E-09
     g1 = df.g1[0] #4.12
     D0 = 1.5 # kpa
-    Vcmax25 = df.Vmax25[0] #60.0
+    Vcmax25 = df.Vmax25[0]*1.5 #60.0
     Jmax25 = Vcmax25 * 1.67
     Rd25 = 2.0
     Eaj = 30000.0
@@ -91,6 +96,8 @@ def main(met_fn, flx_fn, year_to_run):
 
     ndays = int(len(df_met)/48)
 
+    Anc_store = np.zeros(ndays)
+
     An_store = np.zeros(ndays)
     E_store = np.zeros(ndays)
 
@@ -113,6 +120,9 @@ def main(met_fn, flx_fn, year_to_run):
         Eobsx = 0.0
         Lobsx = 0.0
 
+        Acabx = 0.0
+        Ecabx = 0.0
+
         for i in range(48):
 
             if doy < 364:
@@ -131,8 +141,12 @@ def main(met_fn, flx_fn, year_to_run):
             Eobsx += df_flx.Qle[cnt] / lambda_et * et_conv
             Lobsx += laix
 
+            Acabx += df_cab.GPP[cnt] * an_conv
+
             hod += 1
             cnt += 1
+
+        Anc_store[doy] = Acabx
 
         An_store[doy] = Anx
         E_store[doy] = Ex
@@ -163,8 +177,10 @@ def main(met_fn, flx_fn, year_to_run):
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
 
-    ax1.plot(gpp_obs, label="Obs")
+    print(Anc_store)
+    #ax1.plot(gpp_obs, label="Obs")
     ax1.plot(An_store, label="2-leaf")
+    ax1.plot(Anc_store, label="CABLE")
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
 
@@ -245,6 +261,33 @@ def read_obs_file(fname):
 
     return df
 
+def read_cable_file(fname):
+    """ Build a dataframe from the netcdf outputs """
+    ds = xr.open_dataset(fname)
+
+    vars_to_keep = ['GPP','Qle','TVeg','Evap','LAI']
+    df = ds[vars_to_keep].squeeze(dim=["x","y"],
+                                  drop=True).to_dataframe()
+
+    # PALS-style netcdf is missing the first (half)hour timestamp and has
+    # one extra from the next year, i.e. everything is shifted, so we need
+    # to fix this. We will duplicate the
+    # first hour interval and remove the last
+    time_idx = df.index
+    diff = df.index.minute[1] - df.index.minute[0]
+    if diff == 0:
+        time_idx = time_idx.shift(-1, freq='H')
+        df = df.shift(-1, freq='H')
+    else:
+        time_idx = time_idx.shift(-1, freq='30min')
+        df = df.shift(-1, freq='30min')
+
+    df = df.reindex(time_idx)
+    df['year'] = df.index.year
+    df['doy'] = df.index.dayofyear
+
+    return df
+
 def qair_to_vpd(qair, tair, press):
 
     # saturation vapor pressure
@@ -274,6 +317,10 @@ if __name__ == '__main__':
     fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
     flx_fn = os.path.join(fpath, fname)
 
+    fpath = "/Users/mdekauwe/research/CABLE_runs/runs/FI-Hyy_CMIP6-MOSRS/outputs/"
+    fname = "FI-Hyy_out.nc"
+    cab_fn = os.path.join(fpath, fname)
+
     year_to_run = 2003
 
-    main(met_fn, flx_fn, year_to_run)
+    main(met_fn, flx_fn, cab_fn, year_to_run)
