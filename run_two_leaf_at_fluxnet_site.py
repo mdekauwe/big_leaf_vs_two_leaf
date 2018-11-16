@@ -269,18 +269,18 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     ax2.plot(Anc_sha_store)
 
 
-    ax3.plot(par_sun_store")
+    ax3.plot(par_sun_store)
     ax3.plot(parc_sun_store)
     ax3.set_ylabel("PAR (umol m$^{-2}$ d$^{-1}$)")
 
-    ax4.plot(par_sha_store")
+    ax4.plot(par_sha_store)
     ax4.plot(parc_sha_store)
 
-    ax5.plot(lai_sun_store")
+    ax5.plot(lai_sun_store)
     ax5.plot(laic_sun_store)
     ax5.set_ylabel("LAI (m$^{2}$ m$^{-2}$)")
 
-    ax6.plot(lai_sha_store")
+    ax6.plot(lai_sha_store)
     ax6.plot(laic_sha_store)
 
     ax1.locator_params(nbins=6, axis="y")
