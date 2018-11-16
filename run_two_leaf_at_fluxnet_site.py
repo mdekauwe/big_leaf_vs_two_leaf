@@ -191,13 +191,13 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
 
-    ax1.plot(gpp_obs, label="Obs")
+    #ax1.plot(gpp_obs, label="Obs")
     ax1.plot(An_store, label="2-leaf")
     ax1.plot(Anc_store, label="CABLE")
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
 
-    ax2.plot(e_obs)
+    #ax2.plot(e_obs)
     ax2.plot(E_store)
     ax2.plot(Ec_store, label="CABLE")
     ax2.set_ylabel("E (mm d$^{-1}$)")
@@ -337,7 +337,7 @@ def calc_esat(tair):
     esat = 613.75 * np.exp(17.502 * tair / (240.97 + tair))
 
     return esat
-    
+
 def moving_average(a, n=3) :
     ret = np.cumsum(a, dtype=float)
     ret[n:] = ret[n:] - ret[:-n]
