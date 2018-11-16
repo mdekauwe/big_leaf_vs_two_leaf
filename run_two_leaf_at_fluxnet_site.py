@@ -43,6 +43,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     (df_cab) = read_cable_file(cab_fn)
     df_cab = df_cab[df_cab.index.year == year_to_run]
 
+    print(flx_fn)
     (df_flx) = read_obs_file(flx_fn)
     df_flx = df_flx[df_flx.index.year == year_to_run]
 
@@ -190,13 +191,13 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
 
-    #ax1.plot(gpp_obs, label="Obs")
+    ax1.plot(gpp_obs, label="Obs")
     ax1.plot(An_store, label="2-leaf")
     ax1.plot(Anc_store, label="CABLE")
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
 
-    #ax2.plot(e_obs)
+    ax2.plot(e_obs)
     ax2.plot(E_store)
     ax2.plot(Ec_store, label="CABLE")
     ax2.set_ylabel("E (mm d$^{-1}$)")
@@ -218,24 +219,19 @@ def read_met_file(fname):
     ds = xr.open_dataset(fname)
     lat = ds.latitude.values[0][0]
     lon = ds.longitude.values[0][0]
-
+    rh_there = False
     # W/m2, deg K, mm/s, kg/kg, m/s, Pa, ppmw
-    vars_to_keep = ['SWdown','Tair','Qair','Wind','PSurf']
-    df = ds[vars_to_keep].squeeze(dim=["x","y","z"],
-                                  drop=True).to_dataframe()
+    try:
+        vars_to_keep = ['SWdown','Tair','Qair','Wind','PSurf']
+        df = ds[vars_to_keep].squeeze(dim=["x","y","z"],
+                                      drop=True).to_dataframe()
+    except KeyError:
+        vars_to_keep = ['SWdown','Tair','Wind','PSurf','RH']
+        df = ds[vars_to_keep].squeeze(dim=["x","y","z"],
+                                      drop=True).to_dataframe()
+        rh_there = True
 
-    # PALS-style netcdf is missing the first (half)hour timestamp and has
-    # one extra from the next year, i.e. everything is shifted, so we need
-    # to fix this. We will duplicate the
-    # first hour interval and remove the last
     time_idx = df.index
-    diff = df.index.minute[1] - df.index.minute[0]
-    if diff == 0:
-        time_idx = time_idx.shift(-1, freq='H')
-        df = df.shift(-1, freq='H')
-    else:
-        time_idx = time_idx.shift(-1, freq='30min')
-        df = df.shift(-1, freq='30min')
 
     df = df.reindex(time_idx)
     df['year'] = df.index.year
@@ -243,9 +239,35 @@ def read_met_file(fname):
 
     df["PAR"] = df.SWdown * c.SW_2_PAR
     df["Tair"] -= c.DEG_2_KELVIN
-    df["vpd"] = qair_to_vpd(df.Qair, df.Tair, df.PSurf)
+
+    if rh_there:
+        esat = calc_esat(df.Tair)
+        e = (df.RH / 100.) * esat
+        df["vpd"] = (esat - e) / 1000.
+
+    else:
+        df["vpd"] = qair_to_vpd(df.Qair, df.Tair, df.PSurf)
 
     return df, lat, lon
+
+def calc_esat(tair):
+    """
+    Calculates saturation vapour pressure
+
+    Params:
+    -------
+    tair : float
+        deg C
+
+    Reference:
+    ----------
+    * Jones (1992) Plants and microclimate: A quantitative approach to
+    environmental plant physiology, p110
+    """
+
+    esat = 613.75 * np.exp(17.502 * tair / (240.97 + tair))
+
+    return esat
 
 def read_obs_file(fname):
     """ Build a dataframe from the netcdf outputs """
@@ -323,16 +345,18 @@ def moving_average(a, n=3) :
 
 if __name__ == '__main__':
 
-    site = "FR-Pue"#"ES-ES1" #"FI-Hyy"
+    site = "FR-Pue" #"FR-Pue" #"FI-Hyy"
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/met_data/fluxnet2015/"
-    #fname = "%s_1996-2014_FLUXNET2015_Met.nc" %  (site)
-    fname = "%s_2000-2014_FLUXNET2015_Met.nc" %  (site)
+    fname = "FI-Hyy_1996-2014_FLUXNET2015_Met.nc"
+    #fname = "FR-Pue_2000-2014_FLUXNET2015_Met.nc"
+    #fname = "ES-ES1_1999-2006_LaThuile_Met.nc"
     met_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/flux_files/fluxnet2015"
-    #fname = "%s_1996-2014_FLUXNET2015_Flux.nc" %  (site)
-    fname = "%s_2000-2014_FLUXNET2015_Flux.nc" %  (site)
+    fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
+    #fname = "FR-Pue_2000-2014_FLUXNET2015_Flux.nc"
+    #fname = "ES-ES1_1999-2006_LaThuile_Flux.nc"
     flx_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/runs/FI-Hyy_CMIP6-MOSRS/outputs/"
