@@ -128,7 +128,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             if doy < 364:
                 laix = LAI[cnt]
             else:
-                LAI[cnt-1]
+                laix = LAI[cnt-1]
+
             (An, gsw,
              et, tcan) = T.main(tair[cnt], par[cnt], vpd[cnt], wind[cnt],
                                 pressure[cnt], Ca, doy, hod, lat, lon, laix)
@@ -322,14 +323,16 @@ def moving_average(a, n=3) :
 
 if __name__ == '__main__':
 
-    site = "FI-Hyy"
+    site = "FR-Pue"#"ES-ES1" #"FI-Hyy"
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/met_data/fluxnet2015/"
-    fname = "%s_1996-2014_FLUXNET2015_Met.nc" %  (site)
+    #fname = "%s_1996-2014_FLUXNET2015_Met.nc" %  (site)
+    fname = "%s_2000-2014_FLUXNET2015_Met.nc" %  (site)
     met_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/flux_files/fluxnet2015"
-    fname = "%s_1996-2014_FLUXNET2015_Flux.nc" %  (site)
+    #fname = "%s_1996-2014_FLUXNET2015_Flux.nc" %  (site)
+    fname = "%s_2000-2014_FLUXNET2015_Flux.nc" %  (site)
     flx_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/runs/FI-Hyy_CMIP6-MOSRS/outputs/"
