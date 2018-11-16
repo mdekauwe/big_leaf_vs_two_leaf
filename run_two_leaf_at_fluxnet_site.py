@@ -134,6 +134,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         anxsha = 0.0
         parxsun = 0.0
         parxsha = 0.0
+        laixsun = 0.0
+        laixsha = 0.0
 
         Acabx = 0.0
         Ecabx = 0.0
@@ -142,6 +144,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         anxcsha = 0.0
         parcsun = 0.0
         parcsha = 0.0
+        laicsun = 0.0
+        laicsha = 0.0
 
         Aobsx = 0.0
         Eobsx = 0.0
