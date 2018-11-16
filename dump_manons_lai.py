@@ -30,6 +30,7 @@ for doy in range(ndays):
     cnt += 1
 
 opath = "/Users/mdekauwe/Desktop/"
-fname = "%s_lai.csv" % (site)
-fn = os.path.join(opath, fname)
+ofname = "%s_lai.csv" % (site)
+fn = os.path.join(opath, ofname)
+print(fn)
 df_out.to_csv(fn, index=False)
