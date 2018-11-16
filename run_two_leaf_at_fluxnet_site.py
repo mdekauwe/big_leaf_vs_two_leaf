@@ -33,19 +33,16 @@ __version__ = "1.0 (09.11.2018)"
 __email__   = "mdekauwe@gmail.com"
 
 
-def main(met_fn, flx_fn, cab_fn, year_to_run):
+def main(met_fn, flx_fn, cab_fn, year_to_run, site):
 
     fpath = "/Users/mdekauwe/Downloads/"
-    fname = "FI-Hyy_met_and_plant_data_drought_2003.csv"
+    fname = "%s_met_and_plant_data_drought_2003.csv" % (site)
     fn = os.path.join(fpath, fname)
     df = pd.read_csv(fn, skiprows=range(1,2))
 
     (df_cab) = read_cable_file(cab_fn)
     df_cab = df_cab[df_cab.index.year == year_to_run]
-    
-    plt.plot(df_cab.LAI)
-    plt.show()
-    sys.exit()
+
     (df_flx) = read_obs_file(flx_fn)
     df_flx = df_flx[df_flx.index.year == year_to_run]
 
@@ -177,7 +174,6 @@ def main(met_fn, flx_fn, cab_fn, year_to_run):
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
 
-    print(Anc_store)
     #ax1.plot(gpp_obs, label="Obs")
     ax1.plot(An_store, label="2-leaf")
     ax1.plot(Anc_store, label="CABLE")
@@ -309,18 +305,20 @@ def moving_average(a, n=3) :
 
 if __name__ == '__main__':
 
+    site = "FI-Hyy"
+
     fpath = "/Users/mdekauwe/research/CABLE_runs/met_data/fluxnet2015/"
-    fname = "FI-Hyy_1996-2014_FLUXNET2015_Met.nc"
+    fname = "%s_1996-2014_FLUXNET2015_Met.nc" %  (site)
     met_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/flux_files/fluxnet2015"
-    fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
+    fname = "%s_1996-2014_FLUXNET2015_Flux.nc" %  (site)
     flx_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/runs/FI-Hyy_CMIP6-MOSRS/outputs/"
-    fname = "FI-Hyy_out.nc"
+    fname = "%s_out.nc" %  (site)
     cab_fn = os.path.join(fpath, fname)
 
     year_to_run = 2003
 
-    main(met_fn, flx_fn, cab_fn, year_to_run)
+    main(met_fn, flx_fn, cab_fn, year_to_run, site)
