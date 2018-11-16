@@ -250,25 +250,6 @@ def read_met_file(fname):
 
     return df, lat, lon
 
-def calc_esat(tair):
-    """
-    Calculates saturation vapour pressure
-
-    Params:
-    -------
-    tair : float
-        deg C
-
-    Reference:
-    ----------
-    * Jones (1992) Plants and microclimate: A quantitative approach to
-    environmental plant physiology, p110
-    """
-
-    esat = 613.75 * np.exp(17.502 * tair / (240.97 + tair))
-
-    return esat
-
 def read_obs_file(fname):
     """ Build a dataframe from the netcdf outputs """
 
@@ -283,13 +264,13 @@ def read_obs_file(fname):
     # to fix this. We will duplicate the
     # first hour interval and remove the last
     time_idx = df.index
-    diff = df.index.minute[1] - df.index.minute[0]
-    if diff == 0:
-        time_idx = time_idx.shift(-1, freq='H')
-        df = df.shift(-1, freq='H')
-    else:
-        time_idx = time_idx.shift(-1, freq='30min')
-        df = df.shift(-1, freq='30min')
+    #diff = df.index.minute[1] - df.index.minute[0]
+    #if diff == 0:
+    #    time_idx = time_idx.shift(-1, freq='H')
+    #    df = df.shift(-1, freq='H')
+    #else:
+    #    time_idx = time_idx.shift(-1, freq='30min')
+    #    df = df.shift(-1, freq='30min')
 
     df = df.reindex(time_idx)
     df['year'] = df.index.year
@@ -310,13 +291,13 @@ def read_cable_file(fname):
     # to fix this. We will duplicate the
     # first hour interval and remove the last
     time_idx = df.index
-    diff = df.index.minute[1] - df.index.minute[0]
-    if diff == 0:
-        time_idx = time_idx.shift(-1, freq='H')
-        df = df.shift(-1, freq='H')
-    else:
-        time_idx = time_idx.shift(-1, freq='30min')
-        df = df.shift(-1, freq='30min')
+    #diff = df.index.minute[1] - df.index.minute[0]
+    #if diff == 0:
+    #    time_idx = time_idx.shift(-1, freq='H')
+    #    df = df.shift(-1, freq='H')
+    #else:
+    #    time_idx = time_idx.shift(-1, freq='30min')
+    #    df = df.shift(-1, freq='30min')
 
     df = df.reindex(time_idx)
     df['year'] = df.index.year
@@ -338,6 +319,25 @@ def qair_to_vpd(qair, tair, press):
 
     return vpd
 
+def calc_esat(tair):
+    """
+    Calculates saturation vapour pressure
+
+    Params:
+    -------
+    tair : float
+        deg C
+
+    Reference:
+    ----------
+    * Jones (1992) Plants and microclimate: A quantitative approach to
+    environmental plant physiology, p110
+    """
+
+    esat = 613.75 * np.exp(17.502 * tair / (240.97 + tair))
+
+    return esat
+    
 def moving_average(a, n=3) :
     ret = np.cumsum(a, dtype=float)
     ret[n:] = ret[n:] - ret[:-n]
@@ -348,15 +348,15 @@ if __name__ == '__main__':
     site = "FR-Pue" #"FR-Pue" #"FI-Hyy"
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/met_data/fluxnet2015/"
-    fname = "FI-Hyy_1996-2014_FLUXNET2015_Met.nc"
+    #fname = "FI-Hyy_1996-2014_FLUXNET2015_Met.nc"
     #fname = "FR-Pue_2000-2014_FLUXNET2015_Met.nc"
-    #fname = "ES-ES1_1999-2006_LaThuile_Met.nc"
+    fname = "ES-ES1_1999-2006_LaThuile_Met.nc"
     met_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/flux_files/fluxnet2015"
-    fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
+    #fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
     #fname = "FR-Pue_2000-2014_FLUXNET2015_Flux.nc"
-    #fname = "ES-ES1_1999-2006_LaThuile_Flux.nc"
+    fname = "ES-ES1_1999-2006_LaThuile_Flux.nc"
     flx_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/runs/FI-Hyy_CMIP6-MOSRS/outputs/"
