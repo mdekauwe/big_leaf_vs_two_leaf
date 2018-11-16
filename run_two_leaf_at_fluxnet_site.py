@@ -141,7 +141,7 @@ def main(fname, year_to_run):
         lai_obs[doy] = Lobsx / 48
 
 
-    import matplotlib.pyplot as plt
+
     fig = plt.figure(figsize=(16,4))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.2)
@@ -210,14 +210,12 @@ def read_nc_file(fname):
     df['doy'] = df.index.dayofyear
 
     df["PAR"] = df.SWdown * c.SW_2_PAR
+    df["Tair"] -= c.DEG_2_KELVIN
     df["vpd"] = qair_to_vpd(df.Qair, df.Tair, df.PSurf)
 
     return df, lat, lon
 
 def qair_to_vpd(qair, tair, press):
-
-    # convert back to Pa
-    press /= c.PA_TO_KPA
 
     # saturation vapor pressure
     es = 100.0 * 6.112 * np.exp((17.67 * tair) / (243.5 + tair))
@@ -226,6 +224,8 @@ def qair_to_vpd(qair, tair, press):
     ea = (qair * press) / (0.622 + (1.0 - 0.622) * qair)
 
     vpd = (es - ea) * c.PA_TO_KPA
+
+    vpd = np.where(vpd < 0.05, 0.05, vpd)
 
     return vpd
 
