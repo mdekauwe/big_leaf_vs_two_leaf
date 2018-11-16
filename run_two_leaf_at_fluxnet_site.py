@@ -38,25 +38,21 @@ def main(fname, year_to_run):
     (df, lat, lon) = read_nc_file(fname)
     df = df[df.index.year == year_to_run]
 
-    plt.plot(df.vpd)
-    plt.show()
-    sys.exit()
     par = df.PAR
     tair = df.Tair
-    vpd = df.VPD
-    wind = df.u
-    pressure = 101325.0
+    vpd = df.vpd
+    wind = df.Wind
+    pressure = df.PSurf
     Ca = 400.0
-    LAI = df.LAI
-    days = df.doy
+    LAI = 3.0
 
     #
     ## Parameters
     #
     g0 = 1E-09
-    g1 = df.g1[0]
+    g1 = 4.12
     D0 = 1.5 # kpa
-    Vcmax25 = df.Vmax25[0]
+    Vcmax25 = 60.0
     Jmax25 = Vcmax25 * 1.67
     Rd25 = 2.0
     Eaj = 30000.0
@@ -66,8 +62,8 @@ def main(fname, year_to_run):
     Hdv = 200000.0
     Hdj = 200000.0
     Q10 = 2.0
-    gamma = 0.0
     leaf_width = 0.02
+    gamma = 0 # doesn't do anything
 
     # Cambell & Norman, 11.5, pg 178
     # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
@@ -84,14 +80,8 @@ def main(fname, year_to_run):
                      deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
                      gs_model="medlyn")
 
-    B = BigLeaf(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
-                deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
-                gs_model="medlyn")
-
     An_store = np.zeros(365)
     E_store = np.zeros(365)
-    AnB_store = np.zeros(365)
-    EB_store = np.zeros(365)
     gpp_obs = np.zeros(365)
     lai_obs = np.zeros(365)
 
@@ -99,48 +89,33 @@ def main(fname, year_to_run):
     an_conv = c.UMOL_TO_MOL * c.MOL_C_TO_GRAMS_C * 1800.
 
     cnt = 0
-    for doy in range(364):
+    for doy in range(int(len(df)/48)):
         print(doy)
         hod = 0
 
         Aobsx = 0.0
+        Lobsx = 0.0
         Anx = 0.0
         Ex = 0.0
-        Anxb = 0.0
-        Exb = 0.0
-        Lobsx = 0.0
+
         for i in range(48):
 
             (An, gsw,
-             et, tcan) = T.main(tair[cnt], par[cnt], vpd[cnt],
-                                            wind[cnt], pressure, Ca, doy, hod,
-                                            lat, lon, LAI[cnt])
-
-            (Anb, gswb,
-             etb, tcanb) = B.main(tair[cnt], par[cnt], vpd[cnt],
-                                            wind[cnt], pressure, Ca, doy, hod,
-                                            lat, lon, LAI[cnt])
-
-
+             et, tcan) = T.main(tair[cnt], par[cnt], vpd[cnt], wind[cnt],
+                                pressure[cnt], Ca, doy, hod, lat, lon, LAI)
 
             Anx += An * an_conv
             Ex += et * et_conv
-            Anxb += Anb * an_conv
-            Exb += etb * et_conv
-            Aobsx += df.GPP[cnt] * an_conv
-            Lobsx += df.LAI[cnt]
+            #Aobsx += df.GPP[cnt] * an_conv
+            Lobsx += LAI
 
             hod += 1
             cnt += 1
 
         An_store[doy] = Anx
         E_store[doy] = Ex
-        AnB_store[doy] = Anxb
-        EB_store[doy] = Exb
         gpp_obs[doy] = Aobsx
         lai_obs[doy] = Lobsx / 48
-
-
 
     fig = plt.figure(figsize=(16,4))
     fig.subplots_adjust(hspace=0.1)
@@ -154,25 +129,21 @@ def main(fname, year_to_run):
     plt.rcParams['xtick.labelsize'] = 14
     plt.rcParams['ytick.labelsize'] = 14
 
-
     ax1 = fig.add_subplot(131)
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
 
     ax1.plot(gpp_obs, label="Obs")
-    ax1.plot(AnB_store, label="Big-leaf")
     ax1.plot(An_store, label="2-leaf")
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
 
     ax2.plot(E_store, label="Big leaf")
-    ax2.plot(EB_store, label="Big leaf")
     ax2.set_ylabel("E (mm d$^{-1}$)")
     ax2.set_xlabel("Day of year")
 
     ax3.plot(lai_obs)
     ax3.set_ylabel("LAI (m$^{2}$ m$^{-2}$)")
-
 
     ax1.locator_params(nbins=6, axis="y")
     ax2.locator_params(nbins=6, axis="y")
