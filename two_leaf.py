@@ -110,7 +110,8 @@ class CoupledModel(object):
         gsc = np.zeros(2)  # sunlit, shaded
         et = np.zeros(2) # sunlit, shaded
         Tcan = np.zeros(2) # sunlit, shaded
-
+        lai_leaf = np.zeros(2)
+        
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
@@ -119,6 +120,8 @@ class CoupledModel(object):
         # get diffuse/beam frac
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
 
+
+
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
 
@@ -126,6 +129,7 @@ class CoupledModel(object):
              lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
                                                           direct_frac,
                                                           diffuse_frac)
+
             # Calculate scaling term to go from a single leaf to canopy,
             # see Wang & Leuning 1998 appendix C
             scalex = calc_leaf_to_canopy_scalar(lai, kb)
@@ -213,6 +217,8 @@ class CoupledModel(object):
             par_sun = 0.0
             par_sha = 0.0
             tcanopy = tair
+            lai_leaf[c.SUNLIT] = np.nan
+            lai_leaf[c.SHADED] = np.nan
 
         return (an_canopy, gsw_canopy, et_canopy, tcanopy, an_cansun, an_cansha,
                 par_sun, par_sha, lai_leaf[c.SUNLIT], lai_leaf[c.SHADED])

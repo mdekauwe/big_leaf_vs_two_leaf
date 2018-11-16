@@ -77,6 +77,9 @@ def spitters(doy, sw_rad, cos_zenith):
 
     direct_frac = 1.0 - diffuse_frac
 
+    if cos_zenith < 1.0e-2:
+        direct_frac = 0.0
+        
     return (diffuse_frac, direct_frac)
 
 def estimate_clearness(sw_rad, So):
@@ -345,9 +348,25 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     psi1 = 0.5 - 0.633 * lad
     psi2 = 0.877 * (1.0 - 2.0 * psi1)
     Gross = psi1 + psi2 * cos_zenith
+    1.00000005E-03
 
-    # beam extinction coefficient for black leaves
-    kb = Gross / cos_zenith
+    LAI_THRESH = 1.00000005E-03
+    RAD_THRESH = 1.00000005E-0
+
+    if lai > LAI_THRESH and direct_frac > RAD_THRESH:
+        # beam extinction coefficient for black leaves
+        kb = Gross / cos_zenith
+    else:
+        kb = 0.5 # i.e. bare soil
+
+    if np.abs(kb - k_dash_d)  < 0.001:
+        kb = k_dash_d + 0.001
+
+    if direct_frac < RAD_THRESH:
+      # higher value precludes sunlit leaves at night. affects
+      # nighttime evaporation - Ticket #90
+      kb = 1.0e5
+
 
     # beam and diffuse fracs
     Ib = par * direct_frac
