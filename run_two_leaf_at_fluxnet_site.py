@@ -103,7 +103,18 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     An_sha_store = np.zeros(ndays)
     par_sun_store = np.zeros(ndays)
     par_sha_store = np.zeros(ndays)
+    lai_sun_store = np.zeros(ndays)
+    lai_sha_store = np.zeros(ndays)
     E_store = np.zeros(ndays)
+
+    Anc_store = np.zeros(ndays)
+    Anc_sun_store = np.zeros(ndays)
+    Anc_sha_store = np.zeros(ndays)
+    parc_sun_store = np.zeros(ndays)
+    parc_sha_store = np.zeros(ndays)
+    laic_sun_store = np.zeros(ndays)
+    laic_sha_store = np.zeros(ndays)
+    Ec_store = np.zeros(ndays)
 
     gpp_obs = np.zeros(ndays)
     e_obs = np.zeros(ndays)
@@ -118,19 +129,25 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         hod = 0
 
         Anx = 0.0
+        Ex = 0.0
         anxsun = 0.0
         anxsha = 0.0
         parxsun = 0.0
         parxsha = 0.0
-        Ex = 0.0
+
+        Acabx = 0.0
+        Ecabx = 0.0
+        Lcabx = 0.0
+        anxcsun = 0.0
+        anxcsha = 0.0
+        parcsun = 0.0
+        parcsha = 0.0
 
         Aobsx = 0.0
         Eobsx = 0.0
         Lobsx = 0.0
 
-        Acabx = 0.0
-        Ecabx = 0.0
-        Lcabx = 0.0
+
 
         for i in range(48):
 
@@ -142,58 +159,85 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             (An, gsw,
              et, tcan,
              an_sun, an_sha,
-             par_sun, par_sha) = T.main(tair[cnt], par[cnt], vpd[cnt], wind[cnt],
-                                pressure[cnt], Ca, doy, hod, lat, lon, laix)
+             par_sun, par_sha,
+             lai_sun, lai_sha) = T.main(tair[cnt], par[cnt], vpd[cnt],
+                                        wind[cnt], pressure[cnt], Ca, doy, hod,
+                                        lat, lon, laix)
 
             lambda_et = (c.H2OLV0 - 2.365E3 * tair[cnt]) * c.H2OMW
 
             Anx += An * an_conv
             anxsun += an_sun * an_conv
             anxsha += an_sha * an_conv
-            parxsha += par_sha * an_conv
-            parxsun += par_sun * an_conv
+            parxsun += par_sun / c.UMOLPERJ / c.MJ_TO_J * 1800.0
+            parxsha += par_sha / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
+            laixsun += lai_sun
+            laixsha += lai_sha
+            Lobsx += laix
             Ex += et * et_conv
+
+            Anc += df_cab.GPP[cnt] * an_conv
+            ancsun += df_cab.GPP_sunlit[cnt] * an_conv
+            ancsha += df_cab.GPP_shaded[cnt] * an_conv
+            parcsun += df_cab.PAR_sunlit[cnt] / c.UMOLPERJ / c.MJ_TO_J * 1800.0
+            parcsha += df_cab.PAR_shaded[cnt] / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
+            laicsun += df_cab.LAI_sunlit[cnt]
+            laicsha += df_cab.LAI_shaded[cnt]
+            Lcabx += df_cab.LAI[cnt]
+            Ec += et * et_conv
+
             Aobsx += df_flx.GPP[cnt] * an_conv
             Eobsx += df_flx.Qle[cnt] / lambda_et * et_conv
-            Lobsx += laix
-
-            Acabx += df_cab.GPP[cnt] * an_conv
-            Ecabx += df_cab.TVeg[cnt] * 1800.
-
-            Lcabx += df_cab.LAI[cnt]
 
             hod += 1
             cnt += 1
-
-        Anc_store[doy] = Acabx
-        Ec_store[doy] = Ecabx
-        LAI_store[doy] = Lcabx / 48.
 
         An_store[doy] = Anx
         An_sun_store[doy] = anxsun
         An_sha_store[doy] = anxsha
         par_sun_store[doy] = parxsun
         par_sha_store[doy] = parxsha
+        lai_sun_store[doy] = laixsun
+        lai_sha_store[doy] = laixsha
         E_store[doy] = Ex
+
+        Anc_store[doy] = Anc
+        Anc_sun_store[doy] = ancsun
+        Anc_sha_store[doy] = ancsha
+        parc_sun_store[doy] = parcsun
+        parc_sha_store[doy] = parcsha
+        laic_sun_store[doy] = laicsun
+        laic_sha_store[doy] = laicsha
+        Ec_store[doy] = Ec
 
         gpp_obs[doy] = Aobsx
         e_obs[doy] = Eobsx
         lai_obs[doy] = Lobsx / 48
 
-
     window = 3
-    Anc_store = moving_average(Anc_store, n=window)
-    Ec_store = moving_average(Ec_store, n=window)
-    LAI_store = moving_average(LAI_store, n=window)
-
     An_store = moving_average(An_store, n=window)
+    An_sun_store = moving_average(An_sun_store, n=window)
+    An_sha_store = moving_average(An_sha_store, n=window)
+    par_sun_store = moving_average(par_sun_store, n=window)
+    par_sha_store = moving_average(par_sha_store, n=window)
+    lai_sun_store = moving_average(lai_sun_store, n=window)
+    lai_sha_store = moving_average(lai_sha_store, n=window)
     E_store = moving_average(E_store, n=window)
+
+    Anc_store = moving_average(Anc_store, n=window)
+    Anc_sun_store = moving_average(Anc_sun_store, n=window)
+    Anc_sha_store = moving_average(Anc_sha_store, n=window)
+    parc_sun_store = moving_average(parc_sun_store, n=window)
+    parc_sha_store = moving_average(parc_sha_store, n=window)
+    laic_sun_store = moving_average(laic_sun_store, n=window)
+    laic_sha_store = moving_average(laic_sha_store, n=window)
+    Ec_store = moving_average(Ec_store, n=window)
 
     gpp_obs = moving_average(gpp_obs, n=window)
     e_obs = moving_average(e_obs, n=window)
     lai_obs = moving_average(lai_obs, n=window)
 
-    fig = plt.figure(figsize=(16,4))
+    fig = plt.figure(figsize=(14,10))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.3)
     plt.rcParams['text.usetex'] = False
@@ -205,22 +249,39 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     plt.rcParams['xtick.labelsize'] = 14
     plt.rcParams['ytick.labelsize'] = 14
 
-    ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
+    ax1 = fig.add_subplot(321)
+    ax2 = fig.add_subplot(322)
+    ax3 = fig.add_subplot(323)
+    ax4 = fig.add_subplot(324)
+    ax5 = fig.add_subplot(325)
+    ax6 = fig.add_subplot(326)
 
 
+    #ax1.plot(An_sun_store, label="2-leaf - Sun")
+    #ax1.plot(Anc_sun_store, label="2-leaf - Sun")
     ax1.plot(An_sun_store, label="2-leaf - Sun")
-    ax1.plot(Anc_store, label="CABLE - Sun")
+    ax1.plot(Anc_sun_store, label="CABLE - Sun")
+
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
-    ax2.set_xlabel("Day of year")
 
-    #ax2.plot(e_obs)
-    ax2.plot(An_sha_store, label="2-leaf - Shade")
-    ax2.plot(Ec_store, label="CABLE - Shade")
-    ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
-    ax2.set_xlabel("Day of year")
+    ax2.plot(An_sha_store)
+    ax2.plot(Anc_sha_store)
 
+
+    ax3.plot(par_sun_store")
+    ax3.plot(parc_sun_store)
+    ax3.set_ylabel("PAR (umol m$^{-2}$ d$^{-1}$)")
+
+    ax4.plot(par_sha_store")
+    ax4.plot(parc_sha_store)
+
+    ax5.plot(lai_sun_store")
+    ax5.plot(laic_sun_store)
+    ax5.set_ylabel("LAI (m$^{2}$ m$^{-2}$)")
+
+    ax6.plot(lai_sha_store")
+    ax6.plot(laic_sha_store)
 
     ax1.locator_params(nbins=6, axis="y")
     ax2.locator_params(nbins=6, axis="y")
@@ -335,7 +396,8 @@ def read_cable_file(fname):
     """ Build a dataframe from the netcdf outputs """
     ds = xr.open_dataset(fname)
 
-    vars_to_keep = ['GPP','Qle','TVeg','Evap','LAI','A_sun','A_sha']
+    vars_to_keep = ['GPP','Qle','TVeg','Evap','LAI','GPP_shaded',\
+                    'GPP_sunlit','PAR_sunlit','PAR_shaded']
     df = ds[vars_to_keep].squeeze(dim=["x","y"],
                                   drop=True).to_dataframe()
 
