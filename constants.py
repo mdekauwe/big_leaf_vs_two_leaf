@@ -45,3 +45,4 @@ SEC_TO_DAY = 86400.
 SUNLIT = 0
 SHADED = 1
 UMOLPERJ = 4.57     # Conversion from J to umol quanta
+MJ_TO_J = 1E6
