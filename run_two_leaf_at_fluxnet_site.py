@@ -33,26 +33,35 @@ __version__ = "1.0 (09.11.2018)"
 __email__   = "mdekauwe@gmail.com"
 
 
-def main(fname, year_to_run):
+def main(met_fn, flx_fn, year_to_run):
 
-    (df, lat, lon) = read_nc_file(fname)
-    df = df[df.index.year == year_to_run]
+    fpath = "/Users/mdekauwe/Downloads/"
+    fname = "Hyytiala_met_and_plant_data_drought_2003.csv"
+    fn = os.path.join(fpath, fname)
+    df = pd.read_csv(fn, skiprows=range(1,2))
 
-    par = df.PAR
-    tair = df.Tair
-    vpd = df.vpd
-    wind = df.Wind
-    pressure = df.PSurf
+
+    (df_flx) = read_obs_file(flx_fn)
+    df_flx = df_flx[df_flx.index.year == year_to_run]
+
+    (df_met, lat, lon) = read_met_file(met_fn)
+    df_met = df_met[df_met.index.year == year_to_run]
+
+    par = df_met.PAR
+    tair = df_met.Tair
+    vpd = df_met.vpd
+    wind = df_met.Wind
+    pressure = df_met.PSurf
     Ca = 400.0
-    LAI = 3.0
-
+    #LAI = 3.0
+    LAI = df.LAI
     #
     ## Parameters
     #
     g0 = 1E-09
-    g1 = 4.12
+    g1 = df.g1[0] #4.12
     D0 = 1.5 # kpa
-    Vcmax25 = 60.0
+    Vcmax25 = df.Vmax25[0] #60.0
     Jmax25 = Vcmax25 * 1.67
     Rd25 = 2.0
     Eaj = 30000.0
@@ -80,34 +89,47 @@ def main(fname, year_to_run):
                      deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
                      gs_model="medlyn")
 
-    An_store = np.zeros(365)
-    E_store = np.zeros(365)
-    gpp_obs = np.zeros(365)
-    lai_obs = np.zeros(365)
+    ndays = int(len(df_met)/48)
+
+    An_store = np.zeros(ndays)
+    E_store = np.zeros(ndays)
+
+    gpp_obs = np.zeros(ndays)
+    e_obs = np.zeros(ndays)
+    lai_obs = np.zeros(ndays)
 
     et_conv = c.MOL_WATER_2_G_WATER * c.G_TO_KG * 1800.
     an_conv = c.UMOL_TO_MOL * c.MOL_C_TO_GRAMS_C * 1800.
 
     cnt = 0
-    for doy in range(int(len(df)/48)):
-        print(doy)
+    for doy in range(ndays):
+
         hod = 0
 
-        Aobsx = 0.0
-        Lobsx = 0.0
         Anx = 0.0
         Ex = 0.0
 
+        Aobsx = 0.0
+        Eobsx = 0.0
+        Lobsx = 0.0
+
         for i in range(48):
 
+            if doy < 364:
+                laix = LAI[cnt]
+            else:
+                LAI[cnt-1]
             (An, gsw,
              et, tcan) = T.main(tair[cnt], par[cnt], vpd[cnt], wind[cnt],
-                                pressure[cnt], Ca, doy, hod, lat, lon, LAI)
+                                pressure[cnt], Ca, doy, hod, lat, lon, laix)
+
+            lambda_et = (c.H2OLV0 - 2.365E3 * tair[cnt]) * c.H2OMW
 
             Anx += An * an_conv
             Ex += et * et_conv
-            #Aobsx += df.GPP[cnt] * an_conv
-            Lobsx += LAI
+            Aobsx += df_flx.GPP[cnt] * an_conv
+            Eobsx += df_flx.Qle[cnt] / lambda_et * et_conv
+            Lobsx += laix
 
             hod += 1
             cnt += 1
@@ -115,11 +137,19 @@ def main(fname, year_to_run):
         An_store[doy] = Anx
         E_store[doy] = Ex
         gpp_obs[doy] = Aobsx
+        e_obs[doy] = Eobsx
         lai_obs[doy] = Lobsx / 48
 
+    """
+    An_store = moving_average(An_store, n=7)
+    E_store = moving_average(E_store, n=7)
+    gpp_obs = moving_average(gpp_obs, n=7)
+    e_obs = moving_average(e_obs, n=7)
+    lai_obs = moving_average(lai_obs, n=7)
+    """
     fig = plt.figure(figsize=(16,4))
     fig.subplots_adjust(hspace=0.1)
-    fig.subplots_adjust(wspace=0.2)
+    fig.subplots_adjust(wspace=0.3)
     plt.rcParams['text.usetex'] = False
     plt.rcParams['font.family'] = "sans-serif"
     plt.rcParams['font.sans-serif'] = "Helvetica"
@@ -138,7 +168,8 @@ def main(fname, year_to_run):
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
 
-    ax2.plot(E_store, label="Big leaf")
+    ax2.plot(e_obs)
+    ax2.plot(E_store)
     ax2.set_ylabel("E (mm d$^{-1}$)")
     ax2.set_xlabel("Day of year")
 
@@ -151,7 +182,7 @@ def main(fname, year_to_run):
     plt.show()
 
 
-def read_nc_file(fname):
+def read_met_file(fname):
     """ Build a dataframe from the netcdf outputs """
 
     ds = xr.open_dataset(fname)
@@ -186,6 +217,34 @@ def read_nc_file(fname):
 
     return df, lat, lon
 
+def read_obs_file(fname):
+    """ Build a dataframe from the netcdf outputs """
+
+    ds = xr.open_dataset(fname)
+
+    vars_to_keep = ['GPP','Qle']
+    df = ds[vars_to_keep].squeeze(dim=["x","y"],
+                                  drop=True).to_dataframe()
+
+    # PALS-style netcdf is missing the first (half)hour timestamp and has
+    # one extra from the next year, i.e. everything is shifted, so we need
+    # to fix this. We will duplicate the
+    # first hour interval and remove the last
+    time_idx = df.index
+    diff = df.index.minute[1] - df.index.minute[0]
+    if diff == 0:
+        time_idx = time_idx.shift(-1, freq='H')
+        df = df.shift(-1, freq='H')
+    else:
+        time_idx = time_idx.shift(-1, freq='30min')
+        df = df.shift(-1, freq='30min')
+
+    df = df.reindex(time_idx)
+    df['year'] = df.index.year
+    df['doy'] = df.index.dayofyear
+
+    return df
+
 def qair_to_vpd(qair, tair, press):
 
     # saturation vapor pressure
@@ -200,10 +259,21 @@ def qair_to_vpd(qair, tair, press):
 
     return vpd
 
+def moving_average(a, n=3) :
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
 if __name__ == '__main__':
 
-    fpath = "/Users/mdekauwe/research/CABLE_runs/met_data/plumber_met"
-    fname = "TumbaFluxnet.1.4_met.nc"
-    fn = os.path.join(fpath, fname)
+    fpath = "/Users/mdekauwe/research/CABLE_runs/met_data/fluxnet2015/"
+    fname = "FI-Hyy_1996-2014_FLUXNET2015_Met.nc"
+    met_fn = os.path.join(fpath, fname)
+
+    fpath = "/Users/mdekauwe/research/CABLE_runs/flux_files/fluxnet2015"
+    fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
+    flx_fn = os.path.join(fpath, fname)
+
     year_to_run = 2003
-    main(fn, year_to_run)
+
+    main(met_fn, flx_fn, year_to_run)
