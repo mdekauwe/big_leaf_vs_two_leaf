@@ -5,7 +5,7 @@ import pandas as pd
 import os
 import sys
 
-site = "FI-Hyy"
+site = "ES-ES1" #"FR-Pue" #"FI-Hyy"
 fpath = "/Users/mdekauwe/Downloads/"
 fname = "%s_met_and_plant_data_drought_2003.csv" % (site)
 fn = os.path.join(fpath, fname)
@@ -30,5 +30,4 @@ df_out.loc[364] = df_out.loc[363]
 opath = "/Users/mdekauwe/Desktop/"
 ofname = "%s_lai.csv" % (site)
 fn = os.path.join(opath, ofname)
-print(fn)
 df_out.to_csv(fn, index=False)

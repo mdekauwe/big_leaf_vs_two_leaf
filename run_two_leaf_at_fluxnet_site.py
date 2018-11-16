@@ -94,6 +94,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     ndays = int(len(df_met)/48)
 
     Anc_store = np.zeros(ndays)
+    Ec_store = np.zeros(ndays)
+    LAI_store = np.zeros(ndays)
 
     An_store = np.zeros(ndays)
     E_store = np.zeros(ndays)
@@ -119,6 +121,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
 
         Acabx = 0.0
         Ecabx = 0.0
+        Lcabx = 0.0
 
         for i in range(48):
 
@@ -139,25 +142,37 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             Lobsx += laix
 
             Acabx += df_cab.GPP[cnt] * an_conv
+            Ecabx += df_cab.TVeg[cnt] * 1800.
+
+            Lcabx += df_cab.LAI[cnt]
 
             hod += 1
             cnt += 1
 
         Anc_store[doy] = Acabx
+        Ec_store[doy] = Ecabx
+        LAI_store[doy] = Lcabx / 48.
 
         An_store[doy] = Anx
         E_store[doy] = Ex
+
         gpp_obs[doy] = Aobsx
         e_obs[doy] = Eobsx
         lai_obs[doy] = Lobsx / 48
 
-    """
-    An_store = moving_average(An_store, n=7)
-    E_store = moving_average(E_store, n=7)
-    gpp_obs = moving_average(gpp_obs, n=7)
-    e_obs = moving_average(e_obs, n=7)
-    lai_obs = moving_average(lai_obs, n=7)
-    """
+
+    window = 3
+    Anc_store = moving_average(Anc_store, n=window)
+    Ec_store = moving_average(Ec_store, n=window)
+    LAI_store = moving_average(LAI_store, n=window)
+
+    An_store = moving_average(An_store, n=window)
+    E_store = moving_average(E_store, n=window)
+
+    gpp_obs = moving_average(gpp_obs, n=window)
+    e_obs = moving_average(e_obs, n=window)
+    lai_obs = moving_average(lai_obs, n=window)
+
     fig = plt.figure(figsize=(16,4))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.3)
@@ -180,12 +195,14 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
 
-    ax2.plot(e_obs)
+    #ax2.plot(e_obs)
     ax2.plot(E_store)
+    ax2.plot(Ec_store, label="CABLE")
     ax2.set_ylabel("E (mm d$^{-1}$)")
     ax2.set_xlabel("Day of year")
 
-    ax3.plot(lai_obs)
+    ax3.plot(lai_obs, lw=4)
+    ax3.plot(LAI_store, lw=1, label="CABLE")
     ax3.set_ylabel("LAI (m$^{2}$ m$^{-2}$)")
 
     ax1.locator_params(nbins=6, axis="y")
