@@ -14,7 +14,7 @@ References:
 import os
 import sys
 import numpy as np
-from math import pi, cos, sin, exp, sqrt, acos, asin
+import matplotlib.pyplot as plt
 import random
 import math
 import pandas as pd
@@ -33,22 +33,15 @@ __version__ = "1.0 (09.11.2018)"
 __email__   = "mdekauwe@gmail.com"
 
 
-def main(fname):
+def main(fname, year_to_run):
 
     (df, lat, lon) = read_nc_file(fname)
+    df = df[df.index.year == year_to_run]
 
-    print(lat, lon)
+    plt.plot(df.vpd)
+    plt.show()
     sys.exit()
-
-
-
-
-    fpath = "/Users/mdekauwe/Downloads/"
-    fname = "Hyytiala_met_and_plant_data_drought_2003.csv"
-    fn = os.path.join(fpath, fname)
-    df = pd.read_csv(fn, skiprows=range(1,2))
-
-    par = df.PPFD
+    par = df.PAR
     tair = df.Tair
     vpd = df.VPD
     wind = df.u
@@ -217,13 +210,29 @@ def read_nc_file(fname):
     df['doy'] = df.index.dayofyear
 
     df["PAR"] = df.SWdown * c.SW_2_PAR
+    df["vpd"] = qair_to_vpd(df.Qair, df.Tair, df.PSurf)
 
     return df, lat, lon
 
+def qair_to_vpd(qair, tair, press):
+
+    # convert back to Pa
+    press /= c.PA_TO_KPA
+
+    # saturation vapor pressure
+    es = 100.0 * 6.112 * np.exp((17.67 * tair) / (243.5 + tair))
+
+    # vapor pressure
+    ea = (qair * press) / (0.622 + (1.0 - 0.622) * qair)
+
+    vpd = (es - ea) * c.PA_TO_KPA
+
+    return vpd
 
 if __name__ == '__main__':
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/met_data/plumber_met"
     fname = "TumbaFluxnet.1.4_met.nc"
     fn = os.path.join(fpath, fname)
-    main(fn)
+    year_to_run = 2003
+    main(fn, year_to_run)
