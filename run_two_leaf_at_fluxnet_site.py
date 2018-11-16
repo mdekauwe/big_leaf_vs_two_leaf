@@ -64,7 +64,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     g0 = 1E-09
     g1 = df.g1[0] #4.12
     D0 = 1.5 # kpa
-    Vcmax25 = df.Vmax25[0]*1.5 #60.0
+    Vcmax25 = df.Vmax25[0]
     Jmax25 = Vcmax25 * 1.67
     Rd25 = 2.0
     Eaj = 30000.0
