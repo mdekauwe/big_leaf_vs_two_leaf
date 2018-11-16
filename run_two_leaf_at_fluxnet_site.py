@@ -34,7 +34,7 @@ __email__   = "mdekauwe@gmail.com"
 
 
 def main(met_fn, flx_fn, cab_fn, year_to_run, site):
-
+    print(site)
     fpath = "/Users/mdekauwe/Downloads/"
     fname = "%s_met_and_plant_data_drought_2003.csv" % (site)
     fn = os.path.join(fpath, fname)
@@ -43,7 +43,6 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     (df_cab) = read_cable_file(cab_fn)
     df_cab = df_cab[df_cab.index.year == year_to_run]
 
-    print(flx_fn)
     (df_flx) = read_obs_file(flx_fn)
     df_flx = df_flx[df_flx.index.year == year_to_run]
 
@@ -345,24 +344,25 @@ def moving_average(a, n=3) :
 
 if __name__ == '__main__':
 
-    site = "FR-Pue" #"FR-Pue" #"FI-Hyy"
-
     fpath = "/Users/mdekauwe/research/CABLE_runs/met_data/fluxnet2015/"
-    #fname = "FI-Hyy_1996-2014_FLUXNET2015_Met.nc"
+    fname = "FI-Hyy_1996-2014_FLUXNET2015_Met.nc"
     #fname = "FR-Pue_2000-2014_FLUXNET2015_Met.nc"
-    fname = "ES-ES1_1999-2006_LaThuile_Met.nc"
+    #fname = "ES-ES1_1999-2006_LaThuile_Met.nc"
     met_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/flux_files/fluxnet2015"
-    #fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
+    fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
     #fname = "FR-Pue_2000-2014_FLUXNET2015_Flux.nc"
-    fname = "ES-ES1_1999-2006_LaThuile_Flux.nc"
+    #fname = "ES-ES1_1999-2006_LaThuile_Flux.nc"
     flx_fn = os.path.join(fpath, fname)
 
+    site = os.path.basename(met_fn).split(".")[0][0:6]
+    
     fpath = "/Users/mdekauwe/research/CABLE_runs/runs/FI-Hyy_CMIP6-MOSRS/outputs/"
     fname = "%s_out.nc" %  (site)
     cab_fn = os.path.join(fpath, fname)
 
     year_to_run = 2003
+
 
     main(met_fn, flx_fn, cab_fn, year_to_run, site)
