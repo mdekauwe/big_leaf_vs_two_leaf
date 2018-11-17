@@ -463,17 +463,17 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     else: # i.e. bare soil
         extkd = 0.7
 
-
-    c1[0] = np.sqrt(1. - taul[0] - refl[0])
-    c1[1] = np.sqrt(1. - taul[1] - refl[1])
-    c1[2] = 1.
+    # only need vis
+    c1 = np.sqrt(1. - taul[0] - refl[0])
+    #c1[1] = np.sqrt(1. - taul[1] - refl[1])
+    #c1[2] = 1.
 
     # Canopy C%REFLection black horiz leaves
     # (eq. 6.19 in Goudriaan and van Laar, 1994):
     rhoch = (1.0 - c1) / (1.0 + c1)
 
     # Canopy REFLection of diffuse radiation for black leaves:
-    rhocdf = rhoch[0] * 2. * (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
+    rhocdf = rhoch * 2. * (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
                 gauss_w[1] * xk[1] / (xk[1] + extkd) + \
                 gauss_w[2] * xk[2] / (xk[2] + extkd))
 
@@ -495,11 +495,9 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
       # nighttime evaporation - Ticket #90
       extkb = 1.0e5
 
-    # MATCHES CABLE UP ON TO THIS POITN
-
     c1 = np.sqrt(1. - taul[0] - refl[0])
     extkdm = extkd * c1
-    extkbm = extkb * c1
+
 
     # Initialise effective conopy beam reflectance:
     albsoilsn = 4.43889648E-02
@@ -516,42 +514,55 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     else:
         cexpkdm = 0.0
 
-    # Canopy beam transmittance (fraction):
-    dummy2 = min(extkbm * lai, 20.)
-    cexpkbm = np.exp(-dummy2)
+    ####################################
+    # MATCHES CABLE UP ON TO THIS POITN
+    ####################################
 
-    # Canopy reflection (6.21) beam:
-    rhocbm = 2. * extkb / (extkb + extkd) * rhoch[0]
+    cexpkbm = 0.0
+    extkbm  = 0.0
+    rhocbm  = 0.0
 
-    reffbm = rhocbm + (albsoilsn - rhocbm) * cexpkbm**2
+    # where vegetated and sunlit
+    if lai > LAI_THRESH and sw_rad > RAD_THRESH:
+        extkbm = extkb * c1
+
+        # Canopy reflection (6.21) beam:
+        rhocbm = 2. * extkb / (extkb + extkd) * rhoch
+
+        # Canopy beam transmittance (fraction):
+        dummy2 = min(extkbm * lai, 20.)
+        cexpkbm = float(np.exp(-dummy2))
+
+        # Calculate effective beam reflectance (fraction):
+        reffbm = rhocbm + (albsoilsn - rhocbm) * cexpkbm**2
 
     dummy = min(extkb * lai, 30.) # vh version to avoid floating underflow
     transb = np.exp(-dummy)
 
 
     # scale to real sunlit flux
-    qcan[c.SUNLIT] = sw_rad * (diffuse_frac * (1.0 - reffdf) *\
-                        extkdm * cf1 + direct_frac * (1.0 - reffbm) * \
-                        extkbm * cf3 + direct_frac * \
-                        (1.0 - taul[0] - refl[0]) * extkb * \
-                        ((1.0 - transb) / extkb - \
-                        (1.0 - transb**2) / (extkb + extkb)))
+    #qcan[c.SUNLIT] = sw_rad * (diffuse_frac * (1.0 - reffdf) *\
+    #                    extkdm * cf1 + direct_frac * (1.0 - reffbm) * \
+    #                    extkbm * cf3 + direct_frac * \
+    #                    (1.0 - taul[0] - refl[0]) * extkb * \
+    #                    ((1.0 - transb) / extkb - \
+    #                    (1.0 - transb**2) / (extkb + extkb)))
+    #
+    #qcan[c.SHADED] = sw_rad * (diffuse_frac * (1.0 - reffdf) * \
+    #                    extkdm * ((1.0 - cexpkdm) / extkdm - cf1) + \
+    #                    direct_frac * (1. - reffbm) * extkbm * \
+    #                    ((1.0 - cexpkbm) / extkbm - cf3) - direct_frac * \
+    #                    (1.0 - taul[0] - refl[0]) * extkb * \
+    #                    ((1.0 - transb) / extkb -
+    #                    (1.0 - transb**2) / (extkb + extkb)))
 
-    qcan[c.SHADED] = sw_rad * (diffuse_frac * (1.0 - reffdf) * \
-                        extkdm * ((1.0 - cexpkdm) / extkdm - cf1) + \
-                        direct_frac * (1. - reffbm) * extkbm * \
-                        ((1.0 - cexpkbm) / extkbm - cf3) - direct_frac * \
-                        (1.0 - taul[0] - refl[0]) * extkb * \
-                        ((1.0 - transb) / extkb -
-                        (1.0 - transb**2) / (extkb + extkb)))
-
-    apar[c.SUNLIT] = qcan[c.SUNLIT] * 4.6
-    apar[c.SHADED] = qcan[c.SHADED] * 4.6
+    #apar[c.SUNLIT] = qcan[c.SUNLIT] * 4.6
+    #apar[c.SHADED] = qcan[c.SHADED] * 4.6
 
 
     if doy  == 181:
         #print(qcan[c.SUNLIT])
-        print(extkdm, extkbm)
+        print(extkbm)
     elif doy== 182:
         sys.exit()
 
