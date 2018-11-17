@@ -162,7 +162,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             else:
                 laix = LAI[cnt-1]
 
-            
+
             (An, gsw,
              et, tcan,
              an_sun, an_sha,
@@ -180,6 +180,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             parxsha += par_sha / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
             laixsun += lai_sun
             laixsha += lai_sha
+
             Lobsx += laix
             Ex += et * et_conv
 
@@ -188,8 +189,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             ancsha += df_cab.GPP_shaded[cnt] * an_conv
             parcsun += df_cab.PAR_sunlit[cnt] / c.UMOLPERJ / c.MJ_TO_J * 1800.0
             parcsha += df_cab.PAR_shaded[cnt] / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
-            #laicsun += df_cab.LAI_sunlit[cnt]
-            #laicsha += df_cab.LAI_shaded[cnt]
+            laicsun += df_cab.LAI_sunlit[cnt]
+            laicsha += df_cab.LAI_shaded[cnt]
             Lcabx += df_cab.LAI[cnt]
             Ec += et * et_conv
 
@@ -204,8 +205,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         An_sha_store[doy] = anxsha
         par_sun_store[doy] = parxsun
         par_sha_store[doy] = parxsha
-        lai_sun_store[doy] = laixsun
-        lai_sha_store[doy] = laixsha
+        lai_sun_store[doy] = laixsun / 48.
+        lai_sha_store[doy] = laixsha / 48.
         E_store[doy] = Ex
 
         Anc_store[doy] = Anc
@@ -213,8 +214,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         Anc_sha_store[doy] = ancsha
         parc_sun_store[doy] = parcsun
         parc_sha_store[doy] = parcsha
-        laic_sun_store[doy] = laicsun
-        laic_sha_store[doy] = laicsha
+        laic_sun_store[doy] = laicsun / 48.
+        laic_sha_store[doy] = laicsha / 48.
         Ec_store[doy] = Ec
 
         gpp_obs[doy] = Aobsx
@@ -244,7 +245,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     e_obs = moving_average(e_obs, n=window)
     lai_obs = moving_average(lai_obs, n=window)
 
-    fig = plt.figure(figsize=(14,10))
+    fig = plt.figure(figsize=(14,8))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.3)
     plt.rcParams['text.usetex'] = False
@@ -279,7 +280,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
 
     ax3.plot(par_sun_store)
     ax3.plot(parc_sun_store)
-    ax3.set_ylabel("PAR (umol m$^{-2}$ d$^{-1}$)")
+    ax3.set_ylabel("PAR (MJ m$^{-2}$ d$^{-1}$)")
 
     ax4.plot(par_sha_store)
     ax4.plot(parc_sha_store)
@@ -405,7 +406,8 @@ def read_cable_file(fname):
     ds = xr.open_dataset(fname)
 
     vars_to_keep = ['GPP','Qle','TVeg','Evap','LAI','GPP_shaded',\
-                    'GPP_sunlit','PAR_sunlit','PAR_shaded']
+                    'GPP_sunlit','PAR_sunlit','PAR_shaded',\
+                    'LAI_sunlit','LAI_shaded']
     df = ds[vars_to_keep].squeeze(dim=["x","y"],
                                   drop=True).to_dataframe()
 
