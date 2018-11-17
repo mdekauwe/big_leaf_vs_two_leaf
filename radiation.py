@@ -415,7 +415,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
 
     # Taken from CABLE
-    """
+    #"""
     cos3 = np.zeros(3)
     xk = np.zeros(3)
     gauss_w = np.zeros(3)
@@ -477,7 +477,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                 gauss_w[1] * xk[1] / (xk[1] + extkd) + \
                 gauss_w[2] * xk[2] / (xk[2] + extkd))
 
-    # MATCHES CABLE UP ON TO THIS POITN
 
     extkb = 0.0
 
@@ -495,6 +494,8 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
       # higher value precludes sunlit leaves at night. affects
       # nighttime evaporation - Ticket #90
       extkb = 1.0e5
+
+    # MATCHES CABLE UP ON TO THIS POITN
 
     c1 = np.sqrt(1. - taul[0] - refl[0])
     extkdm = extkd * c1
@@ -558,7 +559,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # LAI of sunlit, shaded
     lai_leaf[c.SUNLIT]  = (1.0 - transb) / extkb
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
-    """
+    #"""
 
     return (apar, lai_leaf, kb)
 
