@@ -489,6 +489,8 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                      gauss_w[1] * xk[1] / (xk[1] + extkd) + \
                      gauss_w[2] * xk[2] / (xk[2] + extkd))
 
+    # MATCHES CABLE UP ON TO THIS POITN
+
     extkb = 0.0
 
     if lai > LAI_THRESH and direct_frac > RAD_THRESH:
