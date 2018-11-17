@@ -24,6 +24,7 @@ from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
 from radiation import calculate_solar_geometry, spitters
 from radiation import calculate_absorbed_radiation
+from radiation import sinbet
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -112,8 +113,10 @@ class CoupledModel(object):
         Tcan = np.zeros(2) # sunlit, shaded
         lai_leaf = np.zeros(2)
 
-        cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+        #cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+        cos_zenith = sinbet(doy, lat, hod)
 
+        #print(doy, lat, hod, cos_zenith)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
         sw_rad = par * c.PAR_2_SW # W m-2
@@ -121,10 +124,10 @@ class CoupledModel(object):
         # get diffuse/beam frac
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
 
-        print(diffuse_frac, direct_frac, cos_zenith)
 
         if doy  == 1:
-            print(diffuse_frac, direct_frac, cos_zenith)
+            print(direct_frac, diffuse_frac, cos_zenith)
+            pass
         elif doy== 2:
             sys.exit()
 

@@ -79,8 +79,8 @@ def spitters(doy, sw_rad, cos_zenith):
 
     if cos_zenith < 1.0e-2:
         direct_frac = 0.0
-    """
 
+    """
     solcon = 1370.0
 
     fbeam = 0.0
@@ -88,7 +88,8 @@ def spitters(doy, sw_rad, cos_zenith):
     tmpk = (1.47 - tmpr) / 1.66
 
     if cos_zenith > 1.0e-10 and sw_rad > 10.0:
-        tmprat = sw_rad / ( solcon * ( 1.0 + 0.033 * np.cos( 2. * np.pi * ( doy-10.0 ) / 365.0 ) ) * cos_zenith )
+        tmprat = sw_rad / (solcon * (1.0 + 0.033 * \
+                    np.cos(2. * np.pi * (doy-10.0) / 365.0)) * cos_zenith)
     else:
         tmprat = 0.0
 
@@ -98,11 +99,14 @@ def spitters(doy, sw_rad, cos_zenith):
     if tmprat > 0.35:
         fbeam = min( 1.66 * tmprat - 0.4728, 1.0 )
 
-    if tmprat > tmpk :
+    if tmprat > tmpk:
         fbeam = max( 1.0 - tmpr, 0.0 )
 
+    if cos_zenith < 1.0e-2:
+        fbeam = 0.0
+
     diffuse_frac = 1.0 - fbeam
-    
+
     return (diffuse_frac, fbeam)
 
 def estimate_clearness(sw_rad, So):
@@ -570,3 +574,18 @@ def calculate_absorbed_radiation_big_leaf(par, cos_zenith, lai, direct_frac,
     apar = arg1 + arg2
 
     return (apar, lai_leaf, kb)
+
+def sinbet(doy, xslat, hod):
+
+    # calculate sin(bet), bet = elevation angle of sun
+    # calculations according to goudriaan & van laar 1994 p30
+
+    # sine of maximum declination
+    sindec = -np.sin(23.45 * np.pi / 180.) * \
+                np.cos(2. * np.pi * (doy + 10.0) / 365.0)
+
+    z = max(np.sin(np.pi / 180. * xslat) * sindec + \
+            np.cos(np.pi / 180. * xslat) * np.sqrt(1. - sindec * sindec) * \
+            np.cos(np.pi * (hod - 12.0) / 12.0), 1e-8)
+
+    return z

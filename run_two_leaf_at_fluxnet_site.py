@@ -126,7 +126,6 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     cnt = 0
     for doy in range(ndays):
 
-        hod = 0
 
         Anx = 0.0
         Ex = 0.0
@@ -162,6 +161,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             else:
                 laix = LAI[cnt-1]
 
+            hod = float(i)/2. + 1800. / 3600. / 2.
+
             (An, gsw,
              et, tcan,
              an_sun, an_sha,
@@ -196,7 +197,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             Aobsx += df_flx.GPP[cnt] * an_conv
             Eobsx += df_flx.Qle[cnt] / lambda_et * et_conv
 
-            hod += 1
+
             cnt += 1
         sys.exit()
 
