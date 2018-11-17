@@ -338,6 +338,10 @@ def calc_leaf_to_canopy_scalar(lai, kb):
     scalex[c.SUNLIT] = (1.0 - exp(-(kb + kn) * lai)) / (kb + kn)
     scalex[c.SHADED] = (1.0 - exp(-kn * lai)) / kn - scalex[c.SUNLIT]
 
+    # Taken from CABLE, will need to pass tings to use
+    #scalex[c.SUNLIT] = (1.0 - transb * cf2n) / (extkb + extkn)
+    #scalex[c.SHADED] = (1.0 - cf2n) / extkn - scalex[c.SUNLIT]
+
     #scalex[c.SUNLIT] = lai * (1.0 - exp(-kn - kb * lai)) / (kn + kb * lai)
     #scalex[c.SHADED] = lai * (1.0 - exp(-kn)) / kn - scalex[c.SUNLIT]
 
