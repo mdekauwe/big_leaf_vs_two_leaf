@@ -502,7 +502,7 @@ if __name__ == '__main__':
     fname = "%s_out.nc" %  (site)
     cab_fn = os.path.join(fpath, fname)
 
-    year_to_run = 2003
-    #year_to_run = 1996 # debugging to get first year
+    #year_to_run = 2003
+    year_to_run = 1996 # debugging to get first year
 
     main(met_fn, flx_fn, cab_fn, year_to_run, site)

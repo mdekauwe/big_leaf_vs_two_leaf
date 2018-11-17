@@ -86,7 +86,7 @@ def spitters(doy, sw_rad, cos_zenith):
     fbeam = 0.0
     tmpr = 0.847 + cos_zenith * (1.04 * cos_zenith - 1.61)
     tmpk = (1.47 - tmpr) / 1.66
-    
+
     if cos_zenith > 1.0e-10 and sw_rad > 10.0:
         tmprat = sw_rad / (solcon * (1.0 + 0.033 * \
                     np.cos(2. * np.pi * (doy-10.0) / 365.0)) * cos_zenith)
@@ -342,7 +342,7 @@ def calc_extra_terrestrial_rad(doy, cos_zenith):
     return So
 
 def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
-                                 diffuse_frac):
+                                 diffuse_frac, doy, sw_rad):
     """
     Calculate absorded irradiance of sunlit and shaded fractions of
     the canopy. The total irradiance absorbed by the canopy and the
@@ -372,33 +372,11 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # in the direction perpendicular to the direction of incident solar
     # radiation and the actual leaf area. See Sellers (1985), eqn 13/
     # note this is taken from CABLE code (Kowalczyk '06, eqn 28/29)
-    #psi1 = 0.5 - 0.633 * lad
-    #psi2 = 0.877 * (1.0 - 2.0 * psi1)
-
-    xfang = 9.99999978E-03
-    psi1 = 0.5 - xfang * (0.633 + 0.33 * xfang)
+    psi1 = 0.5 - 0.633 * lad
     psi2 = 0.877 * (1.0 - 2.0 * psi1)
 
     Gross = psi1 + psi2 * cos_zenith
 
-    """
-    LAI_THRESH = 1.00000005E-03
-    RAD_THRESH = 1.00000005E-0
-
-    if lai > LAI_THRESH and direct_frac > RAD_THRESH:
-        # beam extinction coefficient for black leaves
-        kb = Gross / cos_zenith
-    else:
-        kb = 0.5 # i.e. bare soil
-
-    if np.abs(kb - k_dash_d)  < 0.001:
-        kb = k_dash_d + 0.001
-
-    if direct_frac < RAD_THRESH:
-      # higher value precludes sunlit leaves at night. affects
-      # nighttime evaporation - Ticket #90
-      kb = 1.0e5
-    """
     kb = Gross / cos_zenith
 
 
@@ -435,6 +413,162 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # Calculate sunlit &shdaded LAI of the canopy - de P * F eqn 18
     lai_leaf[c.SUNLIT] = (1.0 - np.exp(-kb * lai)) / kb
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
+
+    # Taken from CABLE
+    """
+    cos3 = np.zeros(3)
+    xk = np.zeros(3)
+    gauss_w = np.zeros(3)
+    c1 = np.zeros(3)
+    taul = np.zeros(2)
+    refl = np.zeros(2)
+    rhocdf = np.zeros(3)
+    qcan = np.zeros(2)
+
+    LAI_THRESH = 1.00000005E-03
+    RAD_THRESH = 1.00000005E-03
+
+    # These vary by PFT ... fixing for now
+    taul[0] = 9.00000036E-02
+    taul[1] = 0.300000012
+    refl[0] = 9.00000036E-02
+    refl[1] = 0.300000012
+
+    xfang = 9.99999978E-03
+    xphi1 = 0.5 - xfang * (0.633 + 0.33 * xfang)
+    xphi2 = 0.877 * (1.0 - 2.0 * xphi1)
+
+    cos3[0] = np.cos(np.pi / 180. * 15.0)
+    cos3[1] = np.cos(np.pi / 180. * 45.0)
+    cos3[2] = np.cos(np.pi / 180. * 75.0)
+
+    # Extinction coefficient for beam radiation and black leaves;
+    # eq. B6, Wang and Leuning, 1998
+    if lai > LAI_THRESH: # vegetated
+        xk[0] = xphi1 / cos3[0] + xphi2
+        xk[1] = xphi1 / cos3[1] + xphi2
+        xk[2] = xphi1 / cos3[2] + xphi2
+    else: # i.e. bare soil
+        xk[0] = 0.0
+        xk[1] = 0.0
+        xk[2] = 0.0
+
+    # Gaussian integ. weights
+    gauss_w[0] = 0.308
+    gauss_w[1] = 0.514
+    gauss_w[2] = 0.178
+
+    if lai > LAI_THRESH: # vegetated
+        # Extinction coefficient for diffuse radiation for black leaves:
+        extkd = -np.log(np.sum(gauss_w * np.exp(-xk * lai))) / lai
+    else: # i.e. bare soil
+        extkd = 0.7
+
+
+    c1[0] = np.sqrt(1. - taul[0] - refl[0])
+    c1[1] = np.sqrt(1. - taul[1] - refl[1])
+    c1[2] = 1.
+
+    # Canopy C%REFLection black horiz leaves
+    # (eq. 6.19 in Goudriaan and van Laar, 1994):
+    rhoch = (1.0 - c1) / (1.0 + c1)
+
+    # Canopy REFLection of diffuse radiation for black leaves:
+    rhocdf[0] = rhoch[0] * 2. * \
+                    (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
+                     gauss_w[1] * xk[1] / (xk[1] + extkd) + \
+                     gauss_w[2] * xk[2] / (xk[2] + extkd))
+
+    rhocdf[1] = rhoch[1] * 2. * \
+                    (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
+                     gauss_w[1] * xk[1] / (xk[1] + extkd) + \
+                     gauss_w[2] * xk[2] / (xk[2] + extkd))
+
+    rhocdf[2] = rhoch[2] * 2. * \
+                    (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
+                     gauss_w[1] * xk[1] / (xk[1] + extkd) + \
+                     gauss_w[2] * xk[2] / (xk[2] + extkd))
+
+    extkb = 0.0
+
+    if lai > LAI_THRESH and direct_frac > RAD_THRESH:
+        # SW beam extinction coefficient ("black" leaves, extinction neglects
+        # leaf SW transmittance and REFLectance):
+        extkb = xphi1 / cos_zenith + xphi2
+    else:
+        extkb = 0.5 # i.e. bare soil
+
+    if np.abs(extkb - extkd) < 0.001:
+        extkb = extkd + 0.001
+
+    if direct_frac < RAD_THRESH:
+      # higher value precludes sunlit leaves at night. affects
+      # nighttime evaporation - Ticket #90
+      extkb = 1.0e5
+
+    c1 = np.sqrt(1. - taul[0] - refl[0])
+    extkdm = extkd * c1
+    extkbm = extkb * c1
+
+    # Initialise effective conopy beam reflectance:
+    albsoilsn = 4.43889648E-02
+    reffbm = albsoilsn
+    reffdf = albsoilsn
+    albedo = albsoilsn
+
+    # Calculate effective diffuse reflectance (fraction)
+    if lai > 1e-2:
+
+        # Define canopy diffuse transmittance (fraction):
+        cexpkdm = np.exp(-extkdm * lai)
+        reffdf = rhocdf[0] + (albsoilsn - rhocdf[0]) * cexpkdm**2
+    else:
+        cexpkdm = 0.0
+
+    # Canopy beam transmittance (fraction):
+    dummy2 = min(extkbm * lai, 20.)
+    cexpkbm = np.exp(-dummy2)
+
+    # Canopy reflection (6.21) beam:
+    rhocbm = 2. * extkb / (extkb + extkd) * rhoch[0]
+
+    reffbm = rhocbm + (albsoilsn - rhocbm) * cexpkbm**2
+
+    dummy = min(extkb * lai, 30.) # vh version to avoid floating underflow
+    transb = np.exp(-dummy)
+
+
+    # scale to real sunlit flux
+    qcan[c.SUNLIT] = sw_rad * (diffuse_frac * (1.0 - reffdf) *\
+                        extkdm * cf1 + direct_frac * (1.0 - reffbm) * \
+                        extkbm * cf3 + direct_frac * \
+                        (1.0 - taul[0] - refl[0]) * extkb * \
+                        ((1.0 - transb) / extkb - \
+                        (1.0 - transb**2) / (extkb + extkb)))
+
+    qcan[c.SHADED] = sw_rad * (diffuse_frac * (1.0 - reffdf) * \
+                        extkdm * ((1.0 - cexpkdm) / extkdm - cf1) + \
+                        direct_frac * (1. - reffbm) * extkbm * \
+                        ((1.0 - cexpkbm) / extkbm - cf3) - direct_frac * \
+                        (1.0 - taul[0] - refl[0]) * extkb * \
+                        ((1.0 - transb) / extkb -
+                        (1.0 - transb**2) / (extkb + extkb)))
+
+    apar[c.SUNLIT] = qcan[c.SUNLIT] * 4.6
+    apar[c.SHADED] = qcan[c.SHADED] * 4.6
+
+
+    if doy  == 181:
+        #print(qcan[c.SUNLIT])
+        print(extkdm, extkbm)
+    elif doy== 182:
+        sys.exit()
+
+
+    # LAI of sunlit, shaded
+    lai_leaf[c.SUNLIT]  = (1.0 - transb) / extkb
+    lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
+    """
 
     return (apar, lai_leaf, kb)
 

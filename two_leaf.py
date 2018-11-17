@@ -137,7 +137,8 @@ class CoupledModel(object):
             (apar,
              lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
                                                           direct_frac,
-                                                          diffuse_frac)
+                                                          diffuse_frac, doy,
+                                                          sw_rad_half)
 
             # Calculate scaling term to go from a single leaf to canopy,
             # see Wang & Leuning 1998 appendix C
