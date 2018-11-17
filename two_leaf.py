@@ -121,7 +121,13 @@ class CoupledModel(object):
         # get diffuse/beam frac
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
 
-        #print(direct_frac, hod, elevation)
+        print(diffuse_frac, direct_frac, cos_zenith)
+
+        if doy  == 1:
+            print(diffuse_frac, direct_frac, cos_zenith)
+        elif doy== 2:
+            sys.exit()
+
 
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
@@ -390,7 +396,6 @@ if __name__ == "__main__":
 
     hod = 0
     for i in range(48):
-        #print(hod, tair[i], par[i], vpd[i], wind, pressure, Ca, doy, hod, lat, lon, LAI)
         (An_tl[i], gsw_tl[i],
          et_tl[i], tcan_tl[i],
          _,_,_,_,

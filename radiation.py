@@ -42,7 +42,7 @@ def spitters(doy, sw_rad, cos_zenith):
       Components of incoming radiation. Agricultural Forest Meteorol.,
       38:217-229.
     """
-
+    """
     #sine of the elev of the sun above the horizon is the same as cos_zen
     So = calc_extra_terrestrial_rad(doy, cos_zenith)
 
@@ -79,8 +79,31 @@ def spitters(doy, sw_rad, cos_zenith):
 
     if cos_zenith < 1.0e-2:
         direct_frac = 0.0
+    """
 
-    return (diffuse_frac, direct_frac)
+    solcon = 1370.0
+
+    fbeam = 0.0
+    tmpr = 0.847 + cos_zenith * (1.04 * cos_zenith - 1.61)
+    tmpk = (1.47 - tmpr) / 1.66
+
+    if cos_zenith > 1.0e-10 and sw_rad > 10.0:
+        tmprat = sw_rad / ( solcon * ( 1.0 + 0.033 * np.cos( 2. * np.pi * ( doy-10.0 ) / 365.0 ) ) * cos_zenith )
+    else:
+        tmprat = 0.0
+
+    if tmprat > 0.22:
+        fbeam = 6.4 * ( tmprat - 0.22 )**2
+
+    if tmprat > 0.35:
+        fbeam = min( 1.66 * tmprat - 0.4728, 1.0 )
+
+    if tmprat > tmpk :
+        fbeam = max( 1.0 - tmpr, 0.0 )
+
+    diffuse_frac = 1.0 - fbeam
+    
+    return (diffuse_frac, fbeam)
 
 def estimate_clearness(sw_rad, So):
     """
@@ -345,10 +368,16 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # in the direction perpendicular to the direction of incident solar
     # radiation and the actual leaf area. See Sellers (1985), eqn 13/
     # note this is taken from CABLE code (Kowalczyk '06, eqn 28/29)
-    psi1 = 0.5 - 0.633 * lad
+    #psi1 = 0.5 - 0.633 * lad
+    #psi2 = 0.877 * (1.0 - 2.0 * psi1)
+
+    xfang = 9.99999978E-03
+    psi1 = 0.5 - xfang * (0.633 + 0.33 * xfang)
     psi2 = 0.877 * (1.0 - 2.0 * psi1)
+
     Gross = psi1 + psi2 * cos_zenith
 
+    """
     LAI_THRESH = 1.00000005E-03
     RAD_THRESH = 1.00000005E-0
 
@@ -365,9 +394,10 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
       # higher value precludes sunlit leaves at night. affects
       # nighttime evaporation - Ticket #90
       kb = 1.0e5
-
+    """
     kb = Gross / cos_zenith
-    
+
+
     # beam and diffuse fracs
     Ib = par * direct_frac
     Id = par * diffuse_frac

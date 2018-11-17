@@ -34,7 +34,7 @@ __email__   = "mdekauwe@gmail.com"
 
 
 def main(met_fn, flx_fn, cab_fn, year_to_run, site):
-    print(site)
+    #(site)
     fpath = "/Users/mdekauwe/Downloads/"
     fname = "%s_met_and_plant_data_drought_2003.csv" % (site)
     fn = os.path.join(fpath, fname)
@@ -162,13 +162,12 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             else:
                 laix = LAI[cnt-1]
 
-
             (An, gsw,
              et, tcan,
              an_sun, an_sha,
              par_sun, par_sha,
              lai_sun, lai_sha) = T.main(tair[cnt], par[cnt], vpd[cnt],
-                                        wind[cnt], pressure[cnt], Ca, doy, hod,
+                                        wind[cnt], pressure[cnt], Ca, doy+1, hod,
                                         lat, lon, laix)
 
             lambda_et = (c.H2OLV0 - 2.365E3 * tair[cnt]) * c.H2OMW
@@ -199,6 +198,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
 
             hod += 1
             cnt += 1
+        sys.exit()
+
 
         An_store[doy] = Anx
         An_sun_store[doy] = anxsun
@@ -247,7 +248,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
 
     fig = plt.figure(figsize=(14,8))
     fig.subplots_adjust(hspace=0.1)
-    fig.subplots_adjust(wspace=0.3)
+    fig.subplots_adjust(wspace=0.1)
     plt.rcParams['text.usetex'] = False
     plt.rcParams['font.family'] = "sans-serif"
     plt.rcParams['font.sans-serif'] = "Helvetica"
@@ -267,9 +268,12 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     #ax1.plot(An_store, label="2-leaf - Sun")
     #ax1.plot(Anc_store, label="2-leaf - CABLE")
 
-    ax1.plot(An_sun_store, label="2-leaf - Sun")
-    ax1.plot(Anc_sun_store, label="2-leaf - CABLE")
+    ax1.plot(An_sun_store, label="Me")
+    ax1.plot(Anc_sun_store, label="CABLE")
     #
+
+    ax1.set_title("Sun")
+    ax2.set_title("Shade")
 
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
@@ -294,6 +298,15 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
 
     ax1.locator_params(nbins=6, axis="y")
     ax2.locator_params(nbins=6, axis="y")
+    ax3.locator_params(nbins=6, axis="y")
+    ax4.locator_params(nbins=6, axis="y")
+    ax5.locator_params(nbins=6, axis="y")
+    ax6.locator_params(nbins=6, axis="y")
+
+    plt.setp(ax1.get_xticklabels(), visible=False)
+    plt.setp(ax2.get_xticklabels(), visible=False)
+    plt.setp(ax3.get_xticklabels(), visible=False)
+    plt.setp(ax4.get_xticklabels(), visible=False)
 
     plt.show()
 
@@ -489,6 +502,6 @@ if __name__ == '__main__':
     cab_fn = os.path.join(fpath, fname)
 
     year_to_run = 2003
-
+    year_to_run = 1996
 
     main(met_fn, flx_fn, cab_fn, year_to_run, site)
