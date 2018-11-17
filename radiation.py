@@ -86,7 +86,7 @@ def spitters(doy, sw_rad, cos_zenith):
     fbeam = 0.0
     tmpr = 0.847 + cos_zenith * (1.04 * cos_zenith - 1.61)
     tmpk = (1.47 - tmpr) / 1.66
-
+    
     if cos_zenith > 1.0e-10 and sw_rad > 10.0:
         tmprat = sw_rad / (solcon * (1.0 + 0.033 * \
                     np.cos(2. * np.pi * (doy-10.0) / 365.0)) * cos_zenith)

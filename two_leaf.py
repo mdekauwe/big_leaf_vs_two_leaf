@@ -124,13 +124,13 @@ class CoupledModel(object):
         # get diffuse/beam frac
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
 
-
+        """
         if doy  == 1:
             print(direct_frac, diffuse_frac, cos_zenith)
             pass
         elif doy== 2:
             sys.exit()
-
+        """
 
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
