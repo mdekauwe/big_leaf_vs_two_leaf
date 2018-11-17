@@ -111,8 +111,9 @@ class CoupledModel(object):
         et = np.zeros(2) # sunlit, shaded
         Tcan = np.zeros(2) # sunlit, shaded
         lai_leaf = np.zeros(2)
-        
+
         cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
         sw_rad = par * c.PAR_2_SW # W m-2
@@ -120,7 +121,7 @@ class CoupledModel(object):
         # get diffuse/beam frac
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
 
-
+        #print(direct_frac, hod, elevation)
 
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
@@ -142,6 +143,7 @@ class CoupledModel(object):
                 Cs = Ca
                 Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
+
 
                 iter = 0
                 while True:
@@ -201,8 +203,8 @@ class CoupledModel(object):
             an_canopy = np.sum(An)
             an_cansun = An[c.SUNLIT]
             an_cansha = An[c.SHADED]
-            par_sun = scalex[c.SUNLIT]#apar[c.SUNLIT]
-            par_sha = scalex[c.SHADED]#apar[c.SHADED]
+            par_sun = apar[c.SUNLIT]
+            par_sha = apar[c.SHADED]
             gsw_canopy = np.sum(gsc) * c.GSC_2_GSW
             et_canopy = np.sum(et)
             sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
@@ -385,10 +387,12 @@ if __name__ == "__main__":
     tcan_tl = np.zeros(48)
 
     hod = 0
-    for i in range(len(par)):
-
+    for i in range(48):
+        #print(hod, tair[i], par[i], vpd[i], wind, pressure, Ca, doy, hod, lat, lon, LAI)
         (An_tl[i], gsw_tl[i],
-         et_tl[i], tcan_tl[i]) = C.main(tair[i], par[i], vpd[i],
+         et_tl[i], tcan_tl[i],
+         _,_,_,_,
+         _,_) = C.main(tair[i], par[i], vpd[i],
                                         wind, pressure, Ca, doy, hod,
                                         lat, lon, LAI)
 

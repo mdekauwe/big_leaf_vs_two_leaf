@@ -79,7 +79,7 @@ def spitters(doy, sw_rad, cos_zenith):
 
     if cos_zenith < 1.0e-2:
         direct_frac = 0.0
-        
+
     return (diffuse_frac, direct_frac)
 
 def estimate_clearness(sw_rad, So):
@@ -348,7 +348,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     psi1 = 0.5 - 0.633 * lad
     psi2 = 0.877 * (1.0 - 2.0 * psi1)
     Gross = psi1 + psi2 * cos_zenith
-    1.00000005E-03
 
     LAI_THRESH = 1.00000005E-03
     RAD_THRESH = 1.00000005E-0
@@ -367,7 +366,8 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
       # nighttime evaporation - Ticket #90
       kb = 1.0e5
 
-
+    kb = Gross / cos_zenith
+    
     # beam and diffuse fracs
     Ib = par * direct_frac
     Id = par * diffuse_frac

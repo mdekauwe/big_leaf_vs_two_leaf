@@ -137,11 +137,13 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         laixsun = 0.0
         laixsha = 0.0
 
+        Anc = 0.0
+        Ec = 0.0
         Acabx = 0.0
         Ecabx = 0.0
         Lcabx = 0.0
-        anxcsun = 0.0
-        anxcsha = 0.0
+        ancsun = 0.0
+        ancsha = 0.0
         parcsun = 0.0
         parcsha = 0.0
         laicsun = 0.0
@@ -160,6 +162,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             else:
                 laix = LAI[cnt-1]
 
+            
             (An, gsw,
              et, tcan,
              an_sun, an_sha,
@@ -185,8 +188,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             ancsha += df_cab.GPP_shaded[cnt] * an_conv
             parcsun += df_cab.PAR_sunlit[cnt] / c.UMOLPERJ / c.MJ_TO_J * 1800.0
             parcsha += df_cab.PAR_shaded[cnt] / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
-            laicsun += df_cab.LAI_sunlit[cnt]
-            laicsha += df_cab.LAI_shaded[cnt]
+            #laicsun += df_cab.LAI_sunlit[cnt]
+            #laicsha += df_cab.LAI_shaded[cnt]
             Lcabx += df_cab.LAI[cnt]
             Ec += et * et_conv
 
@@ -260,11 +263,12 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     ax5 = fig.add_subplot(325)
     ax6 = fig.add_subplot(326)
 
+    #ax1.plot(An_store, label="2-leaf - Sun")
+    #ax1.plot(Anc_store, label="2-leaf - CABLE")
 
-    #ax1.plot(An_sun_store, label="2-leaf - Sun")
-    #ax1.plot(Anc_sun_store, label="2-leaf - Sun")
     ax1.plot(An_sun_store, label="2-leaf - Sun")
-    ax1.plot(Anc_sun_store, label="CABLE - Sun")
+    ax1.plot(Anc_sun_store, label="2-leaf - CABLE")
+    #
 
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
