@@ -228,7 +228,12 @@ class PenmanMonteith(object):
         """
 
         # Short wave radiation (W m-2)
-        sw_rad = par * c.PAR_2_SW
+        #sw_rad = par * c.PAR_2_SW
+
+        # this matches CABLE's logic ...  which means they are halving the
+        # SW_down that is used to compute the direct/diffuse terms and presumbly
+        # all other calcs
+        sw_rad = par / 4.6 # W m-2
 
         # absorbed short-wave radiation
         #SW_abs = self.SW_abs * math.cos(math.radians(self.angle)) * SW_rad

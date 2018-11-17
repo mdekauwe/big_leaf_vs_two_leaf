@@ -200,7 +200,6 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
 
 
             cnt += 1
-        #sys.exit()
 
 
         An_store[doy] = Anx
@@ -504,6 +503,6 @@ if __name__ == '__main__':
     cab_fn = os.path.join(fpath, fname)
 
     year_to_run = 2003
-    #year_to_run = 1996
+    #year_to_run = 1996 # debugging to get first year
 
     main(met_fn, flx_fn, cab_fn, year_to_run, site)

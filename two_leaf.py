@@ -122,20 +122,14 @@ class CoupledModel(object):
         sw_rad = par * c.PAR_2_SW # W m-2
 
         # this matches CABLE's logic ...  which means they are halving the
-        # SW_down that is used to compute the direct/diffuse terms.
-        sw_rad_double = par / 4.6 # W m-2
+        # SW_down that is used to compute the direct/diffuse terms and presumbly
+        # all other calcs
+        sw_rad_half = par / 4.6 # W m-2
 
         # get diffuse/beam frac
-        (diffuse_frac, direct_frac) = spitters(doy, sw_rad_double, cos_zenith)
+        (diffuse_frac, direct_frac) = spitters(doy, sw_rad_half, cos_zenith)
 
 
-        #if doy  == 1:
-        #    print(direct_frac, diffuse_frac, cos_zenith, sw_rad)
-        #    pass
-        #elif doy== 2:
-        #    sys.exit()
-        #if doy == 2:
-        #    sys.exit()
 
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
