@@ -422,7 +422,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     c1 = np.zeros(3)
     taul = np.zeros(2)
     refl = np.zeros(2)
-    rhocdf = np.zeros(3)
     qcan = np.zeros(2)
 
     LAI_THRESH = 1.00000005E-03
@@ -474,20 +473,9 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     rhoch = (1.0 - c1) / (1.0 + c1)
 
     # Canopy REFLection of diffuse radiation for black leaves:
-    rhocdf[0] = rhoch[0] * 2. * \
-                    (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
-                     gauss_w[1] * xk[1] / (xk[1] + extkd) + \
-                     gauss_w[2] * xk[2] / (xk[2] + extkd))
-
-    rhocdf[1] = rhoch[1] * 2. * \
-                    (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
-                     gauss_w[1] * xk[1] / (xk[1] + extkd) + \
-                     gauss_w[2] * xk[2] / (xk[2] + extkd))
-
-    rhocdf[2] = rhoch[2] * 2. * \
-                    (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
-                     gauss_w[1] * xk[1] / (xk[1] + extkd) + \
-                     gauss_w[2] * xk[2] / (xk[2] + extkd))
+    rhocdf = rhoch[0] * 2. * (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
+                gauss_w[1] * xk[1] / (xk[1] + extkd) + \
+                gauss_w[2] * xk[2] / (xk[2] + extkd))
 
     # MATCHES CABLE UP ON TO THIS POITN
 
@@ -523,7 +511,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
         # Define canopy diffuse transmittance (fraction):
         cexpkdm = np.exp(-extkdm * lai)
-        reffdf = rhocdf[0] + (albsoilsn - rhocdf[0]) * cexpkdm**2
+        reffdf = rhocdf + (albsoilsn - rhocdf) * cexpkdm**2
     else:
         cexpkdm = 0.0
 
