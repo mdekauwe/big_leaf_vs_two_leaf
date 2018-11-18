@@ -129,20 +129,22 @@ class CoupledModel(object):
         # get diffuse/beam frac
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad_half, cos_zenith)
 
+        (apar,
+         lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
+                                                      direct_frac,
+                                                      diffuse_frac, doy,
+                                                      sw_rad_half)
 
-
+        # Calculate scaling term to go from a single leaf to canopy,
+        # see Wang & Leuning 1998 appendix C
+        scalex = calc_leaf_to_canopy_scalar(lai, kb)
+        
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
 
-            (apar,
-             lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
-                                                          direct_frac,
-                                                          diffuse_frac, doy,
-                                                          sw_rad_half)
 
-            # Calculate scaling term to go from a single leaf to canopy,
-            # see Wang & Leuning 1998 appendix C
-            scalex = calc_leaf_to_canopy_scalar(lai, kb)
+
+
 
             # sunlit / shaded loop
             for ileaf in range(2):

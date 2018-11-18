@@ -5,7 +5,7 @@ import pandas as pd
 import os
 import sys
 
-site = "ES-ES1" #"FR-Pue" #"FI-Hyy"
+site = "FI-Hyy" #"FR-Pue" #"FI-Hyy"
 fpath = "/Users/mdekauwe/Downloads/"
 fname = "%s_met_and_plant_data_drought_2003.csv" % (site)
 fn = os.path.join(fpath, fname)
