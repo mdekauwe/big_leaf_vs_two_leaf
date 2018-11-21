@@ -490,11 +490,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     if np.abs(extkb - extkd) < 0.001:
         extkb = extkd + 0.001
 
-    #if direct_frac < RAD_THRESH:
-    #  # higher value precludes sunlit leaves at night. affects
-    #  # nighttime evaporation - Ticket #90
-    # extkb = 1.0e5
-
     c1 = np.sqrt(1. - taul[0] - refl[0])
     extkdm = extkd * c1
 
@@ -517,6 +512,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     ####################################
     # MATCHES CABLE UP ON TO THIS POITN
     ####################################
+
 
     cexpkbm = 0.0
     extkbm  = 0.0
@@ -563,15 +559,15 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     if doy  == 181:
         #print(qcan[c.SUNLIT])
         #print(extkb, xphi1 , cos_zenith , xphi2)
-        print(cos_zenith)
+        print(extkb, cos_zenith)
 
     elif doy== 182:
         sys.exit()
 
 
     # LAI of sunlit, shaded
-    lai_leaf[c.SUNLIT]  = (1.0 - transb) / extkb
-    lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
+    #lai_leaf[c.SUNLIT]  = (1.0 - transb) / extkb
+    #lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
     #"""
 
     return (apar, lai_leaf, kb)
