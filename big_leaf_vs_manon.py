@@ -21,8 +21,8 @@ from utils import calc_esat
 
 
 #first make sure that own modules from parent dir can be loaded
-script_dir = '/srv/ccrc/data15/z5153939/optimize_over_time'
-#script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
+#script_dir = '/srv/ccrc/data15/z5153939/optimize_over_time'
+script_dir = '/Users/mdekauwe/src/python/optimize_over_time'
 sys.path.append(os.path.abspath(script_dir))
 
 from OptModel.CH2OCoupler import profit_psi, solve_std
@@ -124,15 +124,14 @@ class CoupledModel(object):
 
             iter = 0
             while True:
-                (An,
-                 gsc) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
-                                         Jmax25=self.Jmax25,
-                                         Vcmax25=self.Vcmax25, Q10=self.Q10,
-                                         Eaj=self.Eaj, Eav=self.Eav,
-                                         deltaSj=self.deltaSj,
-                                         deltaSv=self.deltaSv,
-                                         Rd25=self.Rd25, Hdv=self.Hdv,
-                                         Hdj=self.Hdj, vpd=dleaf)
+                (An, gsc) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
+                                             Jmax25=self.Jmax25,
+                                             Vcmax25=self.Vcmax25, Q10=self.Q10,
+                                             Eaj=self.Eaj, Eav=self.Eav,
+                                             deltaSj=self.deltaSj,
+                                             deltaSv=self.deltaSv,
+                                             Rd25=self.Rd25, Hdv=self.Hdv,
+                                             Hdj=self.Hdj, vpd=dleaf)
 
                 # Calculate new Tleaf, dleaf, Cs
                 (new_tleaf, et,
@@ -160,7 +159,8 @@ class CoupledModel(object):
                     #raise Exception('No convergence: %d' % (iter))
 
                 # Update temperature & do another iteration
-                Tleaf = new_tleaf
+                #Tleaf = new_tleaf
+                Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
                 iter += 1
@@ -227,7 +227,6 @@ class CoupledModel(object):
 
         (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
                                                  wind, gsc, cmolar)
-
         if np.isclose(gsc, 0.0):
             et = 0.0
             le_et = 0.0

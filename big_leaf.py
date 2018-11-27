@@ -144,7 +144,11 @@ class CoupledModel(object):
                     break
 
                 if iter > self.iter_max:
-                    raise Exception('No convergence: %d' % (iter))
+                    #raise Exception('No convergence: %d' % (iter))
+                    An = 0.0
+                    gsc = 0.0
+                    et = 0.0
+                    break
 
                 # Update temperature & do another iteration
                 Tleaf = new_tleaf

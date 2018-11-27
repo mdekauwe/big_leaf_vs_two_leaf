@@ -127,7 +127,7 @@ class FarquharC3(object):
             self.alpha = alpha
         else:
             self.alpha = quantum_yield * absorptance # (Medlyn et al 2002)
-            
+
         self.force_vcmax_fit_pts = force_vcmax_fit_pts
         self.change_over_pt = change_over_pt
         self.model_Q10 = model_Q10

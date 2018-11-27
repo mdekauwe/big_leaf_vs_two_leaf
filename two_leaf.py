@@ -24,6 +24,7 @@ from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
 from radiation import calculate_solar_geometry, spitters
 from radiation import calculate_absorbed_radiation
+from radiation import sinbet
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -110,25 +111,40 @@ class CoupledModel(object):
         gsc = np.zeros(2)  # sunlit, shaded
         et = np.zeros(2) # sunlit, shaded
         Tcan = np.zeros(2) # sunlit, shaded
+        lai_leaf = np.zeros(2)
 
-        cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+        #cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+        cos_zenith = sinbet(doy, lat, hod)
+
+        #print(doy, lat, hod, cos_zenith)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
         sw_rad = par * c.PAR_2_SW # W m-2
 
+        # this matches CABLE's logic ...  which means they are halving the
+        # SW_down that is used to compute the direct/diffuse terms and presumbly
+        # all other calcs
+        sw_rad_half = par / 4.6 # W m-2
+
         # get diffuse/beam frac
-        (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
+        (diffuse_frac, direct_frac) = spitters(doy, sw_rad_half, cos_zenith)
 
+        (apar,
+         lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
+                                                      direct_frac,
+                                                      diffuse_frac, doy,
+                                                      sw_rad_half)
+
+        # Calculate scaling term to go from a single leaf to canopy,
+        # see Wang & Leuning 1998 appendix C
+        scalex = calc_leaf_to_canopy_scalar(lai, kb)
+
+        if lai_leaf[0] < 1.e-3: # to match line 336 of CABLE radiation
+            scalex[0] = 0.
+        
         # Is the sun up?
-        if elevation > 0.0 and par > 50.0:
+        if elevation > 0.0 and par > 50.:
 
-            (apar,
-             lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
-                                                          direct_frac,
-                                                          diffuse_frac)
-            # Calculate scaling term to go from a single leaf to canopy,
-            # see Wang & Leuning 1998 appendix C
-            scalex = calc_leaf_to_canopy_scalar(lai, kb)
 
             # sunlit / shaded loop
             for ileaf in range(2):
@@ -139,21 +155,26 @@ class CoupledModel(object):
                 Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
+
                 iter = 0
                 while True:
-                    (An[ileaf],
-                     gsc[ileaf]) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
-                                                    Par=apar[ileaf],
-                                                    Jmax25=self.Jmax25,
-                                                    Vcmax25=self.Vcmax25,
-                                                    Q10=self.Q10, Eaj=self.Eaj,
-                                                    Eav=self.Eav,
-                                                    deltaSj=self.deltaSj,
-                                                    deltaSv=self.deltaSv,
-                                                    Rd25=self.Rd25,
-                                                    Hdv=self.Hdv,
-                                                    Hdj=self.Hdj, vpd=dleaf,
-                                                    scalex=scalex[ileaf])
+
+                    if scalex[ileaf] > 0.:
+                        (An[ileaf],
+                         gsc[ileaf]) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
+                                                        Par=apar[ileaf],
+                                                        Jmax25=self.Jmax25,
+                                                        Vcmax25=self.Vcmax25,
+                                                        Q10=self.Q10, Eaj=self.Eaj,
+                                                        Eav=self.Eav,
+                                                        deltaSj=self.deltaSj,
+                                                        deltaSv=self.deltaSv,
+                                                        Rd25=self.Rd25,
+                                                        Hdv=self.Hdv,
+                                                        Hdj=self.Hdj, vpd=dleaf,
+                                                        scalex=scalex[ileaf])
+                    else:
+                        An[ileaf], gsc[ileaf] = 0., 0.
 
                     # Calculate new Tleaf, dleaf, Cs
                     (new_tleaf, et[ileaf],
@@ -180,7 +201,11 @@ class CoupledModel(object):
                         break
 
                     if iter > self.iter_max:
-                        raise Exception('No convergence: %d' % (iter))
+                        #raise Exception('No convergence: %d' % (iter))
+                        An[ileaf] = 0.0
+                        gsc[ileaf] = 0.0
+                        et[ileaf] = 0.0
+                        break
 
                     # Update temperature & do another iteration
                     Tleaf = new_tleaf
@@ -191,18 +216,31 @@ class CoupledModel(object):
 
             # scale to canopy: sum contributions from beam and diffuse leaves
             an_canopy = np.sum(An)
+            an_cansun = An[c.SUNLIT]
+            an_cansha = An[c.SHADED]
+            par_sun = apar[c.SUNLIT]
+            par_sha = apar[c.SHADED]
             gsw_canopy = np.sum(gsc) * c.GSC_2_GSW
             et_canopy = np.sum(et)
             sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
             sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
             tcanopy = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
+            lai_sun = lai_leaf[c.SUNLIT]
+            lai_sha = lai_leaf[c.SHADED]
         else:
             an_canopy = 0.0
+            an_cansun = 0.0
+            an_cansha = 0.0
             gsw_canopy = 0.0
             et_canopy = 0.0
+            par_sun = 0.0
+            par_sha = 0.0
             tcanopy = tair
+            lai_sun = 0.0
+            lai_sha = lai
 
-        return (an_canopy, gsw_canopy, et_canopy, tcanopy)
+        return (an_canopy, gsw_canopy, et_canopy, tcanopy, an_cansun, an_cansha,
+                par_sun, par_sha, lai_sun, lai_sha)
 
 
     def calc_leaf_temp(self, P=None, tleaf=None, tair=None, gsc=None, par=None,
@@ -306,6 +344,13 @@ def calc_leaf_to_canopy_scalar(lai, kb):
     scalex[c.SUNLIT] = (1.0 - exp(-(kb + kn) * lai)) / (kb + kn)
     scalex[c.SHADED] = (1.0 - exp(-kn * lai)) / kn - scalex[c.SUNLIT]
 
+    # Taken from CABLE, will need to pass tings to use
+    #scalex[c.SUNLIT] = (1.0 - transb * cf2n) / (extkb + extkn)
+    #scalex[c.SHADED] = (1.0 - cf2n) / extkn - scalex[c.SUNLIT]
+
+    #scalex[c.SUNLIT] = lai * (1.0 - exp(-kn - kb * lai)) / (kn + kb * lai)
+    #scalex[c.SHADED] = lai * (1.0 - exp(-kn)) / kn - scalex[c.SUNLIT]
+
     return scalex
 
 if __name__ == "__main__":
@@ -363,10 +408,11 @@ if __name__ == "__main__":
     tcan_tl = np.zeros(48)
 
     hod = 0
-    for i in range(len(par)):
-
+    for i in range(48):
         (An_tl[i], gsw_tl[i],
-         et_tl[i], tcan_tl[i]) = C.main(tair[i], par[i], vpd[i],
+         et_tl[i], tcan_tl[i],
+         _,_,_,_,
+         _,_) = C.main(tair[i], par[i], vpd[i],
                                         wind, pressure, Ca, doy, hod,
                                         lat, lon, LAI)
 

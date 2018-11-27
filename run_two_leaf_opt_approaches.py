@@ -23,8 +23,8 @@ from get_days_met_forcing import get_met_data
 from radiation import calculate_solar_geometry
 
 # first make sure that own modules from parent dir can be loaded
-script_dir = '/srv/ccrc/data15/z5153939/two_leaf_optimisation'
-#script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
+#script_dir = '/srv/ccrc/data15/z5153939/two_leaf_optimisation'
+script_dir = '/Users/mdekauwe/src/python/two_leaf_optimisation'
 sys.path.append(os.path.abspath(script_dir))
 
 from OptModel.CH2OCoupler import profit_psi, solve_std
@@ -86,7 +86,7 @@ def main():
     # among leaves in a canopy and depends on the architecture of the canopy.
     SW_abs = 0.8 # use canopy absorptance of solar radiation
 
-    """
+
     ##
     ### Run Big-leaf
     ##
@@ -109,7 +109,7 @@ def main():
                                         lat, lon, LAI)
 
         hod += 1
-    
+
     ##
     ### Run 2-leaf
     ##
@@ -132,7 +132,7 @@ def main():
                                         lat, lon, LAI)
 
         hod += 1
-    """
+
 
     ##
     ### Run 2-leaf opt
@@ -216,7 +216,7 @@ def main():
             Eo[i], gso[i], Ao[i], __, __ = solve_std(p, p.fc,
                                                      photo='Farquhar')
 
-            """
+            #"""
             try:
                 fstom_opt_psi, Eo[i], gso[i], Ao[i], _, _ = profit_psi(p,
                                                                photo='Farquhar',
@@ -228,7 +228,7 @@ def main():
             except (ValueError, AttributeError):
                 (Eo[i], gso[i], Ao[i]) = (0., 0., 0.)
 
-            """
+            #"""
 
         hod += 1
 
@@ -263,25 +263,22 @@ def main():
     ax3 = fig.add_subplot(133)
 
     #ax1.plot(np.arange(48)/2., An_bl, label="Big leaf")
-    #ax1.plot(np.arange(48)/2., An_tl, label="Two leaf")
+    ax1.plot(np.arange(48)/2., An_tl, label="Two leaf")
     ax1.plot(np.arange(48)/2., An_tlo, label="Two leaf Opt")
-    #ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon")
-    ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon-Medlyn")
+    ax1.plot(np.arange(48)/2., Ao, label="Two leaf Manon")
     ax1.legend(numpoints=1, loc="best")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
 
     #ax2.plot(np.arange(48)/2., et_bl * c.MOL_TO_MMOL, label="Big leaf")
-    #ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
+    ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Two leaf")
     ax2.plot(np.arange(48)/2., et_tlo * c.MOL_TO_MMOL, label="Two leaf opt")
-    #ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon")
-    ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon-Medlyn")
+    ax2.plot(np.arange(48)/2., Eo, label="Two leaf Manon")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
     ax2.set_xlabel("Hour of day")
 
 
     #ax3.plot(np.arange(48)/2., tcan_bl, label="Tcanopy$_{1leaf}$")
-    #ax3.plot(np.arange(48)/2., tcan_tl, label="Tcanopy$_{2leaf}$")
-    ax3.plot(np.arange(48)/2., tcan_tlo, label="Tcanopy$_{2leaf}$")
+    ax3.plot(np.arange(48)/2., tcan_tl, label="Tcanopy$_{2leaf}$")
     ax3.plot(np.arange(48)/2., tair, label="Tair")
     ax3.set_ylabel("Temperature (deg C)")
     ax3.legend(numpoints=1, loc="best")
