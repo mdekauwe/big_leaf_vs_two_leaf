@@ -276,17 +276,17 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
         if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
 
-            cf1 = diffuse_frac * (1.0 - reffdf[b])
+            cf1 = diffuse_frac * (1.0 - reffdf[b]) * kdm[b]
             cf2 = (1.0 - transb * cexpkdm[b]) / (kb + kdm[b])
             cf3 = (1.0 - transb * cexpkbm[b]) / (kb + kbm[b])
             cf4 = (1.0 - tau[b] - refl[b]) * kb
             cf5 = (1.0 - transb) / kb - (1.0 - transb**2) / (kb + kb)
 
-            qcan[c.SUNLIT,b] = sw_rad[b] * (cf1 * kdm[b] * cf2 + \
+            qcan[c.SUNLIT,b] = sw_rad[b] * (cf1 * cf2 + \
                                 direct_frac * (1.0 - reffbm[b]) * kbm[b] * \
                                 cf3 + direct_frac * cf4 * cf5)
 
-            qcan[c.SHADED,b] = sw_rad[b] * (cf1 * kdm[b] * \
+            qcan[c.SHADED,b] = sw_rad[b] * (cf1 * \
                                 ((1.0 - cexpkdm[b]) / kdm[b] - cf2) + \
                                 direct_frac * (1. - reffbm[b]) * kbm[b] * \
                                 ((1.0 - cexpkbm[b]) / kbm[b] - cf3) - \
