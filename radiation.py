@@ -72,7 +72,7 @@ def spitters(doy, sw_rad, cos_zenith):
     return (diffuse_frac, fbeam)
 
 def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
-                                 diffuse_frac, doy, sw_rad, tair):
+                                 diffuse_frac, doy, sw_rad, tair, refl, tau):
     """
     Calculate absorded irradiance of sunlit and shaded fractions of
     the canopy.
@@ -91,24 +91,18 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     apar = np.zeros(2)
     lai_leaf = np.zeros(2)
     cexpkdm = np.zeros(2)
-    extkdm = np.zeros(2)
-    xk = np.zeros(3) # set to zero, i.e. bare soil
+    kdm = np.zeros(2)
+    kbx = np.zeros(3)
     gauss_w = np.array([0.308, 0.514, 0.178]) # Gaussian integ. weights
     cos3 = np.zeros(3)
     c1 = np.zeros(3)
     reffdf = np.zeros(2)
-    extkbm = np.zeros(2)
+    kbm = np.zeros(2)
     rhocbm = np.zeros(2)
     reffbm = np.zeros(2)
     cexpkbm = np.zeros(2)
     rhocdf = np.zeros(3)
     albsoilsn = np.zeros(2)
-
-    # leaf transmissivity [-] (VIS: 0.07 - 0.15)
-    taul = np.array([0.09, 0.09]) # ENF: 0.05; EBF: 0.05; DBF: 0.05; C3G: 0.070
-
-    # leaf reflectance [-] (VIS:0.07 - 0.15)
-    refl = np.array([0.09, 0.09]) # ENF: 0.062;EBF: 0.076;DBF: 0.092; C3G: 0.11
 
     tk = tair + c.DEG_2_KELVIN
 
@@ -143,49 +137,49 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     cos3[1] = np.cos(np.deg2rad(45.0))
     cos3[2] = np.cos(np.deg2rad(75.0))
 
-    # leaf angle distribution param, = 0 for spherical LAD
-    xfang = 9.99999978E-03
+    # empirical param related to the leaf angle dist (= 0 for spherical LAD)
+    chi = 9.99999978E-03
 
     # leaf angle parmameter 1
-    xphi1 = 0.5 - xfang * (0.633 + 0.33 * xfang)
+    xphi1 = 0.5 - chi * (0.633 + 0.33 * chi)
 
     # leaf angle parmameter 2
     xphi2 = 0.877 * (1.0 - 2.0 * xphi1)
 
-    # ratio of the projected area of leaves in the direction perpendicular to
-    # the direction of incident solar radiation and the actual leaf area,
-    # approximated as (eqn 28, Kowalcyk et al. 2006)
-    G = xphi1 + xphi2 * cos_zenith
+    # Ross-Goudriaan function is the ratio of the projected area of leaves
+    # in the direction perpendicular to the direction of incident solar
+    # radiation and the actual leaf area. Approximated as eqn 28,
+    # Kowalcyk et al. 2006)
+    Gross = xphi1 + xphi2 * cos_zenith
 
     # extinction coefficient of direct beam radiation for a canopy with black
     # leaves, eq 26 Kowalcyk et al. 2006
     if lai > c.LAI_THRESH and direct_frac > c.RAD_THRESH:   # vegetated
-        extkb = G / cos_zenith
+        kb = Gross / cos_zenith
     else:   # i.e. bare soil
-        extkb = 0.5
-
-    # Extinction coefficient for beam radiation and black leaves;
-    # eq. B6, Wang and Leuning, 1998
-    if lai > c.LAI_THRESH: # vegetated
-        xk[0] = xphi1 / cos3[0] + xphi2
-        xk[1] = xphi1 / cos3[1] + xphi2
-        xk[2] = xphi1 / cos3[2] + xphi2
+        kb = 0.5
 
     # extinction coefficient of diffuse radiation for a canopy with black
     # leaves, eq 27 Kowalcyk et al. 2006
     if lai > c.LAI_THRESH:  # vegetated
-        extkd = -np.log(np.sum(gauss_w * np.exp(-xk * lai))) / lai
-    else:   # i.e. bare soil
-        extkd = 0.7
 
-    if np.abs(extkb - extkd) < c.RAD_THRESH:
-        extkb = extkd + c.RAD_THRESH
+        # Approximate integration of kb
+        kbx[0] = (xphi1 + xphi2 * cos3[0]) / cos3[0]
+        kbx[1] = (xphi1 + xphi2 * cos3[1]) / cos3[1]
+        kbx[2] = (xphi1 + xphi2 * cos3[2]) / cos3[2]
+
+        kd = -np.log(np.sum(gauss_w * np.exp(-kbx * lai))) / lai
+    else:   # i.e. bare soil
+        kd = 0.7
+
+    if np.abs(kb - kd) < c.RAD_THRESH:
+        kb = kd + c.RAD_THRESH
 
     if direct_frac < c.RAD_THRESH:
-        extkb = 1.e5
+        kb = 1.e5
 
-    c1[0] = np.sqrt(1. - taul[0] - refl[0])
-    c1[1] = np.sqrt(1. - taul[1] - refl[1])
+    c1[0] = np.sqrt(1. - tau[0] - refl[0])
+    c1[1] = np.sqrt(1. - tau[1] - refl[1])
     c1[2] = 1.0
 
     # Canopy reflection black horiz leaves
@@ -195,20 +189,20 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
     # default which comes half Belinda's head and is supported by fig 10 in
     # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
-    #extkn = 0.3
-    extkn = 0.001
+    #kn = 0.3
+    kn = 0.001
 
     # Relative leaf nitrogen concentration within canopy:
-    cf2n = np.exp(-extkn * lai)
+    cf2n = np.exp(-kn * lai)
 
     # fraction SW beam tranmitted through canopy
-    transb = np.exp(-min(extkb * lai, 20.))
+    transb = np.exp(-min(kb * lai, 20.))
 
     if lai > c.LAI_THRESH: # where vegetated
         # Diffuse SW transmission fraction ("black" leaves, extinction neglects
         # leaf SW transmittance and REFLectance);
         # from Monsi & Saeki 1953, quoted in eq. 18 of Sellers 1985:
-        transd = np.exp(-extkd * lai)
+        transd = np.exp(-kd * lai)
     else:
         transd = 1.0
 
@@ -216,9 +210,9 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
         # Canopy reflection of diffuse radiation for black leaves:
         rhocdf[b] = rhoch[b] * 2. * \
-                        (gauss_w[0] * xk[0] / (xk[0] + extkd) + \
-                         gauss_w[1] * xk[1] / (xk[1] + extkd) + \
-                         gauss_w[2] * xk[2] / (xk[2] + extkd))
+                        (gauss_w[0] * kbx[0] / (kbx[0] + kd) + \
+                         gauss_w[1] * kbx[1] / (kbx[1] + kd) + \
+                         gauss_w[2] * kbx[2] / (kbx[2] + kd))
 
     # Calculate albedo
     soil_reflectance = 0.0665834472
@@ -238,10 +232,10 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     for b in range(2): #0 = visible; 1 = nir radiation
 
         # modified k diffuse(6.20)(for leaf scattering)
-        extkdm[b] = extkd * c1[b]
+        kdm[b] = kd * c1[b]
 
         # Define canopy diffuse transmittance (fraction):
-        cexpkdm[b] = np.exp(-extkdm[b] * lai)
+        cexpkdm[b] = np.exp(-kdm[b] * lai)
 
         # Calculate effective diffuse reflectance (fraction)
         if lai > 0.001:
@@ -251,15 +245,15 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
         # where vegetated and sunlit
         if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
-            extkbm[b] = extkb * c1[b]
+            kbm[b] = kb * c1[b]
         else:
-            extkbm[b] = 1.e-9
+            kbm[b] = 1.e-9
 
         # Canopy reflection (6.21) beam:
-        rhocbm[b] = 2. * extkb / (extkb + extkd) * rhoch[b]
+        rhocbm[b] = 2. * kb / (kb + kd) * rhoch[b]
 
         # Canopy beam transmittance (fraction):
-        cexpkbm[b] = np.exp(-min(extkbm[b] * lai, 20.))
+        cexpkbm[b] = np.exp(-min(kbm[b] * lai, 20.))
 
         # Calculate effective beam reflectance (fraction):
         reffbm[b] = rhocbm[b] + (albsoilsn[b] - rhocbm[b]) * cexpkbm[b]**2
@@ -269,10 +263,10 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
         reffbm[b] = albsoilsn[b]
 
     # Longwave radiation absorbed by sunlit canopy fraction:
-    qcan[c.SUNLIT,c.LW] = (flws - flwv) * extkd * \
-                            (transd - transb) / (extkb - extkd) + \
-                            (emissivity_air - emissivity_leaf) * extkd * \
-                            flpwb * (1.0 - transd * transb) / (extkb + extkd)
+    qcan[c.SUNLIT,c.LW] = (flws - flwv) * kd * \
+                            (transd - transb) / (kb - kd) + \
+                            (emissivity_air - emissivity_leaf) * kd * \
+                            flpwb * (1.0 - transd * transb) / (kb + kd)
 
     # Longwave radiation absorbed by shaded canopy fraction:
     qcan[c.SHADED,c.LW] = (1.0 - transd) * (flws + lw_down - 2.0 * flwv) - \
@@ -283,19 +277,19 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
         if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
 
             cf1 = diffuse_frac * (1.0 - reffdf[b])
-            cf2 = (1.0 - transb * cexpkdm[b]) / (extkb + extkdm[b])
-            cf3 = (1.0 - transb * cexpkbm[b]) / (extkb + extkbm[b])
-            cf4 = (1.0 - taul[b] - refl[b]) * extkb
-            cf5 = (1.0 - transb) / extkb - (1.0 - transb**2) / (extkb + extkb)
+            cf2 = (1.0 - transb * cexpkdm[b]) / (kb + kdm[b])
+            cf3 = (1.0 - transb * cexpkbm[b]) / (kb + kbm[b])
+            cf4 = (1.0 - tau[b] - refl[b]) * kb
+            cf5 = (1.0 - transb) / kb - (1.0 - transb**2) / (kb + kb)
 
-            qcan[c.SUNLIT,b] = sw_rad[b] * (cf1 * extkdm[b] * cf2 + \
-                                direct_frac * (1.0 - reffbm[b]) * extkbm[b] * \
+            qcan[c.SUNLIT,b] = sw_rad[b] * (cf1 * kdm[b] * cf2 + \
+                                direct_frac * (1.0 - reffbm[b]) * kbm[b] * \
                                 cf3 + direct_frac * cf4 * cf5)
 
-            qcan[c.SHADED,b] = sw_rad[b] * (cf1 * extkdm[b] * \
-                                ((1.0 - cexpkdm[b]) / extkdm[b] - cf2) + \
-                                direct_frac * (1. - reffbm[b]) * extkbm[b] * \
-                                ((1.0 - cexpkbm[b]) / extkbm[b] - cf3) - \
+            qcan[c.SHADED,b] = sw_rad[b] * (cf1 * kdm[b] * \
+                                ((1.0 - cexpkdm[b]) / kdm[b] - cf2) + \
+                                direct_frac * (1. - reffbm[b]) * kbm[b] * \
+                                ((1.0 - cexpkbm[b]) / kbm[b] - cf3) - \
                                 direct_frac * cf4 * cf5)
 
     apar[c.SUNLIT] = qcan[c.SUNLIT,c.VIS] * c.J_TO_UMOL
@@ -307,13 +301,13 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
     # where vegetated and sunlit
     if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
-        lai_leaf[c.SUNLIT] = (1.0 - transb) / extkb
+        lai_leaf[c.SUNLIT] = (1.0 - transb) / kb
     else:
         lai_leaf[c.SUNLIT] = 0.0
 
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
 
-    return (qcan, apar, lai_leaf, extkb, extkn, cf2n, transb)
+    return (qcan, apar, lai_leaf, kb, kn, cf2n, transb)
 
 def calculate_cos_zenith(doy, xslat, hod):
 

@@ -58,6 +58,14 @@ class CoupledModel(object):
         self.SW_abs = SW_abs # leaf abs of solar rad [0,1]
         self.gs_model = gs_model
         self.iter_max = iter_max
+        # leaf transmissivity [-] (VIS: 0.07 - 0.15)
+        # ENF: 0.05; EBF: 0.05; DBF: 0.05; C3G: 0.070
+        self.tau = np.array([0.09, 0.3])
+
+        # leaf reflectance [-] (VIS:0.07 - 0.15)
+        # ENF: 0.062;EBF: 0.076;DBF: 0.092; C3G: 0.11
+        self.refl = np.array([0.09, 0.3])
+
 
 
     def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod, lat, lon,
@@ -126,7 +134,8 @@ class CoupledModel(object):
          kn, cf2n, transb) = calculate_absorbed_radiation(par, cos_zenith, lai,
                                                           direct_frac,
                                                           diffuse_frac, doy,
-                                                          sw_rad, tair)
+                                                          sw_rad, tair,
+                                                          self.refl, self.tau)
 
         # Calculate scaling term to go from a single leaf to canopy,
         # see Wang & Leuning 1998 appendix C
@@ -232,7 +241,8 @@ class CoupledModel(object):
             lai_sun = 0.0
             lai_sha = lai
 
-        return (an_canopy, gsw_canopy, et_canopy, tcanopy)
+        return (an_canopy, gsw_canopy, et_canopy, tcanopy, an_cansun, an_cansha,
+                par_sun, par_sha, lai_sun, lai_sha)
 
 
     def calc_leaf_temp(self, P=None, tleaf=None, tair=None, gsc=None, par=None,
@@ -332,7 +342,7 @@ if __name__ == "__main__":
     D0 = 1.5 # kpa
     Vcmax25 = 60.0
     Jmax25 = Vcmax25 * 1.67
-    Rd25 = None
+    Rd25 = 2.0
     Eaj = 30000.0
     Eav = 60000.0
     deltaSj = 650.0
