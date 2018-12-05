@@ -22,8 +22,9 @@ import math
 import constants as c
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
-from radiation import calculate_solar_geometry, spitters
+from radiation import spitters
 from radiation import calculate_absorbed_radiation
+from radiation import calculate_cos_zenith, calc_leaf_to_canopy_scalar
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -57,8 +58,6 @@ class CoupledModel(object):
         self.SW_abs = SW_abs # leaf abs of solar rad [0,1]
         self.gs_model = gs_model
         self.iter_max = iter_max
-
-        self.emissivity_leaf = 0.99   # emissivity of leaf (-)
 
 
     def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod, lat, lon,
@@ -100,7 +99,7 @@ class CoupledModel(object):
             transpiration (mol H2O m-2 s-1)
         """
 
-        F = FarquharC3(theta_J=0.85, peaked_Jmax=True, peaked_Vcmax=True,
+        F = FarquharC3(theta_J=0.7, peaked_Jmax=True, peaked_Vcmax=True,
                        model_Q10=True, gs_model=self.gs_model,
                        gamma=self.gamma, g0=self.g0,
                        g1=self.g1, D0=self.D0, alpha=self.alpha)
@@ -110,25 +109,35 @@ class CoupledModel(object):
         gsc = np.zeros(2)  # sunlit, shaded
         et = np.zeros(2) # sunlit, shaded
         Tcan = np.zeros(2) # sunlit, shaded
+        lai_leaf = np.zeros(2)
+        sw_rad = np.zeros(2) # VIS, NIR
 
-        cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+        cos_zenith = calculate_cos_zenith(doy, lat, hod)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
-        sw_rad = par * c.PAR_2_SW # W m-2
+        sw_rad[c.VIS] = 0.5 * (par * c.PAR_2_SW) # W m-2
+        sw_rad[c.NIR] = 0.5 * (par * c.PAR_2_SW) # W m-2
 
-        # get diffuse/beam frac
-        (diffuse_frac, direct_frac) = spitters(doy, sw_rad, cos_zenith)
+        # get diffuse/beam frac, just use VIS as the answer is the same for NIR
+        (diffuse_frac, direct_frac) = spitters(doy, sw_rad[0], cos_zenith)
+
+        (qcan, apar,
+         lai_leaf, kb,
+         kn, cf2n, transb) = calculate_absorbed_radiation(par, cos_zenith, lai,
+                                                          direct_frac,
+                                                          diffuse_frac, doy,
+                                                          sw_rad, tair)
+
+        # Calculate scaling term to go from a single leaf to canopy,
+        # see Wang & Leuning 1998 appendix C
+        scalex = calc_leaf_to_canopy_scalar(lai, kb, kn, cf2n, transb)
+
+        if lai_leaf[0] < 1.e-3: # to match line 336 of CABLE radiation
+            scalex[0] = 0.
 
         # Is the sun up?
-        if elevation > 0.0 and par > 50.0:
+        if elevation > 0.0 and par > 50.:
 
-            (apar,
-             lai_leaf, kb) = calculate_absorbed_radiation(par, cos_zenith, lai,
-                                                          direct_frac,
-                                                          diffuse_frac)
-            # Calculate scaling term to go from a single leaf to canopy,
-            # see Wang & Leuning 1998 appendix C
-            scalex = calc_leaf_to_canopy_scalar(lai, kb)
 
             # sunlit / shaded loop
             for ileaf in range(2):
@@ -139,29 +148,34 @@ class CoupledModel(object):
                 Tleaf = tair
                 Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
+
                 iter = 0
                 while True:
-                    (An[ileaf],
-                     gsc[ileaf]) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
-                                                    Par=apar[ileaf],
-                                                    Jmax25=self.Jmax25,
-                                                    Vcmax25=self.Vcmax25,
-                                                    Q10=self.Q10, Eaj=self.Eaj,
-                                                    Eav=self.Eav,
-                                                    deltaSj=self.deltaSj,
-                                                    deltaSv=self.deltaSv,
-                                                    Rd25=self.Rd25,
-                                                    Hdv=self.Hdv,
-                                                    Hdj=self.Hdj, vpd=dleaf,
-                                                    scalex=scalex[ileaf])
+
+                    if scalex[ileaf] > 0.:
+                        (An[ileaf],
+                         gsc[ileaf]) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K,
+                                                        Par=apar[ileaf],
+                                                        Jmax25=self.Jmax25,
+                                                        Vcmax25=self.Vcmax25,
+                                                        Q10=self.Q10, Eaj=self.Eaj,
+                                                        Eav=self.Eav,
+                                                        deltaSj=self.deltaSj,
+                                                        deltaSv=self.deltaSv,
+                                                        Rd25=self.Rd25,
+                                                        Hdv=self.Hdv,
+                                                        Hdj=self.Hdj, vpd=dleaf,
+                                                        scalex=scalex[ileaf])
+                    else:
+                        An[ileaf], gsc[ileaf] = 0., 0.
 
                     # Calculate new Tleaf, dleaf, Cs
                     (new_tleaf, et[ileaf],
                      le_et, gbH, gw) = self.calc_leaf_temp(P, Tleaf, tair,
                                                            gsc[ileaf],
-                                                           apar[ileaf],
-                                                           vpd, pressure,
-                                                           wind, rnet=rnet,
+                                                           None, vpd, pressure,
+                                                           wind,
+                                                           rnet=qcan[ileaf],
                                                            lai=lai_leaf[ileaf])
 
                     gbc = gbH * c.GBH_2_GBC
@@ -180,7 +194,11 @@ class CoupledModel(object):
                         break
 
                     if iter > self.iter_max:
-                        raise Exception('No convergence: %d' % (iter))
+                        #raise Exception('No convergence: %d' % (iter))
+                        An[ileaf] = 0.0
+                        gsc[ileaf] = 0.0
+                        et[ileaf] = 0.0
+                        break
 
                     # Update temperature & do another iteration
                     Tleaf = new_tleaf
@@ -191,16 +209,28 @@ class CoupledModel(object):
 
             # scale to canopy: sum contributions from beam and diffuse leaves
             an_canopy = np.sum(An)
+            an_cansun = An[c.SUNLIT]
+            an_cansha = An[c.SHADED]
+            par_sun = apar[c.SUNLIT]
+            par_sha = apar[c.SHADED]
             gsw_canopy = np.sum(gsc) * c.GSC_2_GSW
             et_canopy = np.sum(et)
             sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
             sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
             tcanopy = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
+            lai_sun = lai_leaf[c.SUNLIT]
+            lai_sha = lai_leaf[c.SHADED]
         else:
             an_canopy = 0.0
+            an_cansun = 0.0
+            an_cansha = 0.0
             gsw_canopy = 0.0
             et_canopy = 0.0
+            par_sun = 0.0
+            par_sha = 0.0
             tcanopy = tair
+            lai_sun = 0.0
+            lai_sha = lai
 
         return (an_canopy, gsw_canopy, et_canopy, tcanopy)
 
@@ -249,9 +279,9 @@ class CoupledModel(object):
         # convert from mm s-1 to mol m-2 s-1
         cmolar = pressure / (c.RGAS * tair_k)
 
-        # W m-2 = J m-2 s-1
         if rnet is None:
             rnet = P.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
+
 
         (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
                                                  wind, gsc, cmolar, lai)
@@ -277,39 +307,7 @@ class CoupledModel(object):
 
         return (new_Tleaf, et, le_et, gbH, gw)
 
-def calc_leaf_to_canopy_scalar(lai, kb):
-    """
-    Calculate scalar to transform beam/diffuse leaf Vcmax, Jmax and Rd values
-    to big leaf values.
 
-    - Insert eqn C6 & C7 into B5
-
-    Parameters:
-    ----------
-    lai : float
-        leaf area index
-    kb : float
-        beam extinction coefficient for black leaves
-
-    References:
-    ----------
-    * Wang and Leuning (1998) AFm, 91, 89-111; particularly the Appendix.
-    """
-    scalex = np.zeros(2)
-
-    # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
-    # default which comes half Belinda's head and is supported by fig 10 in
-    # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
-    kn = 0.3
-
-    # Parameters to scale up from single leaf to the big leaves
-    scalex[c.SUNLIT] = (1.0 - exp(-(kb + kn) * lai)) / (kb + kn)
-    scalex[c.SHADED] = (1.0 - exp(-kn * lai)) / kn - scalex[c.SUNLIT]
-
-    #scalex[c.SUNLIT] = lai * (1.0 - exp(-kn - kb * lai)) / (kn + kb * lai)
-    #scalex[c.SHADED] = lai * (1.0 - exp(-kn)) / kn - scalex[c.SUNLIT]
-
-    return scalex
 
 if __name__ == "__main__":
 
@@ -334,7 +332,7 @@ if __name__ == "__main__":
     D0 = 1.5 # kpa
     Vcmax25 = 60.0
     Jmax25 = Vcmax25 * 1.67
-    Rd25 = 2.0
+    Rd25 = None
     Eaj = 30000.0
     Eav = 60000.0
     deltaSj = 650.0
@@ -366,8 +364,7 @@ if __name__ == "__main__":
     tcan_tl = np.zeros(48)
 
     hod = 0
-    for i in range(len(par)):
-
+    for i in range(48):
         (An_tl[i], gsw_tl[i],
          et_tl[i], tcan_tl[i]) = C.main(tair[i], par[i], vpd[i],
                                         wind, pressure, Ca, doy, hod,

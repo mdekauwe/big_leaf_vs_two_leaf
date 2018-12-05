@@ -127,7 +127,7 @@ class FarquharC3(object):
             self.alpha = alpha
         else:
             self.alpha = quantum_yield * absorptance # (Medlyn et al 2002)
-
+        
         self.force_vcmax_fit_pts = force_vcmax_fit_pts
         self.change_over_pt = change_over_pt
         self.model_Q10 = model_Q10
@@ -203,10 +203,6 @@ class FarquharC3(object):
         # Effect of temp on CO2 compensation point
         gamma_star = self.arrh(self.gamstar25, self.Eag, Tleaf)
 
-        # Calculations at 25 degrees C or the measurement temperature
-        if Rd25 is not None:
-            Rd = self.calc_resp(Tleaf, Q10, Rd25, Ear)
-
         # Calculate temperature dependancies on Vcmax and Jmax
         if Vcmax25 is not None:
             # Effect of temperature on Vcmax and Jamx
@@ -220,6 +216,12 @@ class FarquharC3(object):
                 Jmax = self.peaked_arrh(Jmax25, Eaj, Tleaf, deltaSj, Hdj)
             else:
                 Jmax = self.arrh(Jmax25, Eaj, Tleaf)
+
+        # Calculations at 25 degrees C or the measurement temperature
+        if Rd25 is not None:
+            Rd = self.calc_resp(Tleaf, Q10, Rd25, Ear)
+        else:
+            Rd = 0.015 * Vcmax
 
         # Scaling from single leaf to canopy, see Wang & Leuning 1998 appendix C
         if scalex is not None:

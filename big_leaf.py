@@ -14,7 +14,9 @@ import numpy as np
 import constants as c
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
-from radiation import calculate_solar_geometry
+from radiation import spitters
+from radiation import calculate_absorbed_radiation
+from radiation import calculate_cos_zenith, calc_leaf_to_canopy_scalar
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -103,7 +105,7 @@ class CoupledModel(object):
         Tleaf = tair
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
-        cos_zenith = calculate_solar_geometry(doy, hod, lat, lon)
+        cos_zenith = calculate_cos_zenith(doy, lat, hod)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
 

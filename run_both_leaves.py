@@ -35,38 +35,15 @@ def main():
     pressure = 101325.0
     Ca = 400.0
 
-    lat = 61.8474
-    lon = 24.2948
-
-    fpath = "/Users/mdekauwe/Downloads/"
-    fname = "Hyytiala_met_and_plant_data_drought_2003.csv"
-    fn = os.path.join(fpath, fname)
-    df = pd.read_csv(fn, skiprows=range(1,2))
-
-    dox = int(doy) * 48
-    par = df.PPFD.iloc[dox:dox+48].values
-
-    tair = df.Tair.iloc[dox:dox+48].values
-    vpd = df.VPD.iloc[dox:dox+48].values
-    wind = 2.5
-    pressure = 101325.0
-    Ca = 400.0
-    LAI = df.LAI[dox]
-
-
     #
     ## Parameters
     #
-    g0 = 1E-09
-    g1 = df.g1[0]
+    g0 = 0.001
+    g1 = 4.0
     D0 = 1.5 # kpa
-    Vcmax25 = df.Vmax25[0]
-    #g0 = 0.001
-    #g1 = 2.0
-    #D0 = 1.5 # kpa
-    #Vcmax25 = 60.0
+    Vcmax25 = 60.0
     Jmax25 = Vcmax25 * 1.67
-    Rd25 = 2.0
+    Rd25 = None
     Eaj = 30000.0
     Eav = 60000.0
     deltaSj = 650.0

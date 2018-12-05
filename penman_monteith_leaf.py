@@ -168,7 +168,8 @@ class PenmanMonteith(object):
             gbHf = 0.0
         else:
             # grashof number
-            grashof_num = 1.6E8 * math.fabs(tleaf - tair) * self.leaf_width**3
+            grashof_num = max(1.e-06, 1.6E8 * math.fabs(tleaf - tair) * \
+                                      self.leaf_width**3)
 
             # boundary layer conductance for heat: single sided, free convection
             # (mol m-2 s-1)
@@ -181,7 +182,7 @@ class PenmanMonteith(object):
                 # Cable uses the leaf LAI to adjust this for the 2-leaf
                 gbHf = lai * 0.5 * c.DHEAT * \
                         grashof_num**0.25 / self.leaf_width * cmolar
-
+            gbHf = max(1.e-06, gbHf)
         # total boundary layer conductance for heat
         gbH = gbHw + gbHf
 
@@ -228,7 +229,12 @@ class PenmanMonteith(object):
         """
 
         # Short wave radiation (W m-2)
-        sw_rad = par * c.PAR_2_SW
+        #sw_rad = par * c.PAR_2_SW
+
+        # this matches CABLE's logic ...  which means they are halving the
+        # SW_down that is used to compute the direct/diffuse terms and presumbly
+        # all other calcs
+        sw_rad = par / 4.6 # W m-2
 
         # absorbed short-wave radiation
         #SW_abs = self.SW_abs * math.cos(math.radians(self.angle)) * SW_rad
