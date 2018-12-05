@@ -366,7 +366,9 @@ if __name__ == "__main__":
     hod = 0
     for i in range(48):
         (An_tl[i], gsw_tl[i],
-         et_tl[i], tcan_tl[i]) = C.main(tair[i], par[i], vpd[i],
+         et_tl[i], tcan_tl[i],
+         _,_,_,_,
+         _,_) = C.main(tair[i], par[i], vpd[i],
                                         wind, pressure, Ca, doy, hod,
                                         lat, lon, LAI)
 

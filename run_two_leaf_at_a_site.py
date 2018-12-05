@@ -39,7 +39,7 @@ lon = 24.2948
 
 
 fpath = "/Users/mdekauwe/Downloads/"
-fname = "Hyytiala_met_and_plant_data_drought_2003.csv"
+fname = "FI-Hyy_met_and_plant_data_drought_2003.csv"
 fn = os.path.join(fpath, fname)
 df = pd.read_csv(fn, skiprows=range(1,2))
 
@@ -114,10 +114,11 @@ for doy in range(364):
     for i in range(48):
 
         (An, gsw,
-         et, tcan) = T.main(tair[cnt], par[cnt], vpd[cnt],
+         et, tcan,
+         _,_,_,_,_,_) = T.main(tair[cnt], par[cnt], vpd[cnt],
                                         wind[cnt], pressure, Ca, doy, hod,
                                         lat, lon, LAI[cnt])
-        
+
         (Anb, gswb,
          etb, tcanb) = B.main(tair[cnt], par[cnt], vpd[cnt],
                                         wind[cnt], pressure, Ca, doy, hod,
