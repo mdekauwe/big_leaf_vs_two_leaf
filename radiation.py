@@ -290,39 +290,39 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                                 direct_frac * (1. - rho_tb[b]) * kbm[b] * \
                                 ((1.0 - cexpkbm[b]) / kbm[b] - cf3) - \
                                 direct_frac * cf4 * cf5)
+            """
+            print(qcan[c.SUNLIT,b])
 
-            #print(qcan[c.SUNLIT,b])
+            qcan[c.SUNLIT,b] = sw_rad[b] * \
+                                ( diffuse_frac * (1.0 - rho_td[b]) *\
+                                 kdm[b] * cf2 + \
+                                 direct_frac * (1.0 - rho_tb[b]) * \
+                                 kbm[b] * cf3 +\
+                                 direct_frac * (1.0 - tau[b] - refl[b]) * kb *\
+                                 ( (1.0 - transb) / kb - (1.0 - transb**2) / (kb + kb)))
 
-            #qcan[c.SUNLIT,b] = sw_rad[b] * \
-            #                    ( (diffuse_frac * (1.0 - rho_td[b])) *\
-            #                     kdm[b] * cf2 + \
-            #                     direct_frac * (1.0 - rho_tb[b]) * \
-            #                     kbm[b] * cf3 +\
-            #                     direct_frac * (1.0 - tau[b] - refl[b]) * kb *\
-            #                     ( (1.0 - transb) / kb - (1.0 - transb**2) / (kb + kb)))
+            print(qcan[c.SUNLIT,b])
 
-            #print(qcan[c.SUNLIT,b])
-
-            #Ib = sw_rad[b] * direct_frac
-            #Id = sw_rad[b] * diffuse_frac
+            Ib = sw_rad[b] * direct_frac
+            Id = sw_rad[b] * diffuse_frac
 
             # B3b in Wang and Leuning 1998
-            #a1 = Id * (1.0 - rho_td[b]) * kdm[b]
-            #a2 = psi_func(kdm[b] + kb, lai)
-            #a3 = Ib * (1.0 - rho_tb[b]) * kbm[b]
-            #a4 = psi_func(kbm[b] + kb, lai)
-            #a5 = Ib * (1.0 - tau[b] - refl[b]) * kb
-            #a6 = psi_func(kb, lai) - psi_func(2.0 * kb, lai)
-            #qcan[c.SUNLIT,b] = a1 * a2 + a3 * a4 + a5 * a6
+            a1 = Id * (1.0 - rho_td[b]) * kdm[b]
+            a2 = psi_func(kdm[b] + kb, lai)
+            a3 = Ib * (1.0 - rho_tb[b]) * kbm[b]
+            a4 = psi_func(kbm[b] + kb, lai)
+            a5 = Ib * (1.0 - tau[b] - refl[b]) * kb
+            a6 = psi_func(kb, lai) - psi_func(2.0 * kb, lai)
+            qcan[c.SUNLIT,b] = a1 * a2 + a3 * a4 + a5 * a6
 
             # B4 in Wang and Leuning 1998
             #a2 = psi_func(kdm[b], lai) - psi_func(kdm[b] + kb, lai)
             #a4 = psi_func(kbm[b], lai) - psi_func(kbm[b] + kb, lai)
             #qcan[c.SHADED,b] = a1 * a2 + a3 * a4 - a5 * a6
 
-            #print(qcan[c.SUNLIT,b])
-            #print("\n")
-
+            print(qcan[c.SUNLIT,b])
+            print("\n")
+            """
 
     apar[c.SUNLIT] = qcan[c.SUNLIT,c.VIS] * c.J_TO_UMOL
     apar[c.SHADED] = qcan[c.SHADED,c.VIS] * c.J_TO_UMOL
