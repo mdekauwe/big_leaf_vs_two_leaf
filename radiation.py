@@ -103,7 +103,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     cexpkbm = np.zeros(2)
     rhocdf = np.zeros(3)
     albsoilsn = np.zeros(2)
-
     tk = tair + c.DEG_2_KELVIN
 
     # surface temperaute - just using air temp
@@ -117,11 +116,11 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # black-body long-wave radiation
     flpwb = c.SIGMA * tk**4
 
-    # soil emissivity
-    emissivity_soil = 1.0
+    # soil emissivity (-), Table 3, Wang and Leuning, 1998
+    emissivity_soil = 1.0 #0.94
 
-    # leaf emissivity # emissivity of leaf (-), Table 3, Wang and Leuning, 1998
-    emissivity_leaf = 0.96
+    # leaf emissivity (-), Table 3, Wang and Leuning, 1998
+    emissivity_leaf = 1.0 #0.96
 
     # air emissivity
     emissivity_air = lw_down / flpwb
@@ -215,7 +214,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                          gauss_w[2] * kbx[2] / (kbx[2] + kd))
 
     # Calculate albedo
-    soil_reflectance = 0.0665834472 # 0.1 is probably a more std value to use
+    soil_reflectance = 0.0665834472
     if soil_reflectance <= 0.14:
         sfact = 0.5
     elif soil_reflectance > 0.14 and soil_reflectance <= 0.20:
@@ -231,7 +230,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # leaf transmittance and reflection (ie. NOT black leaves):
     for b in range(2): #0 = visible; 1 = nir radiation
 
-        # extinction coefficient of a canopy for diffuse radiation
+        # modified k diffuse(6.20)(for leaf scattering)
         kdm[b] = kd * c1[b]
 
         # Define canopy diffuse transmittance (fraction):
@@ -243,7 +242,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
         else:
             rho_td[b] = albsoilsn[b]
 
-        # extinction coefficient of a canopy for direct beam radiation
+        # where vegetated and sunlit
         if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
             kbm[b] = kb * c1[b]
         else:
