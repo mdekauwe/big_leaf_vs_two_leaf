@@ -231,7 +231,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # leaf transmittance and reflection (ie. NOT black leaves):
     for b in range(2): #0 = visible; 1 = nir radiation
 
-        # modified k diffuse(6.20)(for leaf scattering)
+        # extinction coefficient of a canopy for diffuse radiation
         kdm[b] = kd * c1[b]
 
         # Define canopy diffuse transmittance (fraction):
@@ -243,7 +243,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
         else:
             rho_td[b] = albsoilsn[b]
 
-        # where vegetated and sunlit
+        # extinction coefficient of a canopy for direct beam radiation
         if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
             kbm[b] = kb * c1[b]
         else:
