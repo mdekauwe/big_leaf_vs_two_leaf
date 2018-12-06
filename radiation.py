@@ -215,7 +215,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                          gauss_w[2] * kbx[2] / (kbx[2] + kd))
 
     # Calculate albedo
-    soil_reflectance = 0.0665834472
+    soil_reflectance = 0.0665834472 # 0.1 is probably a more std value to use
     if soil_reflectance <= 0.14:
         sfact = 0.5
     elif soil_reflectance > 0.14 and soil_reflectance <= 0.20:
