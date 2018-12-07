@@ -67,7 +67,6 @@ class CoupledModel(object):
         self.refl = np.array([0.09, 0.3])
 
 
-
     def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod, lat, lon,
              lai, rnet=None):
         """
@@ -291,9 +290,12 @@ class CoupledModel(object):
         if rnet is None:
             rnet = P.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
 
-
         (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
                                                  wind, gsc, cmolar, lai)
+
+        # Update net radiation for canopy
+        rnet -= c.CP * c.AIR_MASS * (tleaf_k - tair_k) * grn
+
         if np.isclose(gsc, 0.0):
             et = 0.0
             le_et = 0.0
