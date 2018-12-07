@@ -177,6 +177,12 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     if direct_frac < c.RAD_THRESH:
         kb = 1.e5
 
+    # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
+    # default which comes half Belinda's head and is supported by fig 10 in
+    # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
+    #kn = 0.3
+    kn = 0.001
+
     c1[0] = np.sqrt(1. - tau[0] - refl[0])
     c1[1] = np.sqrt(1. - tau[1] - refl[1])
     c1[2] = 1.0
@@ -184,26 +190,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # Canopy reflection black horiz leaves
     # (eq. 6.19 in Goudriaan and van Laar, 1994):
     rhoch = (1.0 - c1) / (1.0 + c1)
-
-    # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
-    # default which comes half Belinda's head and is supported by fig 10 in
-    # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
-    #kn = 0.3
-    kn = 0.001
-
-    # Relative leaf nitrogen concentration within canopy:
-    cf2n = np.exp(-kn * lai)
-
-    # fraction SW beam tranmitted through canopy
-    transb = np.exp(-kb * lai)
-
-    if lai > c.LAI_THRESH: # where vegetated
-        # Diffuse SW transmission fraction ("black" leaves, extinction neglects
-        # leaf SW transmittance and REFLectance);
-        # from Monsi & Saeki 1953, quoted in eq. 18 of Sellers 1985:
-        transd = np.exp(-kd * lai)
-    else:
-        transd = 1.0
 
     for b in range(3): #0 = visible; 1 = nir radiation; 2 = LW
 
@@ -213,17 +199,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                          gauss_w[1] * kbx[1] / (kbx[1] + kd) + \
                          gauss_w[2] * kbx[2] / (kbx[2] + kd))
 
-    # Longwave radiation absorbed by sunlit canopy fraction:
-    qcan[c.SUNLIT,c.LW] = (flws - flwv) * kd * \
-                            (transd - transb) / (kb - kd) + \
-                            (emissivity_air - emissivity_leaf) * kd * \
-                            flpwb * (1.0 - transd * transb) / (kb + kd)
-
-    # Longwave radiation absorbed by shaded canopy fraction:
-    qcan[c.SHADED,c.LW] = (1.0 - transd) * (flws + lw_down - 2.0 * flwv) - \
-                            qcan[0,2]
-
-    # Calculate albedo
+    # Calculate albedo - can be made a param ...
     soil_reflectance = 0.0665834472
     if soil_reflectance <= 0.14:
         sfact = 0.5
@@ -236,6 +212,8 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     albsoilsn[c.SHADED] = 2.0 * soil_reflectance / (1. + sfact)
     albsoilsn[c.SUNLIT] = sfact * albsoilsn[c.SHADED]
 
+    # Update extinction coefficients and fractional transmittance for
+    # leaf transmittance and reflection (ie. NOT black leaves):
     for b in range(2): #0 = visible; 1 = nir radiation
 
         # modified k diffuse(6.20)(for leaf scattering)
@@ -266,47 +244,12 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
         # Calculate effective canopy-soil beam reflectance (fraction):
         rho_tb[b] = rhocbm[b] + (albsoilsn[b] - rhocbm[b]) * cexpk_dash_b[b]**2
 
-
         if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
-
-            cf1 = diffuse_frac * (1.0 - rho_td[b]) * k_dash_d[b]
-            cf2 = (1.0 - transb * cexpk_dash_d[b]) / (kb + k_dash_d[b])
-            cf3 = (1.0 - transb * cexpk_dash_b[b]) / (kb + k_dash_b[b])
-            cf4 = (1.0 - tau[b] - refl[b]) * kb
-            cf5 = (1.0 - transb) / kb - (1.0 - transb**2) / (kb + kb)
-
-            qcan[c.SUNLIT,b] = sw_rad[b] * (cf1 * cf2 + \
-                                direct_frac * (1.0 - rho_tb[b]) * \
-                                k_dash_b[b] * cf3 + direct_frac * cf4 * cf5)
-
-            qcan[c.SHADED,b] = sw_rad[b] * (cf1 * \
-                                ((1.0 - cexpk_dash_d[b]) / k_dash_d[b] - cf2) +\
-                                direct_frac * (1. - rho_tb[b]) * k_dash_b[b] *\
-                                ((1.0 - cexpk_dash_b[b]) / k_dash_b[b] - cf3) -\
-                                direct_frac * cf4 * cf5)
-            """
-            print(qcan[c.SUNLIT,b])
-            #cexpk_dash_d[b] = np.exp(-k_dash_d[b] * lai)
-            #cexpk_dash_b[b] = np.exp(-min(k_dash_b[b] * lai, 30.))
-            #cf2 = (1.0 - transb * cexpk_dash_d[b]) / (kb + k_dash_d[b])
-            #cf3 = (1.0 - transb * cexpk_dash_b[b]) / (kb + k_dash_b[b])
-            #cf2 = psi_func(k_dash_d[b] + kb, lai)
-            #cf3 = psi_func(k_dash_b[b] + kb, lai)
-            qcan[c.SUNLIT,b] = sw_rad[b] * \
-                                ( diffuse_frac * (1.0 - rho_td[b]) *\
-                                 k_dash_d[b] * cf2 + \
-                                 direct_frac * (1.0 - rho_tb[b]) * \
-                                 k_dash_b[b] * cf3 +\
-                                 direct_frac * (1.0 - tau[b] - refl[b]) * kb *\
-                                 ( (1.0 - transb) / kb - \
-                                   (1.0 - transb**2) / (kb + kb) ) )
-
-            print(qcan[c.SUNLIT,b])
 
             Ib = sw_rad[b] * direct_frac
             Id = sw_rad[b] * diffuse_frac
 
-            # B3b in Wang and Leuning 1998
+            # Radiation absorbed by the sunlit leaf, B3b Wang and Leuning 1998
             a1 = Id * (1.0 - rho_td[b]) * k_dash_d[b]
             a2 = psi_func(k_dash_d[b] + kb, lai)
             a3 = Ib * (1.0 - rho_tb[b]) * k_dash_b[b]
@@ -315,14 +258,26 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
             a6 = psi_func(kb, lai) - psi_func(2.0 * kb, lai)
             qcan[c.SUNLIT,b] = a1 * a2 + a3 * a4 + a5 * a6
 
-            # B4 in Wang and Leuning 1998
-            #a2 = psi_func(k_dash_d[b], lai) - psi_func(k_dash_d[b] + kb, lai)
-            #a4 = psi_func(k_dash_b[b], lai) - psi_func(k_dash_b[b] + kb, lai)
-            #qcan[c.SHADED,b] = a1 * a2 + a3 * a4 - a5 * a6
+            # Radiation absorbed by the shaded leaf, B4  Wang and Leuning 1998
+            a2 = psi_func(k_dash_d[b], lai) - psi_func(k_dash_d[b] + kb, lai)
+            a4 = psi_func(k_dash_b[b], lai) - psi_func(k_dash_b[b] + kb, lai)
+            qcan[c.SHADED,b] = a1 * a2 + a3 * a4 - a5 * a6
 
-            print(qcan[c.SUNLIT,b])
-            print("\n")
-            """
+    # Longwave radiation absorbed by sunlit leaves under isothermal conditions
+    # B18 Wang and Leuning 1998
+    a1 = -kd * c.SIGMA * tk**4
+    a2 = emissivity_leaf * (1.0 - emissivity_air)
+    a3 = psi_func(kb + kd, lai)
+    a4 = 1.0 - emissivity_soil
+    a5 = (emissivity_leaf - emissivity_air)
+    a6 = psi_func(2.0 * kd, lai) * psi_func(kb - kd, lai)
+    qcan[c.SUNLIT,c.LW] = a1 * (a2 * a3 + a4 * a5 * a6)
+
+    # Longwave radiation absorbed by shaded leaves under isothermal conditions
+    # B19 Wang and Leuning 1998
+    a3 = psi_func(kd, lai)
+    a6 = np.exp(-kd * lai) * a3
+    qcan[c.SHADED,c.LW] = a1 * (a2 * a3 - a4 * a5 * a6) - qcan[c.SUNLIT,c.LW]
 
     apar[c.SUNLIT] = qcan[c.SUNLIT,c.VIS] * c.J_TO_UMOL
     apar[c.SHADED] = qcan[c.SHADED,c.VIS] * c.J_TO_UMOL
@@ -333,13 +288,13 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
     # where vegetated and sunlit
     if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
-        lai_leaf[c.SUNLIT] = (1.0 - transb) / kb
+        lai_leaf[c.SUNLIT] = (1.0 - np.exp(-kb * lai)) / kb
     else:
         lai_leaf[c.SUNLIT] = 0.0
 
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
 
-    return (qcan, apar, lai_leaf, kb, kn, cf2n, transb)
+    return (qcan, apar, lai_leaf, kb, kn)
 
 def psi_func(z, lai):
     # B5 function from Wang and Leuning which integrates property passed via
@@ -367,7 +322,7 @@ def calculate_cos_zenith(doy, xslat, hod):
 
     return z
 
-def calc_leaf_to_canopy_scalar(lai, kb, kn, cf2n, transb):
+def calc_leaf_to_canopy_scalar(lai, kb, kn):
     """
     Calculate scalar to transform beam/diffuse leaf Vcmax, Jmax and Rd values
     to big leaf values.
@@ -386,9 +341,7 @@ def calc_leaf_to_canopy_scalar(lai, kb, kn, cf2n, transb):
     * Wang and Leuning (1998) AFm, 91, 89-111; particularly the Appendix.
     """
     scalex = np.zeros(2)
-
-    # Taken from CABLE, will need to pass tings to use
-    scalex[c.SUNLIT] = (1.0 - transb * cf2n) / (kb + kn)
-    scalex[c.SHADED] = (1.0 - cf2n) / kn - scalex[c.SUNLIT]
+    scalex[c.SUNLIT] = (1.0 - np.exp(-kb * lai) * np.exp(-kn * lai)) / (kb + kn)
+    scalex[c.SHADED] = (1.0 - np.exp(-kn * lai)) / kn - scalex[c.SUNLIT]
 
     return scalex
