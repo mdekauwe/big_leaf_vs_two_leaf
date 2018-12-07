@@ -117,10 +117,10 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     flpwb = c.SIGMA * tk**4
 
     # soil emissivity (-), Table 3, Wang and Leuning, 1998
-    emissivity_soil = 1.0 #0.94
+    emissivity_soil = 0.94
 
     # leaf emissivity (-), Table 3, Wang and Leuning, 1998
-    emissivity_leaf = 1.0 #0.96
+    emissivity_leaf = 0.96
 
     # air emissivity
     emissivity_air = lw_down / flpwb
@@ -199,8 +199,8 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                          gauss_w[1] * kbx[1] / (kbx[1] + kd) + \
                          gauss_w[2] * kbx[2] / (kbx[2] + kd))
 
-    # Calculate albedo - can be made a param ...
-    soil_reflectance = 0.0665834472
+    # Calculate albedo 
+    soil_reflectance = 0.1 # Table 3, Wang and Leuning, 1998
     if soil_reflectance <= 0.14:
         sfact = 0.5
     elif soil_reflectance > 0.14 and soil_reflectance <= 0.20:
