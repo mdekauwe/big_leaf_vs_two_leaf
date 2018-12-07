@@ -213,6 +213,16 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                          gauss_w[1] * kbx[1] / (kbx[1] + kd) + \
                          gauss_w[2] * kbx[2] / (kbx[2] + kd))
 
+    # Longwave radiation absorbed by sunlit canopy fraction:
+    qcan[c.SUNLIT,c.LW] = (flws - flwv) * kd * \
+                            (transd - transb) / (kb - kd) + \
+                            (emissivity_air - emissivity_leaf) * kd * \
+                            flpwb * (1.0 - transd * transb) / (kb + kd)
+
+    # Longwave radiation absorbed by shaded canopy fraction:
+    qcan[c.SHADED,c.LW] = (1.0 - transd) * (flws + lw_down - 2.0 * flwv) - \
+                            qcan[0,2]
+
     # Calculate albedo
     soil_reflectance = 0.0665834472
     if soil_reflectance <= 0.14:
@@ -226,8 +236,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     albsoilsn[c.SHADED] = 2.0 * soil_reflectance / (1. + sfact)
     albsoilsn[c.SUNLIT] = sfact * albsoilsn[c.SHADED]
 
-    # Update extinction coefficients and fractional transmittance for
-    # leaf transmittance and reflection (ie. NOT black leaves):
     for b in range(2): #0 = visible; 1 = nir radiation
 
         # modified k diffuse(6.20)(for leaf scattering)
@@ -258,18 +266,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
         # Calculate effective canopy-soil beam reflectance (fraction):
         rho_tb[b] = rhocbm[b] + (albsoilsn[b] - rhocbm[b]) * cexpk_dash_b[b]**2
 
-
-    # Longwave radiation absorbed by sunlit canopy fraction:
-    qcan[c.SUNLIT,c.LW] = (flws - flwv) * kd * \
-                            (transd - transb) / (kb - kd) + \
-                            (emissivity_air - emissivity_leaf) * kd * \
-                            flpwb * (1.0 - transd * transb) / (kb + kd)
-
-    # Longwave radiation absorbed by shaded canopy fraction:
-    qcan[c.SHADED,c.LW] = (1.0 - transd) * (flws + lw_down - 2.0 * flwv) - \
-                            qcan[0,2]
-
-    for b in range(2): #0 = visible; 1 = nir radiation
 
         if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
 
