@@ -90,17 +90,17 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     qcan = np.zeros((2,3))
     apar = np.zeros(2)
     lai_leaf = np.zeros(2)
-    cexpkdm = np.zeros(2)
-    kdm = np.zeros(2)
+    cexpk_dash_d = np.zeros(2)
+    k_dash_d = np.zeros(2)
     kbx = np.zeros(3)
     gauss_w = np.array([0.308, 0.514, 0.178]) # Gaussian integ. weights
     cos3 = np.zeros(3)
     c1 = np.zeros(3)
     rho_td = np.zeros(2)
-    kbm = np.zeros(2)
+    k_dash_b = np.zeros(2)
     rhocbm = np.zeros(2)
     rho_tb = np.zeros(2)
-    cexpkbm = np.zeros(2)
+    cexpk_dash_b = np.zeros(2)
     rhocdf = np.zeros(3)
     albsoilsn = np.zeros(2)
     tk = tair + c.DEG_2_KELVIN
@@ -231,33 +231,34 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     for b in range(2): #0 = visible; 1 = nir radiation
 
         # modified k diffuse(6.20)(for leaf scattering)
-        kdm[b] = kd * c1[b]
+        k_dash_d[b] = kd * c1[b]
 
         # Define canopy diffuse transmittance (fraction):
-        cexpkdm[b] = np.exp(-kdm[b] * lai)
+        cexpk_dash_d[b] = np.exp(-k_dash_d[b] * lai)
 
         # Calculate effective canopy-soiil diffuse reflectance (fraction)
         if lai > 0.001:
-            rho_td[b] = rhocdf[b] + (albsoilsn[b] - rhocdf[b]) * cexpkdm[b]**2
+            rho_td[b] = rhocdf[b] + (albsoilsn[b] - rhocdf[b]) * \
+                            cexpk_dash_d[b]**2
         else:
             rho_td[b] = albsoilsn[b]
 
         # where vegetated and sunlit
         if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
-            kbm[b] = kb * c1[b]
+            k_dash_b[b] = kb * c1[b]
         else:
-            kbm[b] = 1.e-9
+            k_dash_b[b] = 1.e-9
 
         # Canopy reflection (6.21) beam:
         rhocbm[b] = 2. * kb / (kb + kd) * rhoch[b]
 
         # Canopy beam transmittance (fraction):
-        cexpkbm[b] = np.exp(-min(kbm[b] * lai, 20.))
+        cexpk_dash_b[b] = np.exp(-min(k_dash_b[b] * lai, 20.))
 
         # Calculate effective canopy-soil beam reflectance (fraction):
-        rho_tb[b] = rhocbm[b] + (albsoilsn[b] - rhocbm[b]) * cexpkbm[b]**2
+        rho_tb[b] = rhocbm[b] + (albsoilsn[b] - rhocbm[b]) * cexpk_dash_b[b]**2
     else:
-        cexpkbm[b] = 0.0
+        cexpk_dash_b[b] = 0.0
         rhocbm[b]  = 0.0
         rho_tb[b] = albsoilsn[b]
 
@@ -275,31 +276,32 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
         if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
 
-            cf1 = diffuse_frac * (1.0 - rho_td[b]) * kdm[b]
-            cf2 = (1.0 - transb * cexpkdm[b]) / (kb + kdm[b])
-            cf3 = (1.0 - transb * cexpkbm[b]) / (kb + kbm[b])
+            cf1 = diffuse_frac * (1.0 - rho_td[b]) * k_dash_d[b]
+            cf2 = (1.0 - transb * cexpk_dash_d[b]) / (kb + k_dash_d[b])
+            cf3 = (1.0 - transb * cexpk_dash_b[b]) / (kb + k_dash_b[b])
             cf4 = (1.0 - tau[b] - refl[b]) * kb
             cf5 = (1.0 - transb) / kb - (1.0 - transb**2) / (kb + kb)
 
             qcan[c.SUNLIT,b] = sw_rad[b] * (cf1 * cf2 + \
-                                direct_frac * (1.0 - rho_tb[b]) * kbm[b] * \
-                                cf3 + direct_frac * cf4 * cf5)
+                                direct_frac * (1.0 - rho_tb[b]) * \
+                                k_dash_b[b] * cf3 + direct_frac * cf4 * cf5)
 
             qcan[c.SHADED,b] = sw_rad[b] * (cf1 * \
-                                ((1.0 - cexpkdm[b]) / kdm[b] - cf2) + \
-                                direct_frac * (1. - rho_tb[b]) * kbm[b] * \
-                                ((1.0 - cexpkbm[b]) / kbm[b] - cf3) - \
+                                ((1.0 - cexpk_dash_d[b]) / k_dash_d[b] - cf2) +\
+                                direct_frac * (1. - rho_tb[b]) * k_dash_b[b] *\
+                                ((1.0 - cexpk_dash_b[b]) / k_dash_b[b] - cf3) -\
                                 direct_frac * cf4 * cf5)
             """
             print(qcan[c.SUNLIT,b])
 
             qcan[c.SUNLIT,b] = sw_rad[b] * \
                                 ( diffuse_frac * (1.0 - rho_td[b]) *\
-                                 kdm[b] * cf2 + \
+                                 k_dash_d[b] * cf2 + \
                                  direct_frac * (1.0 - rho_tb[b]) * \
-                                 kbm[b] * cf3 +\
+                                 k_dash_b[b] * cf3 +\
                                  direct_frac * (1.0 - tau[b] - refl[b]) * kb *\
-                                 ( (1.0 - transb) / kb - (1.0 - transb**2) / (kb + kb)))
+                                 ( (1.0 - transb) / kb - \
+                                   (1.0 - transb**2) / (kb + kb) ) )
 
             print(qcan[c.SUNLIT,b])
 
@@ -307,17 +309,17 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
             Id = sw_rad[b] * diffuse_frac
 
             # B3b in Wang and Leuning 1998
-            a1 = Id * (1.0 - rho_td[b]) * kdm[b]
-            a2 = psi_func(kdm[b] + kb, lai)
-            a3 = Ib * (1.0 - rho_tb[b]) * kbm[b]
-            a4 = psi_func(kbm[b] + kb, lai)
+            a1 = Id * (1.0 - rho_td[b]) * k_dash_d[b]
+            a2 = psi_func(k_dash_d[b] + kb, lai)
+            a3 = Ib * (1.0 - rho_tb[b]) * k_dash_b[b]
+            a4 = psi_func(k_dash_b[b] + kb, lai)
             a5 = Ib * (1.0 - tau[b] - refl[b]) * kb
             a6 = psi_func(kb, lai) - psi_func(2.0 * kb, lai)
             qcan[c.SUNLIT,b] = a1 * a2 + a3 * a4 + a5 * a6
 
             # B4 in Wang and Leuning 1998
-            #a2 = psi_func(kdm[b], lai) - psi_func(kdm[b] + kb, lai)
-            #a4 = psi_func(kbm[b], lai) - psi_func(kbm[b] + kb, lai)
+            #a2 = psi_func(k_dash_d[b], lai) - psi_func(k_dash_d[b] + kb, lai)
+            #a4 = psi_func(k_dash_b[b], lai) - psi_func(k_dash_b[b] + kb, lai)
             #qcan[c.SHADED,b] = a1 * a2 + a3 * a4 - a5 * a6
 
             print(qcan[c.SUNLIT,b])
