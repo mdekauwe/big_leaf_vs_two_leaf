@@ -257,10 +257,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
         # Calculate effective canopy-soil beam reflectance (fraction):
         rho_tb[b] = rhocbm[b] + (albsoilsn[b] - rhocbm[b]) * cexpk_dash_b[b]**2
-    else:
-        cexpk_dash_b[b] = 0.0
-        rhocbm[b]  = 0.0
-        rho_tb[b] = albsoilsn[b]
+
 
     # Longwave radiation absorbed by sunlit canopy fraction:
     qcan[c.SUNLIT,c.LW] = (flws - flwv) * kd * \
