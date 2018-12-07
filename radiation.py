@@ -253,7 +253,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
         rhocbm[b] = 2. * kb / (kb + kd) * rhoch[b]
 
         # Canopy beam transmittance (fraction):
-        cexpk_dash_b[b] = np.exp(-min(k_dash_b[b] * lai, 20.))
+        cexpk_dash_b[b] = np.exp(-min(k_dash_b[b] * lai, 30.))
 
         # Calculate effective canopy-soil beam reflectance (fraction):
         rho_tb[b] = rhocbm[b] + (albsoilsn[b] - rhocbm[b]) * cexpk_dash_b[b]**2
@@ -293,7 +293,12 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                                 direct_frac * cf4 * cf5)
             """
             print(qcan[c.SUNLIT,b])
-
+            #cexpk_dash_d[b] = np.exp(-k_dash_d[b] * lai)
+            #cexpk_dash_b[b] = np.exp(-min(k_dash_b[b] * lai, 30.))
+            #cf2 = (1.0 - transb * cexpk_dash_d[b]) / (kb + k_dash_d[b])
+            #cf3 = (1.0 - transb * cexpk_dash_b[b]) / (kb + k_dash_b[b])
+            #cf2 = psi_func(k_dash_d[b] + kb, lai)
+            #cf3 = psi_func(k_dash_b[b] + kb, lai)
             qcan[c.SUNLIT,b] = sw_rad[b] * \
                                 ( diffuse_frac * (1.0 - rho_td[b]) *\
                                  k_dash_d[b] * cf2 + \
@@ -350,8 +355,8 @@ def psi_func(z, lai):
     # References:
     # -----------
     # * Wang and Leuning (1998) AFm, 91, 89-111. Page 106
-
-    return ( (1.0 - np.exp(-z * lai)) / z )
+    # min check avoids floatin underflow issues
+    return ( (1.0 - np.exp(-min(z * lai, 30.0))) / z )
 
 
 def calculate_cos_zenith(doy, xslat, hod):
