@@ -30,13 +30,16 @@ def run_treatment(T, df):
     ndays = int(len(days) / 24.)
 
     dummy = np.ones(ndays) * np.nan
-    out = pd.DataFrame({'year':dummy, 'doy':dummy,'An':dummy, 'E':dummy})
+    out = pd.DataFrame({'year':dummy, 'doy':dummy, 'An':dummy, 'E':dummy,
+                        'An_obs':dummy, 'E_obs':dummy})
 
     An_store = np.zeros(ndays)
     E_store = np.zeros(ndays)
+    An_store_obs = np.zeros(ndays)
+    E_store_obs = np.zeros(ndays)
 
-    et_conv = c.MOL_WATER_2_G_WATER * c.G_TO_KG * c.SEC_TO_HR
     an_conv = c.UMOL_TO_MOL * c.MOL_C_TO_GRAMS_C * c.SEC_TO_HR
+    et_conv = c.MOL_WATER_2_G_WATER * c.G_TO_KG * c.SEC_TO_HR
 
     i = 0
     j = 0
@@ -46,6 +49,8 @@ def run_treatment(T, df):
 
         Anx = 0.0
         Ex = 0.0
+        An_obs = 0.0
+        Ex_obs = 0.0
         hod = 0
         for k in range(24):
 
@@ -58,6 +63,10 @@ def run_treatment(T, df):
             Anx += An * an_conv
             Ex += et * et_conv
 
+            # wrong units, as per tree
+            An_obs += df.FluxCO2[i] * c.MMOL_2_UMOL * an_conv
+            Ex_obs += df.FluxH2O[i] * et_conv
+
             hod += 1
             i += 1
 
@@ -65,6 +74,8 @@ def run_treatment(T, df):
         out.doy[i] = doy
         out.An[i] = Anx
         out.E[i] = Ex
+        out.An_obs[i] = An_obs
+        out.E_obs[i] = Ex_obs
         j += 1
 
     return (out)
@@ -129,11 +140,14 @@ if __name__ == "__main__":
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
 
-    ax1.plot(out.An)
+    ax1.plot(out.An, label="Model")
+    ax1.plot(out.An_obs, label="Observations")
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.set_xlabel("Days", position=(1.1, 0.5))
+    ax1.legend(numpoints=1, loc="best")
 
-    ax2.plot(out.E)
+    ax2.plot(out.E, label="Model")
+    ax2.plot(out.E_obs, label="Observations")
     ax2.set_ylabel("E (mm d$^{-1}$)")
 
     ax1.locator_params(nbins=6, axis="y")
