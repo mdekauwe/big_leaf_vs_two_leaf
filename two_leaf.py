@@ -105,9 +105,10 @@ class Canopy(object):
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad[0], cos_zenith)
 
         (qcan, apar,
-         lai_leaf, kb, gradis) = calculate_absorbed_radiation(p, par, cos_zenith, lai,
-                                                      direct_frac, diffuse_frac,
-                                                      doy, sw_rad, tair)
+         lai_leaf, kb,
+         gradis) = calculate_absorbed_radiation(p, par, cos_zenith, lai,
+                                                direct_frac, diffuse_frac,
+                                                doy, sw_rad, tair)
 
         # Calculate scaling term to go from a single leaf to canopy,
         # see Wang & Leuning 1998 appendix C
