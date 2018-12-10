@@ -108,3 +108,12 @@ SW_abs = 0.8 # use canopy absorptance of solar radiation
 
 # leaf emissivity (-), Table 3, Wang and Leuning, 1998
 emissivity_leaf = 0.96
+
+# light extinction coefficient
+k = 0.5
+
+# extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
+# default which comes half Belinda's head and is supported by fig 10 in
+# Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
+#kn = 0.3
+kn = 0.001

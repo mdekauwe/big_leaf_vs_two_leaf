@@ -177,12 +177,6 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     if direct_frac < c.RAD_THRESH:
         kb = 1.e5
 
-    # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
-    # default which comes half Belinda's head and is supported by fig 10 in
-    # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
-    #kn = 0.3
-    kn = 0.001
-
     c1[0] = np.sqrt(1. - tau[0] - refl[0])
     c1[1] = np.sqrt(1. - tau[1] - refl[1])
     c1[2] = 1.0
@@ -199,7 +193,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                          gauss_w[1] * kbx[1] / (kbx[1] + kd) + \
                          gauss_w[2] * kbx[2] / (kbx[2] + kd))
 
-    # Calculate albedo 
+    # Calculate albedo
     soil_reflectance = 0.1 # Table 3, Wang and Leuning, 1998
     if soil_reflectance <= 0.14:
         sfact = 0.5
@@ -294,7 +288,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
 
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
 
-    return (qcan, apar, lai_leaf, kb, kn)
+    return (qcan, apar, lai_leaf, kb)
 
 def psi_func(z, lai):
     # B5 function from Wang and Leuning which integrates property passed via
@@ -322,12 +316,17 @@ def calculate_cos_zenith(doy, xslat, hod):
 
     return z
 
-def calc_leaf_to_canopy_scalar(lai, kb, kn):
+def calc_leaf_to_canopy_scalar(lai, k=None, kn=None, kb=None, big_leaf=False):
     """
-    Calculate scalar to transform beam/diffuse leaf Vcmax, Jmax and Rd values
-    to big leaf values.
+    Calculate scalar to transform from big leaf to canopy.
 
-    - Insert eqn C6 & C7 into B5
+    In the big-leaf model this scalar is applied to An, gsc and so E. This
+    assumes that the photosynthetic capacity is assumed to decline exponentially
+    through the canopy in proportion to the incident radiation estimated by
+    Beer’s Law
+
+    In the 2-leaf model this scalar is applied to the leaf Vcmax, Jmax and Rd
+    values.
 
     Parameters:
     ----------
@@ -339,9 +338,14 @@ def calc_leaf_to_canopy_scalar(lai, kb, kn):
     References:
     ----------
     * Wang and Leuning (1998) AFm, 91, 89-111; particularly the Appendix.
+      Insert eqn C6 & C7 into B5
     """
-    scalex = np.zeros(2)
-    scalex[c.SUNLIT] = (1.0 - np.exp(-kb * lai) * np.exp(-kn * lai)) / (kb + kn)
-    scalex[c.SHADED] = (1.0 - np.exp(-kn * lai)) / kn - scalex[c.SUNLIT]
+    if big_leaf:
+        scalex = (1.0 - np.exp(-k * lai)) / k
+    else:
+        scalex = np.zeros(2)
+        scalex[c.SUNLIT] = (1.0 - np.exp(-kb * lai) * \
+                                np.exp(-kn * lai)) / (kb + kn)
+        scalex[c.SHADED] = (1.0 - np.exp(-kn * lai)) / kn - scalex[c.SUNLIT]
 
     return scalex

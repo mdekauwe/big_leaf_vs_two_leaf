@@ -16,8 +16,6 @@ import constants as c
 import parameters as p
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
-from radiation import spitters
-from radiation import calculate_absorbed_radiation
 from radiation import calculate_cos_zenith, calc_leaf_to_canopy_scalar
 from utils import calc_esat
 
@@ -40,7 +38,6 @@ class Canopy(object):
         self.model_Q10 = model_Q10
         self.gs_model = gs_model
         self.iter_max = iter_max
-        self.k = 0.5 # light extinction coefficient
 
     def main(self, p, tair, par, vpd, wind, pressure, Ca, doy, hod,
              lai, rnet=None):
@@ -96,6 +93,9 @@ class Canopy(object):
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
 
+        # Calculate big-leaf scaling term to go from a single leaf to canopy
+        scalex = calc_leaf_to_canopy_scalar(lai, k=p.k, big_leaf=True)
+
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
 
@@ -108,8 +108,8 @@ class Canopy(object):
                 # capacity is assumed to decline exponentially through the
                 # canopy, in proportion to the incident radiation estimated by
                 # Beer’s Law
-                An *= (1.0 - np.exp(-self.k * lai)) / self.k
-                gsc *= (1.0 - np.exp(-self.k * lai)) / self.k
+                An *= scalex
+                gsc *= scalex
 
                 # Calculate new Tleaf, dleaf, Cs
                 (new_tleaf, et,
