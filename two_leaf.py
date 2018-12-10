@@ -19,12 +19,14 @@ from math import pi, cos, sin, exp, sqrt, acos, asin
 import random
 import math
 
+import parameters as p
 import constants as c
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
 from radiation import spitters
 from radiation import calculate_absorbed_radiation
 from radiation import calculate_cos_zenith, calc_leaf_to_canopy_scalar
+from utils import calc_esat
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -324,50 +326,26 @@ if __name__ == "__main__":
 
     from get_days_met_forcing import get_met_data
 
-    lat = -23.575001
-    lon = 152.524994
-    doy = 180.0
+    doy = 180.
     #
     ## Met data ...
     #
-    (par, tair, vpd) = get_met_data(lat, lon, doy)
-    wind = 2.5
-    pressure = 101325.0
-    Ca = 400.0
+    (par, tair, vpd) = get_met_data(p.lat, p.lon, doy)
 
-    #
-    ## Parameters
-    #
-    g0 = 0.001
-    g1 = 4.0
-    D0 = 1.5 # kpa
-    Vcmax25 = 60.0
-    Jmax25 = Vcmax25 * 1.67
-    Rd25 = 2.0
-    Eaj = 30000.0
-    Eav = 60000.0
-    deltaSj = 650.0
-    deltaSv = 650.0
-    Hdv = 200000.0
-    Hdj = 200000.0
-    Q10 = 2.0
-    gamma = 0.0
-    leaf_width = 0.02
-    LAI = 1.5
-    # Cambell & Norman, 11.5, pg 178
-    # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
-    # with canopies (~0.8) from Table 11.2 reveals a surprising difference.
-    # The higher absorptivityof canopies arises because of multiple reflections
-    # among leaves in a canopy and depends on the architecture of the canopy.
-    SW_abs = 0.8 # use canopy absorptance of solar radiation
+    # more realistic VPD
+    rh = 40.
+    esat = calc_esat(tair)
+    ea = rh / 100. * esat
+    vpd = (esat - ea) * c.PA_2_KPA
+    vpd = np.where(vpd < 0.05, 0.05, vpd)
 
     ##
     ### Run Big-leaf
     ##
 
-    C = CoupledModel(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
-                     deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
-                     gs_model="medlyn")
+    C = CoupledModel(p.g0, p.g1, p.D0, p.gamma, p.Vcmax25, p.Jmax25, p.Rd25,
+                     p.Eaj, p.Eav, p.deltaSj, p.deltaSv, p.Hdv, p.Hdj, p.Q10,
+                     p.leaf_width, p.SW_abs, gs_model="medlyn")
 
     An_tl = np.zeros(48)
     gsw_tl = np.zeros(48)
@@ -379,9 +357,8 @@ if __name__ == "__main__":
         (An_tl[i], gsw_tl[i],
          et_tl[i], tcan_tl[i],
          _,_,_,_,
-         _,_) = C.main(tair[i], par[i], vpd[i],
-                                        wind, pressure, Ca, doy, hod,
-                                        lat, lon, LAI)
+         _,_) = C.main(tair[i], par[i], vpd[i], p.wind, p.pressure, p.Ca, doy,
+                       hod, p.lat, p.lon, p.LAI)
 
         hod += 1
 

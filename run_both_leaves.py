@@ -8,14 +8,15 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from math import pi, cos, sin, exp, sqrt, acos, asin
-import random
+
 from big_leaf import CoupledModel as BigLeaf
 #from big_leaf_depFarq import CoupledModel as BigLeaf
 import pandas as pd
 from two_leaf import CoupledModel as TwoLeaf
 import constants as c
+import parameters as p
 from get_days_met_forcing import get_met_data
+from utils import calc_esat
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -24,51 +25,26 @@ __email__   = "mdekauwe@gmail.com"
 
 def main():
 
-    lat = -23.575001
-    lon = 152.524994
-    doy = 180.0
+    doy = 180.
     #
     ## Met data ...
     #
-    (par, tair, vpd) = get_met_data(lat, lon, doy)
-    wind = 2.5
-    pressure = 101325.0
-    Ca = 400.0
+    (par, tair, vpd) = get_met_data(p.lat, p.lon, doy)
 
-    #
-    ## Parameters
-    #
-    g0 = 0.001
-    g1 = 4.0
-    D0 = 1.5 # kpa
-    Vcmax25 = 60.0
-    Jmax25 = Vcmax25 * 1.67
-    Rd25 = None
-    Eaj = 30000.0
-    Eav = 60000.0
-    deltaSj = 650.0
-    deltaSv = 650.0
-    Hdv = 200000.0
-    Hdj = 200000.0
-    Q10 = 2.0
-    gamma = 0.0
-    leaf_width = 0.02
-    LAI = 1.5
-
-    # Cambell & Norman, 11.5, pg 178
-    # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
-    # with canopies (~0.8) from Table 11.2 reveals a surprising difference.
-    # The higher absorptivityof canopies arises because of multiple reflections
-    # among leaves in a canopy and depends on the architecture of the canopy.
-    SW_abs = 0.8 # use canopy absorptance of solar radiation
+    # more realistic VPD
+    rh = 40.
+    esat = calc_esat(tair)
+    ea = rh / 100. * esat
+    vpd = (esat - ea) * c.PA_2_KPA
+    vpd = np.where(vpd < 0.05, 0.05, vpd)
 
     ##
     ### Run Big-leaf
     ##
 
-    B = BigLeaf(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
-                deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
-                gs_model="medlyn")
+    B = BigLeaf(p.g0, p.g1, p.D0, p.gamma, p.Vcmax25, p.Jmax25, p.Rd25,
+                p.Eaj, p.Eav, p.deltaSj, p.deltaSv, p.Hdv, p.Hdj, p.Q10,
+                p.leaf_width, p.SW_abs, gs_model="medlyn")
 
     An_bl = np.zeros(48)
     gsw_bl = np.zeros(48)
@@ -80,17 +56,17 @@ def main():
 
         (An_bl[i], gsw_bl[i],
          et_bl[i], tcan_bl[i]) = B.main(tair[i], par[i], vpd[i],
-                                        wind, pressure, Ca, doy, hod,
-                                        lat, lon, LAI)
+                                        p.wind, p.pressure, p.Ca, doy, hod,
+                                        p.lat, p.lon, p.LAI)
 
         hod += 1
     ##
     ### Run 2-leaf
     ##
 
-    T = TwoLeaf(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
-                deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
-                gs_model="medlyn")
+    T = TwoLeaf(p.g0, p.g1, p.D0, p.gamma, p.Vcmax25, p.Jmax25, p.Rd25,
+                p.Eaj, p.Eav, p.deltaSj, p.deltaSv, p.Hdv, p.Hdj, p.Q10,
+                p.leaf_width, p.SW_abs, gs_model="medlyn")
 
     An_tl = np.zeros(48)
     gsw_tl = np.zeros(48)
@@ -103,8 +79,8 @@ def main():
         (An_tl[i], gsw_tl[i],
          et_tl[i], tcan_tl[i],
          __,__,__,__,
-         __,__) = T.main(tair[i], par[i], vpd[i], wind, pressure, Ca, doy, hod,
-                         lat, lon, LAI)
+         __,__) = T.main(tair[i], par[i], vpd[i], p.wind, p.pressure, p.Ca,
+                         doy, hod, p.lat, p.lon, p.LAI)
 
         hod += 1
 
