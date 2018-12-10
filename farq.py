@@ -200,10 +200,6 @@ class FarquharC3(object):
         # Calculate conductance to CO2
         gsc = max(g0, g0 + gs_over_a * An)
 
-        # Extra step here; GS can be negative
-        if gsc < g0:
-            gsc = g0
-
         # Calculate conductance to water
         gsw = gsc * c.GSC_2_GSW
 
