@@ -89,13 +89,12 @@ class Canopy(object):
         Tleaf = tair
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
-        cos_zenith = calculate_cos_zenith(doy, p.lat, hod)
+        (cos_zenith, elevation) = calculate_cos_zenith(doy, p.lat, hod)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
-        elevation = 90.0 - zenith_angle
 
         # Calculate big-leaf scaling term to go from a single leaf to canopy
         scalex = calc_leaf_to_canopy_scalar(lai, k=p.k, big_leaf=True)
-
+        print(elevation)
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
 

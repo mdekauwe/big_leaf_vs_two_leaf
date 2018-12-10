@@ -89,17 +89,15 @@ class Canopy(object):
                        model_Q10=self.model_Q10, gs_model=self.gs_model)
         PM = PenmanMonteith()
 
-        An = np.zeros(2) # sunlit, shaded
-        gsc = np.zeros(2)  # sunlit, shaded
-        et = np.zeros(2) # sunlit, shaded
-        Tcan = np.zeros(2) # sunlit, shaded
+        An = np.zeros(2)        # sunlit, shaded
+        gsc = np.zeros(2)       # sunlit, shaded
+        et = np.zeros(2)        # sunlit, shaded
+        Tcan = np.zeros(2)      # sunlit, shaded
         lai_leaf = np.zeros(2)
         sw_rad = np.zeros(2) # VIS, NIR
-        tcanopy = np.zeros(2)
 
-        cos_zenith = calculate_cos_zenith(doy, p.lat, hod)
-        zenith_angle = np.rad2deg(np.arccos(cos_zenith))
-        elevation = 90.0 - zenith_angle
+        (cos_zenith, elevation) = calculate_cos_zenith(doy, p.lat, hod)
+
         sw_rad[c.VIS] = 0.5 * (par * c.PAR_2_SW) # W m-2
         sw_rad[c.NIR] = 0.5 * (par * c.PAR_2_SW) # W m-2
 
@@ -119,6 +117,7 @@ class Canopy(object):
             scalex[0] = 0.
 
         # Is the sun up?
+        #print(elevation, zenith_angle, np.rad2deg(np.arcsin(cos_zenith)))
         if elevation > 0.0 and par > 50.:
 
             # sunlit / shaded loop
@@ -141,7 +140,8 @@ class Canopy(object):
                                                         vpd=dleaf,
                                                         scalex=scalex[ileaf])
                     else:
-                        An[ileaf], gsc[ileaf] = 0., 0.
+                        An[ileaf] = 0.0
+                        gsc[ileaf] = 0.0
 
                     # Calculate new Tleaf, dleaf, Cs
                     (new_tleaf, et[ileaf],
@@ -150,7 +150,8 @@ class Canopy(object):
                                                            None, vpd,
                                                            pressure, wind,
                                                            rnet=qcan[ileaf],
-                                                           lai=lai_leaf[ileaf])
+                                                           lai=lai_leaf[ileaf],
+                                                           leaf=ileaf)
 
                     gbc = gbH * c.GBH_2_GBC
                     if gbc > 0.0 and An[ileaf] > 0.0:
@@ -165,6 +166,7 @@ class Canopy(object):
 
                     # Check for convergence...?
                     if math.fabs(Tleaf - new_tleaf) < 0.02:
+                        Tcan[ileaf] = Tleaf
                         break
 
                     if iter > self.iter_max:
@@ -185,7 +187,7 @@ class Canopy(object):
 
     def calc_leaf_temp(self, p, PM=None, tleaf=None, tair=None, gsc=None,
                        par=None, vpd=None, pressure=None, wind=None, rnet=None,
-                       lai=None):
+                       lai=None, leaf=None):
         """
         Resolve leaf temp
 
@@ -295,13 +297,13 @@ if __name__ == "__main__":
     gsw_tl = np.zeros(48)
     et_tl = np.zeros(48)
     tcan_tl = np.zeros(48)
-
+    
     hod = 0
     for i in range(48):
 
         (An, et, Tcan,
          apar, lai_leaf) = C.main(p, tair[i], par[i], vpd[i], wind,
-                                  pressure, Ca, doy, hod, lai)
+                                  pressure, Ca, doy, hod/2., lai)
 
         sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
         sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
@@ -309,6 +311,7 @@ if __name__ == "__main__":
         et_tl[i] = np.sum(et)
         tcan_tl[i] = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
 
+        #print(Tcan[c.SHADED], Tcan[c.SHADED] * sha_frac, sha_frac)
         hod += 1
 
     fig = plt.figure(figsize=(16,4))
@@ -350,6 +353,7 @@ if __name__ == "__main__":
 
     ax3.plot(np.arange(48)/2., tair, label="Tair")
     ax3.plot(np.arange(48)/2., tcan_tl, label="Tcanopy")
+
     ax3.set_ylabel("Temperature (deg C)")
     ax3.legend(numpoints=1, loc="best")
 

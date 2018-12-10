@@ -299,11 +299,15 @@ def calculate_cos_zenith(doy, xslat, hod):
     sindec = -np.sin(23.45 * np.pi / 180.) * \
                 np.cos(2. * np.pi * (doy + 10.0) / 365.0)
 
-    z = max(np.sin(np.pi / 180. * xslat) * sindec + \
-            np.cos(np.pi / 180. * xslat) * np.sqrt(1. - sindec * sindec) * \
-            np.cos(np.pi * (hod - 12.0) / 12.0), 1e-8)
+    cos_zenith = max(np.sin(np.pi / 180. * xslat) * sindec + \
+                     np.cos(np.pi / 180. * xslat) * \
+                     np.sqrt(1. - sindec * sindec) * \
+                     np.cos(np.pi * (hod - 12.0) / 12.0), 1e-8)
 
-    return z
+    zenith_angle = np.rad2deg(np.arccos(cos_zenith))
+    elevation = 90.0 - zenith_angle
+
+    return (cos_zenith, elevation)
 
 def calc_leaf_to_canopy_scalar(lai, k=None, kn=None, kb=None, big_leaf=False):
     """
