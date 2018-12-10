@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 import constants as c
 import parameters as p
 from utils import calc_esat
-from big_leaf import CoupledModel as BigLeaf
-from two_leaf import CoupledModel as TwoLeaf
+from big_leaf import Canopy as BigLeaf
+from two_leaf import Canopy as TwoLeaf
 from get_days_met_forcing import get_met_data
 
 __author__  = "Martin De Kauwe"
@@ -57,7 +57,7 @@ def main():
 
     hod = 0
     for i in range(len(par)):
-        
+
         (An, gsw, et, Tcan) = B.main(p, tair[i], par[i], vpd[i], wind,
                                      pressure, Ca, doy, hod, LAI)
 

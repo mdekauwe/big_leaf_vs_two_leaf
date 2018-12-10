@@ -28,8 +28,8 @@ import parameters as p
 class PenmanMonteith(object):
 
     def __init__(self, angle=35.0):
-        pass
-        #self.angle = angle              # angle from horizontal (deg) 0-90
+        # not used
+        self.angle = angle              # angle from horizontal (deg) 0-90
 
     def main(self, p, tleaf, tair, gsc, vpd, pressure, wind, par):
 
@@ -101,14 +101,10 @@ class PenmanMonteith(object):
         arg2 = slope + gamma * gh / gw
 
         # W m-2
-        LE = arg1 / arg2
+        LE = max(0.0, arg1 / arg2)
 
         # transpiration, mol H20 m-2 s-1
-        et = LE / lambda_et
-
-        if et < 0.0:
-            et = 0.0
-            le_et = 0.0
+        et = max(0.0, LE / lambda_et)
 
         return (et, LE)
 

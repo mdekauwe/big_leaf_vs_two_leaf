@@ -33,8 +33,10 @@ __version__ = "1.0 (09.11.2018)"
 __email__   = "mdekauwe@gmail.com"
 
 
-class CoupledModel(object):
-    """Iteratively solve leaf temp, Ci, gs and An."""
+class Canopy(object):
+    """
+    Iteratively solve leaf temp, Ci, gs and An using a 2-leaf approximation
+    """
 
     def __init__(self, p, peaked_Jmax=True, peaked_Vcmax=True, model_Q10=True,
                  gs_model=None, iter_max=100):
@@ -288,7 +290,7 @@ if __name__ == "__main__":
     ##
     ### Run Two-leaf
     ##
-    C = CoupledModel(p, gs_model="medlyn")
+    C = Canopy(p, gs_model="medlyn")
 
     An_tl = np.zeros(48)
     gsw_tl = np.zeros(48)

@@ -25,9 +25,10 @@ __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
 __email__   = "mdekauwe@gmail.com"
 
-
-class CoupledModel(object):
-    """Iteratively solve leaf temp, Ci, gs and An."""
+class Canopy(object):
+    """
+    Iteratively solve leaf temp, Ci, gs and An using a big-leaf approach
+    """
 
     def __init__(self, p, peaked_Jmax=True, peaked_Vcmax=True, model_Q10=True,
                  gs_model=None, iter_max=100):
@@ -257,7 +258,7 @@ if __name__ == "__main__":
     ##
     ### Run Big-leaf
     ##
-    B = CoupledModel(p, gs_model="medlyn")
+    B = Canopy(p, gs_model="medlyn")
 
     An_bl = np.zeros(48)
     gsw_bl = np.zeros(48)
