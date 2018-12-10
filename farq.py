@@ -165,7 +165,6 @@ class FarquharC3(object):
             ci_over_ca = p.g1 / (p.g1 + math.sqrt(vpd))
 
         elif self.gs_model == "user_defined":
-            # Multiplier is user-defined.
             g0 = p.g0 / c.GSC_2_GSW
             gs_over_a = mult / c.GSC_2_GSW
 
