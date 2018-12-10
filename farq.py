@@ -88,16 +88,8 @@ class FarquharC3(object):
             Use the peaked Arrhenius function (if true)
         peaked_Vcmax : logical
             Use the peaked Arrhenius function (if true)
-
-        force_vcmax_fit_pts : None or npts
-            Force Ac fit for first X points
-        change_over_pt : None or value of Ci
-            Explicitly set the transition point between Aj and Ac.
-
         gs_model : sting
             stomatal conductance model - Leuning/Medlyn
-        gamma : float
-            is the CO2 compensation point of photosynthesis (umol m-2 s-1)
         g0 : float
             residual stomatal conductance as net assimilation rate reaches
             zero (mol m-2 s-1)
