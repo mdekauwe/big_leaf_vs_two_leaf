@@ -29,36 +29,20 @@ __email__   = "mdekauwe@gmail.com"
 class CoupledModel(object):
     """Iteratively solve leaf temp, Ci, gs and An."""
 
-    def __init__(self, g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
-                 deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
-                 gs_model, alpha=None, iter_max=100):
+    def __init__(self, p, peaked_Jmax=True, peaked_Vcmax=True, model_Q10=True,
+                 gs_model=None, iter_max=100):
 
-        # set params
-        self.g0 = g0
-        self.g1 = g1
-        self.D0 = D0
-        self.gamma = gamma
-        self.Vcmax25 = Vcmax25
-        self.Jmax25 = Jmax25
-        self.Rd25 = Rd25
-        self.Eaj = Eaj
-        self.Eav = Eav
-        self.deltaSj = deltaSj
-        self.deltaSv = deltaSv
-        self.Hdv = Hdv
-        self.Hdj = Hdj
-        self.Q10 = Q10
-        self.leaf_width = leaf_width
-        self.alpha = alpha
-        self.SW_abs = SW_abs # leaf abs of solar rad [0,1]
+        self.p = p
+
+        self.peaked_Jmax = peaked_Jmax
+        self.peaked_Vcmax = peaked_Vcmax
+        self.model_Q10 = model_Q10
         self.gs_model = gs_model
         self.iter_max = iter_max
-
-        self.emissivity_leaf = 0.99   # emissivity of leaf (-)
         self.k = 0.5 # light extinction coefficient
 
-    def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod, lat, lon,
-             LAI, rnet=None):
+    def main(self, p, tair, par, vpd, wind, pressure, Ca, doy, hod,
+             lai, rnet=None):
         """
         Parameters:
         ----------
@@ -96,11 +80,10 @@ class CoupledModel(object):
             transpiration (mol H2O m-2 s-1)
         """
 
-        F = FarquharC3(theta_J=0.85, peaked_Jmax=True, peaked_Vcmax=True,
-                       model_Q10=True, gs_model=self.gs_model,
-                       gamma=self.gamma, g0=self.g0,
-                       g1=self.g1, D0=self.D0, alpha=self.alpha)
-        P = PenmanMonteith(self.leaf_width, self.SW_abs)
+        F = FarquharC3(peaked_Jmax=self.peaked_Jmax,
+                       peaked_Vcmax=self.peaked_Vcmax,
+                       model_Q10=self.model_Q10, gs_model=self.gs_model)
+        PM = PenmanMonteith(p.leaf_width, p.SW_abs)
 
         # set initial values
         dleaf = vpd
@@ -108,7 +91,7 @@ class CoupledModel(object):
         Tleaf = tair
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
-        cos_zenith = calculate_cos_zenith(doy, lat, hod)
+        cos_zenith = calculate_cos_zenith(doy, p.lat, hod)
         zenith_angle = np.rad2deg(np.arccos(cos_zenith))
         elevation = 90.0 - zenith_angle
 
@@ -117,26 +100,19 @@ class CoupledModel(object):
 
             iter = 0
             while True:
-                (An,
-                 gsc) = F.photosynthesis(Cs=Cs, Tleaf=Tleaf_K, Par=par,
-                                         Jmax25=self.Jmax25,
-                                         Vcmax25=self.Vcmax25, Q10=self.Q10,
-                                         Eaj=self.Eaj, Eav=self.Eav,
-                                         deltaSj=self.deltaSj,
-                                         deltaSv=self.deltaSv,
-                                         Rd25=self.Rd25, Hdv=self.Hdv,
-                                         Hdj=self.Hdj, vpd=dleaf)
+                (An, gsc) = F.photosynthesis(p, Cs=Cs, Tleaf=Tleaf_K,
+                                             Par=par, vpd=dleaf)
 
                 # Scale leaf to canopy fluxes, assuming that the photosynthetic
                 # capacity is assumed to decline exponentially through the
                 # canopy, in proportion to the incident radiation estimated by
                 # Beer’s Law
-                An *= (1.0 - np.exp(-self.k * LAI)) / self.k
-                gsc *= (1.0 - np.exp(-self.k * LAI)) / self.k
+                An *= (1.0 - np.exp(-self.k * lai)) / self.k
+                gsc *= (1.0 - np.exp(-self.k * lai)) / self.k
 
                 # Calculate new Tleaf, dleaf, Cs
                 (new_tleaf, et,
-                 le_et, gbH, gw) = self.calc_leaf_temp(P, Tleaf, tair, gsc,
+                 le_et, gbH, gw) = self.calc_leaf_temp(PM, Tleaf, tair, gsc,
                                                        par, vpd, pressure, wind,
                                                        rnet=rnet)
 
@@ -270,13 +246,18 @@ if __name__ == "__main__":
     vpd = (esat - ea) * c.PA_2_KPA
     vpd = np.where(vpd < 0.05, 0.05, vpd)
 
+    #
+    ##  Fixed met stuff
+    #
+    wind = 2.5
+    pressure = 101325.0
+    Ca = 400.0
+    lai = p.LAI
+
     ##
     ### Run Big-leaf
     ##
-
-    C = CoupledModel(p.g0, p.g1, p.D0, p.gamma, p.Vcmax25, p.Jmax25, p.Rd25,
-                     p.Eaj, p.Eav, p.deltaSj, p.deltaSv, p.Hdv, p.Hdj, p.Q10,
-                     p.leaf_width, p.SW_abs, gs_model="medlyn")
+    B = CoupledModel(p, gs_model="medlyn")
 
     An_bl = np.zeros(48)
     gsw_bl = np.zeros(48)
@@ -286,10 +267,12 @@ if __name__ == "__main__":
     hod = 0
     for i in range(len(par)):
 
-        (An_bl[i], gsw_bl[i],
-         et_bl[i], tcan_bl[i]) = C.main(tair[i], par[i], vpd[i],
-                                        p.wind, p.pressure, p.Ca, doy, hod,
-                                        p.lat, p.lon, p.LAI)
+        (An, gsw, et, Tcan) = B.main(p, tair[i], par[i], vpd[i], wind,
+                                     pressure, Ca, doy, hod, lai)
+
+        An_bl[i] = An
+        et_bl[i] = et
+        tcan_bl[i] = Tcan
 
         hod += 1
 

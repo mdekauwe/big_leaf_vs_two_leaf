@@ -6,9 +6,32 @@ import numpy as np
 lat = -23.575001
 lon = 152.524994
 
+# leaf transmissivity [-] (VIS: 0.07 - 0.15)
+# ENF: 0.05; EBF: 0.05; DBF: 0.05; C3G: 0.070
+tau = np.array([0.09, 0.3])
+
+# leaf reflectance [-] (VIS:0.07 - 0.15)
+# ENF: 0.062;EBF: 0.076;DBF: 0.092; C3G: 0.11
+refl = np.array([0.09, 0.3])
+
+Oi = 210.0
+gamstar25 = 42.75
+Kc25 = 404.9
+Ko25 = 278.4
+Ec = 79430.0
+Eo = 36380.0
+Eag = 37830.0
+Ear = None # 34000.0
+theta_hyperbol = 0.9995
+theta_J = 0.7
+quantum_yield = 0.3
+absorptance = 0.8
+alpha = quantum_yield * absorptance # (Medlyn et al 2002)
 g0 = 0.001
 g1 = 4.0
 D0 = 1.5 # kpa
+Hdv=200000.0
+Hdj=200000.0
 Vcmax25 = 60.0
 Jmax25 = Vcmax25 * 1.67
 Rd25 = 2.0
@@ -28,10 +51,3 @@ LAI = 1.5
 # The higher absorptivityof canopies arises because of multiple reflections
 # among leaves in a canopy and depends on the architecture of the canopy.
 SW_abs = 0.8 # use canopy absorptance of solar radiation
-
-#
-##  Fixed met stuff
-#
-wind = 2.5
-pressure = 101325.0
-Ca = 400.0

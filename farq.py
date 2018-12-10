@@ -51,14 +51,9 @@ class FarquharC3(object):
       A review of experimental data. Plant, Cell and Enviroment 25, 1167-1179.
     """
 
-    def __init__(self, peaked_Jmax=False, peaked_Vcmax=False, Oi=210.0,
-                 gamstar25=42.75, Kc25=404.9, Ko25=278.4, Ec=79430.0,
-                 Eo=36380.0, Eag=37830.0, theta_hyperbol=0.9995,
-                 theta_J=0., force_vcmax_fit_pts=None,
-                 alpha=None, quantum_yield=0.3, absorptance=0.8,
-                 change_over_pt=None, model_Q10=False,
-                 gs_model=None, gamma=0.0, g0=None, g1=None, D0=1.5,
-                 adjust_Vcmax_Jmax_for_low_temp=False):
+    def __init__(self, peaked_Jmax=False, peaked_Vcmax=False,
+                 model_Q10=False, gs_model=None,
+                 adjust_for_low_temp=False):
         """
         Parameters
         ----------
@@ -114,36 +109,12 @@ class FarquharC3(object):
         """
         self.peaked_Jmax = peaked_Jmax
         self.peaked_Vcmax = peaked_Vcmax
-        self.Oi = Oi
-        self.gamstar25 = gamstar25
-        self.Kc25 = Kc25
-        self.Ko25 = Ko25
-        self.Ec = Ec
-        self.Eo = Eo
-        self.Eag = Eag
-        self.theta_hyperbol = theta_hyperbol
-        self.theta_J = theta_J
-        if alpha is not None:
-            self.alpha = alpha
-        else:
-            self.alpha = quantum_yield * absorptance # (Medlyn et al 2002)
-
-        self.force_vcmax_fit_pts = force_vcmax_fit_pts
-        self.change_over_pt = change_over_pt
         self.model_Q10 = model_Q10
         self.gs_model = gs_model
-        self.gamma = gamma
-        self.g0 = g0
-        self.g1 = g1
-        self.D0 = D0
-        self.adjust_Vcmax_Jmax_for_low_temp = adjust_Vcmax_Jmax_for_low_temp
+        self.adjust_for_low_temp = adjust_for_low_temp
 
-    def photosynthesis(self, Cs=None, Tleaf=None, Par=None,
-                       Jmax=None, Vcmax=None, Jmax25=None, Vcmax25=None,
-                       Rd=None, Rd25=None, Q10=None, Eaj=None, Eav=None,
-                       deltaSj=None, deltaSv=None, Hdv=200000.0,
-                       Hdj=200000.0, Ear=None, vpd=None, mult=None,
-                       scalex=None):
+    def photosynthesis(self, p, Cs=None, Tleaf=None, Par=None, vpd=None,
+                       mult=None, scalex=None):
         """
         Parameters
         ----------
@@ -195,31 +166,27 @@ class FarquharC3(object):
         gsw : float
             stomatal conductance to water vapour [mol H2O m-2 s-1]
         """
-        self.check_supplied_args(Jmax, Vcmax, Rd, Jmax25, Vcmax25, Rd25)
 
         # calculate temp dependancies of MichaelisMenten constants for CO2, O2
-        Km = self.calc_michaelis_menten_constants(Tleaf)
+        Km = self.calc_michaelis_menten_constants(p, Tleaf)
 
         # Effect of temp on CO2 compensation point
-        gamma_star = self.arrh(self.gamstar25, self.Eag, Tleaf)
+        gamma_star = self.arrh(p.gamstar25, p.Eag, Tleaf)
 
         # Calculate temperature dependancies on Vcmax and Jmax
-        if Vcmax25 is not None:
-            # Effect of temperature on Vcmax and Jamx
-            if self.peaked_Vcmax:
-                Vcmax = self.peaked_arrh(Vcmax25, Eav, Tleaf, deltaSv, Hdv)
-            else:
-                Vcmax = self.arrh(Vcmax25, Eav, Tleaf)
+        if self.peaked_Vcmax:
+            Vcmax = self.peaked_arrh(p.Vcmax25, p.Eav, Tleaf, p.deltaSv, p.Hdv)
+        else:
+            Vcmax = self.arrh(Vcmax25, Eav, Tleaf)
 
-        if Jmax25 is not None:
-            if self.peaked_Jmax:
-                Jmax = self.peaked_arrh(Jmax25, Eaj, Tleaf, deltaSj, Hdj)
-            else:
-                Jmax = self.arrh(Jmax25, Eaj, Tleaf)
+        if self.peaked_Jmax:
+            Jmax = self.peaked_arrh(p.Jmax25, p.Eaj, Tleaf, p.deltaSj, p.Hdj)
+        else:
+            Jmax = self.arrh(p.Jmax25, p.Eaj, Tleaf)
 
         # Calculations at 25 degrees C or the measurement temperature
-        if Rd25 is not None:
-            Rd = self.calc_resp(Tleaf, Q10, Rd25, Ear)
+        if p.Rd25 is not None:
+            Rd = self.calc_resp(Tleaf, p.Q10, p.Rd25, p.Ear)
         else:
             Rd = 0.015 * Vcmax
 
@@ -231,31 +198,31 @@ class FarquharC3(object):
 
         # Rate of electron transport, which is a function of absorbed PAR
         if Par is not None:
-            J = self.calc_electron_transport_rate(Par, Jmax)
+            J = self.calc_electron_transport_rate(p, Par, Jmax)
         # all measurements are calculated under saturated light!!
         else:
             J = Jmax
         Vj = J / 4.0
 
-        if self.adjust_Vcmax_Jmax_for_low_temp:
+        if self.adjust_for_low_temp:
             Jmax = self.adj_for_low_temp(Jmax, Tleaf)
             Vcmax = self.adj_for_low_temp(Vcmax, Tleaf)
 
         if self.gs_model == "leuning":
-            g0 = self.g0 * c.GSW_2_GSC
-            gs_over_a = self.g1 / (Cs - gamma_star) / (1.0 + vpd / self.D0)
+            g0 = p.g0 * c.GSW_2_GSC
+            gs_over_a = p.g1 / (Cs - gamma_star) / (1.0 + vpd / p.D0)
 
             # conductance to CO2
             gs_over_a *= c.GSW_2_GSC
-            ci_over_ca = 1.0 - 1.6 * (1.0 + vpd / self.D0) / self.g1
+            ci_over_ca = 1.0 - 1.6 * (1.0 + vpd / p.D0) / p.g1
 
         elif self.gs_model == "medlyn":
-            if np.isclose(self.g0, 0.0):
+            if np.isclose(p.g0, 0.0):
                 # I want a zero g0, but zero messes up the convergence,
                 # numerical fix
                 g0 = 1E-09
             else:
-                g0 = self.g0 * c.GSW_2_GSC
+                g0 = p.g0 * c.GSW_2_GSC
             if vpd < 0.05:
                 vpd = 0.05
 
@@ -264,12 +231,12 @@ class FarquharC3(object):
             if np.isclose(Cs, 0.0):
                 gs_over_a = 0.0
             else:
-                gs_over_a = (1.0 + self.g1 / math.sqrt(vpd)) / Cs
-            ci_over_ca = self.g1 / (self.g1 + math.sqrt(vpd))
+                gs_over_a = (1.0 + p.g1 / math.sqrt(vpd)) / Cs
+            ci_over_ca = p.g1 / (p.g1 + math.sqrt(vpd))
 
         elif self.gs_model == "user_defined":
             # Multiplier is user-defined.
-            g0 = self.g0 / c.GSC_2_GSW
+            g0 = p.g0 / c.GSC_2_GSW
             gs_over_a = mult / c.GSC_2_GSW
 
         if ( np.isclose(Par, 0.0) | np.isclose(Vj, 0.0) ):
@@ -295,7 +262,7 @@ class FarquharC3(object):
             Aj = self.assim(Cij, gamma_star, a1=Vj, a2=2.0*gamma_star)
 
         # Hyperbolic minimum.
-        A = -self.quadratic(a=1.0 - 1E-04, b=Ac + Aj, c=Ac * Aj, large=True)
+        A = -self.quadratic(a=1.0-1E-04, b=Ac+Aj, c=Ac*Aj, large=True)
 
         # Net photosynthesis
         An = A - Rd
@@ -323,7 +290,7 @@ class FarquharC3(object):
 
         return (An, gsc)
 
-    def calc_electron_transport_rate(self, Par, Jmax):
+    def calc_electron_transport_rate(self, p, Par, Jmax):
         """
         Electron transport rate for a given absorbed irradiance
 
@@ -336,9 +303,9 @@ class FarquharC3(object):
           transpiration: scaling from leaves to canopies, Plant Cell Environ.,
           18, 1183– 1200, 1995. Leuning 1995, eqn C3.
         """
-        A = self.theta_J
-        B = -(self.alpha * Par + Jmax);
-        C = self.alpha * Par * Jmax;
+        A = p.theta_J
+        B = -(p.alpha * Par + Jmax);
+        C = p.alpha * Par * Jmax;
 
         J = self.quadratic(a=A, b=B, c=C, large=False)
 
@@ -391,50 +358,7 @@ class FarquharC3(object):
 
         return param
 
-    def check_supplied_args(self, Jmax, Vcmax, Rd, Jmax25, Vcmax25, Rd25):
-        """ Check the user supplied arguments, either they supply the values
-        at 25 deg C, or the supply Jmax and Vcmax at the measurement temp. It
-        is of course possible they accidentally supply both or a random
-        combination, so raise an exception if so
-
-        Parameters
-        ----------
-        Jmax : float
-            potential rate of electron transport at measurement temperature
-            [deg K]
-        Vcmax : float
-            max rate of rubisco activity at measurement temperature [deg K]
-        Rd : float
-            Day "light" respiration [umol m-2 time unit-1]
-        Jmax25 : float
-            potential rate of electron transport at 25 deg or 298 K
-        Vcmax25 : float
-            max rate of rubisco activity at 25 deg or 298 K
-        Rd25 : float
-            Estimate of respiration rate at the reference temperature 25 deg C
-             or 298 K [deg K]
-
-        Returns
-        -------
-        Nothing
-        """
-        try:
-            if (Rd25 is not None and Jmax25 is not None and
-                Vcmax25 is not None and Vcmax is None and
-                Jmax is None and Rd is None):
-
-                return
-            elif (Rd25 is None and Jmax25 is None and
-                  Vcmax25 is None and Vcmax is not None and
-                  Jmax is not None and Rd is not None):
-
-                return
-
-        except AttributeError:
-            err_msg = "Supplied arguments are a mess!"
-            raise AttributeError(err_msg)
-
-    def calc_michaelis_menten_constants(self, Tleaf):
+    def calc_michaelis_menten_constants(self, p, Tleaf):
         """ Michaelis-Menten constant for O2/CO2, Arrhenius temp dependancy
         Parameters:
         ----------
@@ -445,10 +369,10 @@ class FarquharC3(object):
         Km : float
 
         """
-        Kc = self.arrh(self.Kc25, self.Ec, Tleaf)
-        Ko = self.arrh(self.Ko25, self.Eo, Tleaf)
+        Kc = self.arrh(p.Kc25, p.Ec, Tleaf)
+        Ko = self.arrh(p.Ko25, p.Eo, Tleaf)
 
-        Km = Kc * (1.0 + self.Oi / Ko)
+        Km = Kc * (1.0 + p.Oi / Ko)
 
         return Km
 

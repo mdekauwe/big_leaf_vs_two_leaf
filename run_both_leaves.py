@@ -7,16 +7,15 @@ a big-leaf and 2-leaf approximation and make a comparison plot
 import os
 import sys
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
-from big_leaf import CoupledModel as BigLeaf
-#from big_leaf_depFarq import CoupledModel as BigLeaf
-import pandas as pd
-from two_leaf import CoupledModel as TwoLeaf
 import constants as c
 import parameters as p
-from get_days_met_forcing import get_met_data
 from utils import calc_esat
+from big_leaf import CoupledModel as BigLeaf
+from two_leaf import CoupledModel as TwoLeaf
+from get_days_met_forcing import get_met_data
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
@@ -38,13 +37,18 @@ def main():
     vpd = (esat - ea) * c.PA_2_KPA
     vpd = np.where(vpd < 0.05, 0.05, vpd)
 
+    #
+    ##  Fixed met stuff
+    #
+    wind = 2.5
+    pressure = 101325.0
+    Ca = 400.0
+    LAI = p.LAI
+
     ##
     ### Run Big-leaf
     ##
-
-    B = BigLeaf(p.g0, p.g1, p.D0, p.gamma, p.Vcmax25, p.Jmax25, p.Rd25,
-                p.Eaj, p.Eav, p.deltaSj, p.deltaSv, p.Hdv, p.Hdj, p.Q10,
-                p.leaf_width, p.SW_abs, gs_model="medlyn")
+    B = BigLeaf(p, gs_model="medlyn")
 
     An_bl = np.zeros(48)
     gsw_bl = np.zeros(48)
@@ -53,34 +57,36 @@ def main():
 
     hod = 0
     for i in range(len(par)):
+        
+        (An, gsw, et, Tcan) = B.main(p, tair[i], par[i], vpd[i], wind,
+                                     pressure, Ca, doy, hod, LAI)
 
-        (An_bl[i], gsw_bl[i],
-         et_bl[i], tcan_bl[i]) = B.main(tair[i], par[i], vpd[i],
-                                        p.wind, p.pressure, p.Ca, doy, hod,
-                                        p.lat, p.lon, p.LAI)
+        An_bl[i] = An
+        et_bl[i] = et
+        tcan_bl[i] = Tcan
 
         hod += 1
     ##
     ### Run 2-leaf
     ##
-
-    T = TwoLeaf(p.g0, p.g1, p.D0, p.gamma, p.Vcmax25, p.Jmax25, p.Rd25,
-                p.Eaj, p.Eav, p.deltaSj, p.deltaSv, p.Hdv, p.Hdj, p.Q10,
-                p.leaf_width, p.SW_abs, gs_model="medlyn")
+    T = TwoLeaf(p, gs_model="medlyn")
 
     An_tl = np.zeros(48)
-    gsw_tl = np.zeros(48)
     et_tl = np.zeros(48)
     tcan_tl = np.zeros(48)
 
     hod = 0
     for i in range(len(par)):
 
-        (An_tl[i], gsw_tl[i],
-         et_tl[i], tcan_tl[i],
-         __,__,__,__,
-         __,__) = T.main(tair[i], par[i], vpd[i], p.wind, p.pressure, p.Ca,
-                         doy, hod, p.lat, p.lon, p.LAI)
+        (An, et, Tcan,
+         apar, lai_leaf) = T.main(p, tair[i], par[i], vpd[i], wind,
+                                  pressure, Ca, doy, hod, LAI)
+
+        sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
+        sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
+        An_tl[i] = np.sum(An)
+        et_tl[i] = np.sum(et)
+        tcan_tl[i] = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
 
         hod += 1
 
