@@ -52,7 +52,7 @@ class CoupledModel(object):
         self.iter_max = iter_max
 
         self.emissivity_leaf = 0.99   # emissivity of leaf (-)
-
+        self.k = 0.5 # light extinction coefficient
 
     def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod, lat, lon,
              LAI, rnet=None):
@@ -124,6 +124,13 @@ class CoupledModel(object):
                                          Rd25=self.Rd25, Hdv=self.Hdv,
                                          Hdj=self.Hdj, vpd=dleaf)
 
+                # Scale leaf to canopy fluxes, assuming that the photosynthetic
+                # capacity is assumed to decline exponentially through the
+                # canopy, in proportion to the incident radiation estimated by
+                # Beer’s Law
+                An *= (1.0 - np.exp(-self.k * LAI)) / self.k
+                gsc *= (1.0 - np.exp(-self.k * LAI)) / self.k
+
                 # Calculate new Tleaf, dleaf, Cs
                 (new_tleaf, et,
                  le_et, gbH, gw) = self.calc_leaf_temp(P, Tleaf, tair, gsc,
@@ -158,9 +165,9 @@ class CoupledModel(object):
 
                 iter += 1
 
-            an_canopy = An * LAI
-            gsw_canopy = gsc * c.GSC_2_GSW * LAI
-            et_canopy = et * LAI
+            an_canopy = An
+            gsw_canopy = gsc * c.GSC_2_GSW 
+            et_canopy = et
             tcanopy = Tleaf
         else:
             an_canopy = 0.0
