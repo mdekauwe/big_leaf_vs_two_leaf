@@ -131,11 +131,7 @@ class FarquharC3(object):
             Jmax *= Jmax
 
         # Rate of electron transport, which is a function of absorbed PAR
-        if Par is not None:
-            J = self.calc_electron_transport_rate(p, Par, Jmax)
-        # all measurements are calculated under saturated light!!
-        else:
-            J = Jmax
+        J = self.calc_electron_transport_rate(p, Par, Jmax)
         Vj = J / 4.0
 
         if self.adjust_for_low_temp:
