@@ -254,8 +254,10 @@ class Canopy(object):
         # NB. I'm using gh here to include grn and the doubling of conductances
         new_Tleaf = tair + H / (c.CP * air_density * (gh / cmolar))
 
+        # Update leaf temperature:
+        new_tleaf_k = tleaf_k + (new_Tleaf + c.DEG_2_KELVIN)
+
         # Update net radiation for canopy
-        new_tleaf_k = (tleaf + new_Tleaf) + c.DEG_2_KELVIN
         rnet -= c.CP * c.AIR_MASS * (new_tleaf_k - tair_k) * grn
 
         return (new_Tleaf, et, le_et, gbH, gw)
