@@ -104,6 +104,7 @@ def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
     rhocdf = np.zeros(3)
     albsoilsn = np.zeros(2)
     tk = tair + c.DEG_2_KELVIN
+    gradis = np.zeros(2)
 
     # surface temperaute - just using air temp
     tsurf = tk
@@ -266,6 +267,23 @@ def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
     apar[c.SUNLIT] = qcan[c.SUNLIT,c.VIS] * c.J_TO_UMOL
     apar[c.SHADED] = qcan[c.SHADED,c.VIS] * c.J_TO_UMOL
 
+    """
+    if lai > c.LAI_THRESH:  # vegetated
+        transb = np.exp(-(min(kb * lai, 30.)))
+        transd = np.exp(-kd * lai)
+
+        # Define radiative conductance (Leuning et al, 1995), eq. D7:
+        a1 = 4.0 * p.emissivity_leaf / (c.CP * c.AIR_MASS)
+        a2 = flpwb / tk * kd
+        a3 = (1.0 - transb * transd) / (kb + kd) + \
+                (transd - transb) / (kb - kd)
+        gradis[0] = a1 * a2 * a3
+
+        a1 = 8.0 * p.emissivity_leaf / (c.CP * c.AIR_MASS)
+        a3 = (1.0 - transd) / kd - gradis[0]
+        gradis[1] = a1 * a2 * a3
+    """
+    
     # Total energy absorbed by canopy, summing VIS, NIR and LW components, to
     # leave us with the indivual leaf components.
     qcan = qcan.sum(axis=1)
@@ -278,7 +296,7 @@ def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
 
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
 
-    return (qcan, apar, lai_leaf, kb)
+    return (qcan, apar, lai_leaf, kb, gradis)
 
 def psi_func(z, lai):
     # B5 function from Wang and Leuning which integrates property passed via
@@ -340,5 +358,5 @@ def calc_leaf_to_canopy_scalar(lai, k=None, kn=None, kb=None, big_leaf=False):
         scalex[c.SUNLIT] = (1.0 - np.exp(-kb * lai) * \
                                 np.exp(-kn * lai)) / (kb + kn)
         scalex[c.SHADED] = (1.0 - np.exp(-kn * lai)) / kn - scalex[c.SUNLIT]
-        
+
     return scalex
