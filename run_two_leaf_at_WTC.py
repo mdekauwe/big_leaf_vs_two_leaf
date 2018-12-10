@@ -19,7 +19,7 @@ __version__ = "1.0 (07.12.2018)"
 __email__   = "mdekauwe@gmail.com"
 
 
-def run_treatment(T, df):
+def run_treatment(T, df, footprint):
 
     wind = 5.0
     pressure = 101325.0
@@ -41,6 +41,9 @@ def run_treatment(T, df):
     an_conv = c.UMOL_TO_MOL * c.MOL_C_TO_GRAMS_C * c.SEC_TO_HR
     et_conv = c.MOL_WATER_2_G_WATER * c.G_TO_KG * c.SEC_TO_HR
 
+    # Add an LAI field, i.e. converting from per tree to m2 m-2
+    df = df.assign(LAI = lambda x: x.leafArea/footprint)
+
     i = 0
     j = 0
     while i < len(df):
@@ -58,14 +61,14 @@ def run_treatment(T, df):
              et, tcan,
              _,_,_,_,_,_) = T.main(df.tair[i], df.par[i], df.vpd[i], wind,
                                    pressure, Ca, doy, hod, lat, lon,
-                                   df.leafArea[i])
+                                   df.LAI[i])
 
             Anx += An * an_conv
             Ex += et * et_conv
 
-            # wrong units, as per tree
-            An_obs += df.FluxCO2[i] * c.MMOL_2_UMOL * an_conv
-            Ex_obs += df.FluxH2O[i] * et_conv
+            # Convert from per tree to m-2
+            An_obs += df.FluxCO2[i] * c.MMOL_2_UMOL * an_conv / footprint
+            Ex_obs += df.FluxH2O[i] * et_conv / footprint
 
             hod += 1
             i += 1
@@ -113,6 +116,9 @@ if __name__ == "__main__":
     leaf_width = 0.02
     SW_abs = 0.8 # use canopy absorptance of solar radiation, not used anyway...
 
+    diameter = 3.25 # chamber
+    footprint = np.pi * (diameter / 2.)**2 # to convert from tree to m2
+
     T = TwoLeaf(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav, deltaSj,
                 deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs, gs_model="medlyn")
 
@@ -122,7 +128,10 @@ if __name__ == "__main__":
              (df.Water_treatment == "control") &
              (df.chamber == "C01")]
 
-    (out) = run_treatment(T, dfx)
+
+    (out) = run_treatment(T, dfx, footprint)
+
+
 
     import matplotlib.pyplot as plt
     fig = plt.figure(figsize=(16,4))
