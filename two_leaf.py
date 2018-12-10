@@ -179,6 +179,28 @@ class Canopy(object):
                     Tleaf_K = Tleaf + c.DEG_2_KELVIN
                     Tcan[ileaf] = Tleaf
 
+                    # Update temperature & do another iteration
+                    Tleaf = new_tleaf
+                    Tleaf_K = Tleaf + c.DEG_2_KELVIN
+                    Tcan[ileaf] = Tleaf
+
+                    """
+                    # Update leaf surface vapour pressure deficit:
+                    tetena = 6.106
+                    tetenb = 17.27
+                    tetenc = 237.3
+                    TFRZ = 273.15
+                    Tair_K = tair + c.DEG_2_KELVIN
+
+                    # d(es)/dT (Pa/K)
+                    a1 = tetena * tetenb * tetenc
+                    a2 = ((Tair_K - TFRZ) + tetenc)**2
+                    a3 = np.exp(tetenb * \
+                                (Tair_K-TFRZ) / ((Tair_K-TFRZ) + tetenc))
+                    dsatdk = 100.0 * a1 / a2 * a3 * c.PA_TO_KPA
+                    dleafx = vpd + dsatdk * (Tleaf_K - Tair_K)
+                    """
+
                     iter += 1
 
         return (An, et, Tcan, apar, lai_leaf)
@@ -227,9 +249,6 @@ class Canopy(object):
 
         # convert from mm s-1 to mol m-2 s-1
         cmolar = pressure / (c.RGAS * tair_k)
-
-        if rnet is None:
-            rnet = PM.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
 
         (grn, gh, gbH, gw) = PM.calc_conductances(p, tair_k, tleaf, tair,
                                                   wind, gsc, cmolar, lai)
