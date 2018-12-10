@@ -268,7 +268,10 @@ def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
     apar[c.SUNLIT] = qcan[c.SUNLIT,c.VIS] * c.J_TO_UMOL
     apar[c.SHADED] = qcan[c.SHADED,c.VIS] * c.J_TO_UMOL
 
-    #"""
+    # Total energy absorbed by canopy, summing VIS, NIR and LW components, to
+    # leave us with the indivual leaf components.
+    qcan = qcan.sum(axis=1)
+
     if lai > c.LAI_THRESH:  # vegetated
         transb = np.exp(-(min(kb * lai, 30.)))
         transd = np.exp(-kd * lai)
@@ -285,11 +288,6 @@ def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
         a3 = (1.0 - transd) / kd - gradis[0]
         gradis[1] = a1 * a2 * a3
         gradis[1] = max(1.0e-3,gradis[1])
-    #"""
-
-    # Total energy absorbed by canopy, summing VIS, NIR and LW components, to
-    # leave us with the indivual leaf components.
-    qcan = qcan.sum(axis=1)
 
     # where vegetated and sunlit
     if lai > c.LAI_THRESH and np.sum(sw_rad) > c.RAD_THRESH:
