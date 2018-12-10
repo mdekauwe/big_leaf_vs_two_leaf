@@ -6,6 +6,9 @@ import numpy as np
 lat = -23.575001
 lon = 152.524994
 
+# Leaf area index [m2 m-2]
+LAI = 1.5
+
 # leaf transmissivity [-] (VIS: 0.07 - 0.15)
 # ENF: 0.05; EBF: 0.05; DBF: 0.05; C3G: 0.070
 tau = np.array([0.09, 0.3])
