@@ -149,7 +149,8 @@ class Canopy(object):
                                                            None, vpd,
                                                            pressure, wind,
                                                            rnet=qcan[ileaf],
-                                                           lai=lai_leaf[ileaf])
+                                                           lai=lai_leaf[ileaf],
+                                                           gradis=gradis[ileaf])
 
                     gbc = gbH * c.GBH_2_GBC
                     if gbc > 0.0 and An[ileaf] > 0.0:
@@ -202,7 +203,7 @@ class Canopy(object):
 
     def calc_leaf_temp(self, p, PM=None, tleaf=None, tair=None, gsc=None,
                        par=None, vpd=None, pressure=None, wind=None, rnet=None,
-                       lai=None):
+                       lai=None, gradis=None):
         """
         Resolve leaf temp
 
@@ -259,10 +260,17 @@ class Canopy(object):
         # Leuning isn't explicit about grn but I think this is right
         # NB the units or grn and gbH are mol m-2 s-1 and not m s-1, but it
         # cancels.
-        Y = 1.0 / (1.0 + (2.0 * grn) / (2.0 * gbH))
+        #Y = 1.0 / (1.0 + (2.0 * grn) / (2.0 * gbH))
 
         # sensible heat exchanged between leaf and surroundings
-        H = Y * (rnet - le_et)
+        #H = Y * (rnet - le_et)
+
+        # Conductance for heat and longwave radiation
+        ghr = gh + gradis * cmolar
+
+        # Update canopy sensible heat flux
+        H = (rnet - le_et - c.CP * air_density * \
+                (tleaf_k-tair_k) * gradis) * gh / ghr
 
         # leaf-air temperature difference recalculated from energy balance.
         # NB. I'm using gh here to include grn and the doubling of conductances
@@ -272,7 +280,7 @@ class Canopy(object):
         new_tleaf_k = tleaf_k + (new_Tleaf + c.DEG_2_KELVIN)
 
         # Update net radiation for canopy
-        rnet -= c.CP * c.AIR_MASS * (new_tleaf_k - tair_k) * grn
+        rnet -= c.CP * c.AIR_MASS * (new_tleaf_k - tair_k) * gradis
 
         return (new_Tleaf, et, le_et, gbH, gw)
 
