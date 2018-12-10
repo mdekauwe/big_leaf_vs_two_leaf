@@ -117,7 +117,6 @@ class Canopy(object):
             scalex[0] = 0.
 
         # Is the sun up?
-        #print(elevation, zenith_angle, np.rad2deg(np.arcsin(cos_zenith)))
         if elevation > 0.0 and par > 50.:
 
             # sunlit / shaded loop
@@ -150,8 +149,7 @@ class Canopy(object):
                                                            None, vpd,
                                                            pressure, wind,
                                                            rnet=qcan[ileaf],
-                                                           lai=lai_leaf[ileaf],
-                                                           leaf=ileaf)
+                                                           lai=lai_leaf[ileaf])
 
                     gbc = gbH * c.GBH_2_GBC
                     if gbc > 0.0 and An[ileaf] > 0.0:
@@ -187,7 +185,7 @@ class Canopy(object):
 
     def calc_leaf_temp(self, p, PM=None, tleaf=None, tair=None, gsc=None,
                        par=None, vpd=None, pressure=None, wind=None, rnet=None,
-                       lai=None, leaf=None):
+                       lai=None):
         """
         Resolve leaf temp
 
@@ -297,7 +295,7 @@ if __name__ == "__main__":
     gsw_tl = np.zeros(48)
     et_tl = np.zeros(48)
     tcan_tl = np.zeros(48)
-    
+
     hod = 0
     for i in range(48):
 
