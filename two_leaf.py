@@ -179,11 +179,6 @@ class Canopy(object):
                     Tleaf_K = Tleaf + c.DEG_2_KELVIN
                     Tcan[ileaf] = Tleaf
 
-                    # Update temperature & do another iteration
-                    Tleaf = new_tleaf
-                    Tleaf_K = Tleaf + c.DEG_2_KELVIN
-                    Tcan[ileaf] = Tleaf
-
                     """
                     # Update leaf surface vapour pressure deficit:
                     tetena = 6.106
