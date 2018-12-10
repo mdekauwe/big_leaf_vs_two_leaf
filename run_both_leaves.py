@@ -59,7 +59,7 @@ def main():
     for i in range(len(par)):
 
         (An, gsw, et, Tcan) = B.main(p, tair[i], par[i], vpd[i], wind,
-                                     pressure, Ca, doy, hod, LAI)
+                                     pressure, Ca, doy, hod/2., LAI)
 
         An_bl[i] = An
         et_bl[i] = et
@@ -80,7 +80,7 @@ def main():
 
         (An, et, Tcan,
          apar, lai_leaf) = T.main(p, tair[i], par[i], vpd[i], wind,
-                                  pressure, Ca, doy, hod, LAI)
+                                  pressure, Ca, doy, hod/2., LAI)
 
         sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
         sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)

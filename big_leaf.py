@@ -267,7 +267,7 @@ if __name__ == "__main__":
     for i in range(len(par)):
 
         (An, gsw, et, Tcan) = B.main(p, tair[i], par[i], vpd[i], wind,
-                                     pressure, Ca, doy, hod, lai)
+                                     pressure, Ca, doy, hod/2., lai)
 
         An_bl[i] = An
         et_bl[i] = et
