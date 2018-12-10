@@ -55,17 +55,17 @@ def main():
     et_bl = np.zeros(48)
     tcan_bl = np.zeros(48)
 
-    hod = 0
     for i in range(len(par)):
 
+        hod = float(i)/2. + 1800. / 3600. / 2.
+
         (An, gsw, et, Tcan) = B.main(p, tair[i], par[i], vpd[i], wind,
-                                     pressure, Ca, doy, hod/2., LAI)
+                                     pressure, Ca, doy, hod, LAI)
 
         An_bl[i] = An
         et_bl[i] = et
         tcan_bl[i] = Tcan
 
-        hod += 1
     ##
     ### Run 2-leaf
     ##

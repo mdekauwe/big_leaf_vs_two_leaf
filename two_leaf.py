@@ -296,12 +296,13 @@ if __name__ == "__main__":
     et_tl = np.zeros(48)
     tcan_tl = np.zeros(48)
 
-    hod = 0
     for i in range(48):
+
+        hod = float(i)/2. + 1800. / 3600. / 2.
 
         (An, et, Tcan,
          apar, lai_leaf) = C.main(p, tair[i], par[i], vpd[i], wind,
-                                  pressure, Ca, doy, hod/2., lai)
+                                  pressure, Ca, doy, hod, lai)
 
         sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
         sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
@@ -310,7 +311,7 @@ if __name__ == "__main__":
         tcan_tl[i] = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
 
         #print(Tcan[c.SHADED], Tcan[c.SHADED] * sha_frac, sha_frac)
-        hod += 1
+
 
     fig = plt.figure(figsize=(16,4))
     fig.subplots_adjust(hspace=0.1)
