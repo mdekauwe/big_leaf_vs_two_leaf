@@ -33,7 +33,6 @@ class FarquharC3(object):
     dependancy function, either an exponential Arrheniuous or a peaked
     function, i.e. the Arrhenious function with a switch off point.
 
-
     All calculations in Kelvins...
 
     References:
@@ -57,47 +56,16 @@ class FarquharC3(object):
         """
         Parameters
         ----------
-        Oi : float
-            intercellular concentration of O2 [mmol mol-1]
-        gamstar25 : float
-            CO2 compensation point - base rate at 25 deg C / 298 K [umol mol-1]
-        Kc25 : float
-            Michaelis-Menten coefficents for carboxylation by Rubisco at
-            25degC [umol mol-1] or 298 K
-        Ko25: float
-            Michaelis-Menten coefficents for oxygenation by Rubisco at
-            25degC [mmol mol-1]. Note value in Bernacchie 2001 is in mmol!!
-            or 298 K
-        Ec : float
-            Activation energy for carboxylation [J mol-1]
-        Eo : float
-            Activation energy for oxygenation [J mol-1]
-        Eag : float
-            Activation energy at CO2 compensation point [J mol-1]
-        RGAS : float
-            Universal gas constant [J mol-1 K-1]
-        theta_hyperbol : float
-            Curvature of the light response.
-            See Peltoniemi et al. 2012 Tree Phys, 32, 510-519
-        theta_J : float
-            Curvature of the light response
-        alpha : float
-            Leaf quantum yield (initial slope of the A-light response curve)
-            [mol mol-1]
         peaked_Jmax : logical
-            Use the peaked Arrhenius function (if true)
+            use peaked or non-peaked arrhenius func
         peaked_Vcmax : logical
-            Use the peaked Arrhenius function (if true)
-        gs_model : sting
-            stomatal conductance model - Leuning/Medlyn
-        g0 : float
-            residual stomatal conductance as net assimilation rate reaches
-            zero (mol m-2 s-1)
-        g1 : float
-            and the slope of the sensitivity of stomatal conductance to
-            assimilation (mol m-2 s-1)
-        D0 : float
-            the sensitivity of stomatal conductance to D (kPa)
+            use peaked or non-peaked arrhenius func
+        model_Q10 : logical
+            use Q10 to calculate Rd
+        gs_model : string
+            medlyn or leuning model
+        adjust_for_low_temp : logical
+            adjust Vcmax/Jmax at the low temperature end
         """
         self.peaked_Jmax = peaked_Jmax
         self.peaked_Vcmax = peaked_Vcmax
@@ -110,44 +78,20 @@ class FarquharC3(object):
         """
         Parameters
         ----------
+        p : struct
+            contains all the model params
         Cs : float
             leaf surface CO2 concentration [umol mol-1]
         Tleaf : float
             leaf temp [deg K]
-        * Optional args:
-        Jmax : float
-            potential rate of electron transport at measurement temperature
-            [deg K]
-        Vcmax : float
-            max rate of rubisco activity at measurement temperature [deg K]
-        Jmax25 : float
-            potential rate of electron transport at 25 deg or 298 K
-        Vcmax25 : float
-            max rate of rubisco activity at 25 deg or 298 K
-        Rd : float
-            Day "light" respiration [umol m-2 time unit-1]
-        Q10 : float
-            ratio of respiration at a given temperature divided by respiration
-            at a temperature 10 degrees lower
-        Eaj : float
-            activation energy for the parameter [J mol-1]
-        Eav : float
-            activation energy for the parameter [J mol-1]
-        deltaSj : float
-            entropy factor [J mol-1 K-1)
-        deltaSv : float
-            entropy factor [J mol-1 K-1)
-        HdV : float
-            Deactivation energy for Vcmax [J mol-1]
-        Hdj : float
-            Deactivation energy for Jmax [J mol-1]
-        Rd25 : float
-            Estimate of respiration rate at the reference temperature 25 deg C
-             or 298 K [deg K]
         Par : float
-            photosynthetically active radiation [umol m-2 time unit-1]. Default
-            is not to supply PAR, with measurements taken under light
-            saturation.
+            photosynthetically active radiation [umol m-2 s-1].
+        vpd : float
+            vapour pressure deficit [kPa].
+        mult : float
+            if passing a user defined gs model, i.e. not Medlyn or Leuning.
+        scalex : float
+            scaler to transform leaf to big leaf
 
         Returns:
         --------
@@ -155,8 +99,6 @@ class FarquharC3(object):
             Net leaf assimilation rate [umol m-2 s-1]
         gsc : float
             stomatal conductance to CO2 [mol m-2 s-1]
-        gsw : float
-            stomatal conductance to water vapour [mol H2O m-2 s-1]
         """
 
         # calculate temp dependancies of MichaelisMenten constants for CO2, O2
@@ -286,6 +228,21 @@ class FarquharC3(object):
         """
         Electron transport rate for a given absorbed irradiance
 
+        Parameters
+        ----------
+        p : struct
+            contains all the model params
+        Par : float
+            photosynthetically active radiation [umol m-2 s-1].
+        Jmax : float
+            potential rate of electron transport
+
+        theta_J : float
+            Curvature of the light response (-)
+        alpha : float
+            Leaf quantum yield (initial slope of the A-light response curve)
+            [mol mol-1]
+
         Reference:
         ----------
         * Farquhar G.D. & Wong S.C. (1984) An empirical model of stomatal
@@ -309,6 +266,29 @@ class FarquharC3(object):
         Leuning 1990, see eqn 15a-c, solving simultaneous solution for Eqs 2, 12
         and 13
 
+        Parameters
+        ----------
+        g0 : float
+            residual stomatal conductance as net assimilation rate reaches zero
+            (mol m-2 s-1)
+        g1 : float
+            slope of the sensitivity of stomatal conductance to assimilation
+            (mol m-2 s-1)
+        gs_over_a : float
+            gs / A
+        rd : float
+            Rspiration rate [umol m-2 s-1]
+        Cs : float
+            leaf surface CO2 concentration [umol mol-1]
+        gamma_star : float
+            CO2 compensation point - base rate at 25 deg C / 298 K [umol mol-1]
+        gamma : float
+            if calculating Cic, this will be Vcmax
+            if calculating Cij, this will be Vj
+        beta : float
+            if calculating Cic, this will be Km
+            if calculating Cij, this will be 2.0*gamma_star
+
         Reference:
         ----------
         * Leuning (1990) Modelling Stomatal Behaviour and Photosynthesis of
@@ -331,35 +311,31 @@ class FarquharC3(object):
 
         return Ci
 
-
-    def adj_for_low_temp(self, param, Tk, lower_bound=0.0, upper_bound=10.0):
-        """
-        Function allowing Jmax/Vcmax to be forced linearly to zero at low T
-
-        Parameters:
-        ----------
-        Tk : float
-            air temperature (Kelvin)
-        """
-        Tc = Tk - c.DEG_2_KELVIN
-
-        if Tc < lower_bound:
-            param = 0.0
-        elif Tc < upper_bound:
-            param *= (Tc - lower_bound) / (upper_bound - lower_bound)
-
-        return param
-
     def calc_michaelis_menten_constants(self, p, Tleaf):
         """ Michaelis-Menten constant for O2/CO2, Arrhenius temp dependancy
+
         Parameters:
         ----------
         Tleaf : float
             leaf temperature [deg K]
 
-        Returns:
-        Km : float
+        Kc25 : float
+            Michaelis-Menten coefficents for carboxylation by Rubisco at
+            25degC [umol mol-1] or 298 K
+        Kc25 : float
+            Michaelis-Menten coefficents for oxygenation by Rubisco at
+            25degC [mmol mol-1]. Note value in Bernacchie 2001 is in mmol!!
+            or 298 K
+        Ec : float
+            Activation energy for carboxylation [J mol-1]
+        Eo : float
+            Activation energy for oxygenation [J mol-1]
+        Oi : float
+            intercellular concentration of O2 [mmol mol-1]
 
+        Returns:
+        --------
+        Km : float
         """
         Kc = self.arrh(p.Kc25, p.Ec, Tleaf)
         Ko = self.arrh(p.Ko25, p.Eo, Tleaf)
@@ -436,6 +412,7 @@ class FarquharC3(object):
             intercellular CO2 concentration.
         gamma_star : float
             CO2 compensation point in the abscence of mitochondrial respiration
+            [umol m-2 s-1]
         a1 : float
             variable depends on whether the calculation is light or rubisco
             limited.
@@ -447,6 +424,7 @@ class FarquharC3(object):
         -------
         assimilation_rate : float
             assimilation rate assuming either light or rubisco limitation.
+            [umol m-2 s-1]
         """
         return a1 * (Ci - gamma_star) / (a2 + Ci)
 
@@ -455,19 +433,22 @@ class FarquharC3(object):
 
         Parameters:
         ----------
-        Rd25 : float
-            Estimate of respiration rate at the reference temperature 25 deg C
-            or or 298 K
-        Tref : float
-            reference temperature
+        Tleaf : float
+            leaf temp [deg K]
         Q10 : float
             ratio of respiration at a given temperature divided by respiration
             at a temperature 10 degrees lower
+        Rd25 : float
+            Estimate of respiration rate at the reference temperature 25 deg C
+            or or 298 K
         Ear : float
             activation energy for the parameter [J mol-1]
+        Tref : float
+            reference temperature
+
         Returns:
         -------
-        Rt : float
+        Rd : float
             leaf respiration
 
         References:
@@ -526,3 +507,23 @@ class FarquharC3(object):
                 root = (-b - np.sqrt(d)) / (2.0 * a)
 
         return root
+
+    def adj_for_low_temp(self, param, Tk, lower_bound=0.0, upper_bound=10.0):
+        """
+        Function allowing Jmax/Vcmax to be forced linearly to zero at low T
+
+        Parameters:
+        ----------
+        param : float
+            value to adjust
+        Tk : float
+            air temperature (Kelvin)
+        """
+        Tc = Tk - c.DEG_2_KELVIN
+
+        if Tc < lower_bound:
+            param = 0.0
+        elif Tc < upper_bound:
+            param *= (Tc - lower_bound) / (upper_bound - lower_bound)
+
+        return param
