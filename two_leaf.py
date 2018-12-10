@@ -85,7 +85,7 @@ class CoupledModel(object):
         F = FarquharC3(peaked_Jmax=self.peaked_Jmax,
                        peaked_Vcmax=self.peaked_Vcmax,
                        model_Q10=self.model_Q10, gs_model=self.gs_model)
-        PM = PenmanMonteith(p.leaf_width, p.SW_abs)
+        PM = PenmanMonteith()
 
         An = np.zeros(2) # sunlit, shaded
         gsc = np.zeros(2)  # sunlit, shaded
@@ -144,7 +144,7 @@ class CoupledModel(object):
 
                     # Calculate new Tleaf, dleaf, Cs
                     (new_tleaf, et[ileaf],
-                     le_et, gbH, gw) = self.calc_leaf_temp(PM, Tleaf, tair,
+                     le_et, gbH, gw) = self.calc_leaf_temp(p, PM, Tleaf, tair,
                                                            gsc[ileaf],
                                                            None, vpd,
                                                            pressure, wind,
@@ -182,8 +182,9 @@ class CoupledModel(object):
 
         return (An, et, Tcan, apar, lai_leaf)
 
-    def calc_leaf_temp(self, PM=None, tleaf=None, tair=None, gsc=None, par=None,
-                       vpd=None, pressure=None, wind=None, rnet=None, lai=None):
+    def calc_leaf_temp(self, p, PM=None, tleaf=None, tair=None, gsc=None,
+                       par=None, vpd=None, pressure=None, wind=None, rnet=None,
+                       lai=None):
         """
         Resolve leaf temp
 
@@ -229,7 +230,7 @@ class CoupledModel(object):
         if rnet is None:
             rnet = PM.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
 
-        (grn, gh, gbH, gw) = PM.calc_conductances(tair_k, tleaf, tair,
+        (grn, gh, gbH, gw) = PM.calc_conductances(p, tair_k, tleaf, tair,
                                                   wind, gsc, cmolar, lai)
 
         # Update net radiation for canopy

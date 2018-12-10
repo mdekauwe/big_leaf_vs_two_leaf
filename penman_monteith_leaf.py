@@ -20,32 +20,30 @@ __email__ = "mdekauwe@gmail.com"
 import math
 import numpy as np
 import sys
+
 from utils import calc_esat
 import constants as c
+import parameters as p
 
 class PenmanMonteith(object):
 
-    def __init__(self, leaf_width, SW_abs, angle=35.0):
+    def __init__(self, angle=35.0):
+        pass
+        #self.angle = angle              # angle from horizontal (deg) 0-90
 
-        # emissivity of leaf (-); Table 3, Wang and Leuning, 1998
-        self.leaf_ems = 0.96
-        self.SW_abs = SW_abs            # laea/can absorptance to SW radiation
-        self.leaf_width = leaf_width    # (m)
-        self.angle = angle              # angle from horizontal (deg) 0-90
-
-    def main(self, tleaf, tair, gs, vpd, pressure, wind, par):
+    def main(self, p, tleaf, tair, gsc, vpd, pressure, wind, par):
 
         tleaf_k = tleaf + c.DEG_2_KELVIN
         tair_k = tair + c.DEG_2_KELVIN
 
         air_density = pressure  / (c.RSPECIFC_DRY_AIR * tair_k)
-        cmolar = pressure  / (RGAS * tair_k)
-        rnet = P.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
+        cmolar = pressure  / (c.RGAS * tair_k)
+        rnet = self.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
 
-        (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
-                                                 wind, gsc, cmolar)
-        (et, lambda_et) = P.calc_et(tleaf, tair, vpd, pressure, wind, par,
-                                    gh, gw, rnet)
+        (grn, gh, gbH, gw) = self.calc_conductances(p, tair_k, tleaf, tair,
+                                                    wind, gsc, cmolar)
+        (et, lambda_et) = self.calc_et(tleaf, tair, vpd, pressure, wind, par,
+                                       gh, gw, rnet)
         return (et, lambda_et)
 
     def calc_et(self, tleaf, tair, vpd, pressure, wind, par, gh, gw,
@@ -114,7 +112,8 @@ class PenmanMonteith(object):
 
         return (et, LE)
 
-    def calc_conductances(self, tair_k, tleaf, tair, wind, gsc, cmolar, lai=None):
+    def calc_conductances(self, p, tair_k, tleaf, tair, wind, gsc, cmolar,
+                          lai=None):
         """
         Both forced and free convection contribute to exchange of heat and mass
         through leaf boundary layers at the wind speeds typically encountered
@@ -158,31 +157,33 @@ class PenmanMonteith(object):
         # just below eqn 9. This differs from Leuning (1995) where it is
         # expressed as a function of the diffuse extinction coefficent and
         # cumulative LAI (NB. units already in mol m-2 s-1).
-        grn = (4.0 * c.SIGMA * tair_k**3 * self.leaf_ems) / (c.CP * c.AIR_MASS)
+        grn = (4.0 * c.SIGMA * tair_k**3 * \
+               p.emissivity_leaf) / (c.CP * c.AIR_MASS)
 
         # boundary layer conductance for heat: single sided, forced convection
         # (mol m-2 s-1)
-        gbHw = 0.003 * math.sqrt(wind / self.leaf_width) * cmolar
+        gbHw = 0.003 * math.sqrt(wind / p.leaf_width) * cmolar
 
         if np.isclose(tleaf - tair, 0.0):
             gbHf = 0.0
         else:
             # grashof number
             grashof_num = max(1.e-06, 1.6E8 * math.fabs(tleaf - tair) * \
-                                      self.leaf_width**3)
+                                      p.leaf_width**3)
 
             # boundary layer conductance for heat: single sided, free convection
             # (mol m-2 s-1)
-            gbHf = 0.5 * c.DHEAT * grashof_num**0.25 / self.leaf_width * cmolar
+            gbHf = 0.5 * c.DHEAT * grashof_num**0.25 / p.leaf_width * cmolar
 
             if lai is None:
                 gbHf = 0.5 * c.DHEAT * \
-                        grashof_num**0.25 / self.leaf_width * cmolar
+                        grashof_num**0.25 / p.leaf_width * cmolar
             else:
                 # Cable uses the leaf LAI to adjust this for the 2-leaf
                 gbHf = lai * 0.5 * c.DHEAT * \
-                        grashof_num**0.25 / self.leaf_width * cmolar
+                        grashof_num**0.25 / p.leaf_width * cmolar
             gbHf = max(1.e-06, gbHf)
+
         # total boundary layer conductance for heat
         gbH = gbHw + gbHf
 
@@ -254,7 +255,7 @@ class PenmanMonteith(object):
         #kd = 0.8
 
         # isothermal net radiation (W m-2)
-        rnet = self.SW_abs * sw_rad - net_lw_rad #* kd * exp(-kd * lai)
+        rnet = p.SW_abs * sw_rad - net_lw_rad #* kd * exp(-kd * lai)
 
         return rnet
 
@@ -530,18 +531,8 @@ if __name__ == '__main__':
     vpd = 2.0
     pressure = 101325.0 # Pa
     wind = 2.0
-    leaf_width = 0.02
 
-    # Cambell & Norman, 11.5, pg 178
-    # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
-    # with canopies (~0.8) from Table 11.2 reveals a surprising difference.
-    # The higher absorptivityof canopies arises because of multiple reflections
-    # among leaves in a canopy and depends on the architecture of the canopy.
-    SW_abs = 0.8 # use canopy absorptance of solar radiation
-    RGAS = 8.314
-    angle = 35.0 # angle from horizontal
-
-    P = PenmanMonteith(leaf_width, SW_abs, angle)
-    (et, lambda_et) = P.main(tleaf, tair, gs, vpd, pressure, wind, par)
+    PM = PenmanMonteith()
+    (et, lambda_et) = PM.main(p, tleaf, tair, gs, vpd, pressure, wind, par)
 
     print(et, lambda_et)

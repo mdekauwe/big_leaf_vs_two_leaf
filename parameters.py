@@ -96,6 +96,7 @@ deltaSj = 650.0
 # entropy factor [J mol-1 K-1)
 deltaSv = 650.0
 
+# leaf width (m)
 leaf_width = 0.02
 
 # Cambell & Norman, 11.5, pg 178
@@ -104,3 +105,6 @@ leaf_width = 0.02
 # The higher absorptivityof canopies arises because of multiple reflections
 # among leaves in a canopy and depends on the architecture of the canopy.
 SW_abs = 0.8 # use canopy absorptance of solar radiation
+
+# leaf emissivity (-), Table 3, Wang and Leuning, 1998
+emissivity_leaf = 0.96

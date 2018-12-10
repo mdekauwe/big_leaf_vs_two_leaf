@@ -83,7 +83,7 @@ class CoupledModel(object):
         F = FarquharC3(peaked_Jmax=self.peaked_Jmax,
                        peaked_Vcmax=self.peaked_Vcmax,
                        model_Q10=self.model_Q10, gs_model=self.gs_model)
-        PM = PenmanMonteith(p.leaf_width, p.SW_abs)
+        PM = PenmanMonteith()
 
         # set initial values
         dleaf = vpd
@@ -112,7 +112,7 @@ class CoupledModel(object):
 
                 # Calculate new Tleaf, dleaf, Cs
                 (new_tleaf, et,
-                 le_et, gbH, gw) = self.calc_leaf_temp(PM, Tleaf, tair, gsc,
+                 le_et, gbH, gw) = self.calc_leaf_temp(p, PM, Tleaf, tair, gsc,
                                                        par, vpd, pressure, wind,
                                                        rnet=rnet)
 
@@ -156,8 +156,8 @@ class CoupledModel(object):
 
         return (an_canopy, gsw_canopy, et_canopy, tcanopy)
 
-    def calc_leaf_temp(self, P=None, tleaf=None, tair=None, gsc=None, par=None,
-                       vpd=None, pressure=None, wind=None, rnet=None):
+    def calc_leaf_temp(self, p, PM=None, tleaf=None, tair=None, gsc=None,
+                       par=None, vpd=None, pressure=None, wind=None, rnet=None):
         """
         Resolve leaf temp
 
@@ -202,15 +202,15 @@ class CoupledModel(object):
 
         # W m-2 = J m-2 s-1
         if rnet is None:
-            rnet = P.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
+            rnet = PM.calc_rnet(par, tair, tair_k, tleaf_k, vpd, pressure)
 
-        (grn, gh, gbH, gw) = P.calc_conductances(tair_k, tleaf, tair,
-                                                 wind, gsc, cmolar)
+        (grn, gh, gbH, gw) = PM.calc_conductances(p, tair_k, tleaf, tair,
+                                                  wind, gsc, cmolar)
         if np.isclose(gsc, 0.0):
             et = 0.0
             le_et = 0.0
         else:
-            (et, le_et) = P.calc_et(tleaf, tair, vpd, pressure, wind, par,
+            (et, le_et) = PM.calc_et(tleaf, tair, vpd, pressure, wind, par,
                                     gh, gw, rnet)
 
         # D6 in Leuning. NB I'm doubling conductances, see note below E5.
