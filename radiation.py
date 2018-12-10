@@ -340,5 +340,5 @@ def calc_leaf_to_canopy_scalar(lai, k=None, kn=None, kb=None, big_leaf=False):
         scalex[c.SUNLIT] = (1.0 - np.exp(-kb * lai) * \
                                 np.exp(-kn * lai)) / (kb + kn)
         scalex[c.SHADED] = (1.0 - np.exp(-kn * lai)) / kn - scalex[c.SUNLIT]
-
+        
     return scalex
