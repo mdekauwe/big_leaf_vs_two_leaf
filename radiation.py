@@ -43,36 +43,36 @@ def spitters(doy, sw_rad, cos_zenith):
       38:217-229.
     """
 
-    solcon = 1370.0
+    solar_constant = 1370.0 # W m–2
 
-    fbeam = 0.0
+    direct_frac = 0.0
     tmpr = 0.847 + cos_zenith * (1.04 * cos_zenith - 1.61)
     tmpk = (1.47 - tmpr) / 1.66
 
     if cos_zenith > 1.0e-10 and sw_rad > 10.0:
-        tmprat = sw_rad / (solcon * (1.0 + 0.033 * \
+        tmprat = sw_rad / (solar_constant * (1.0 + 0.033 * \
                     np.cos(2. * np.pi * (doy-10.0) / 365.0)) * cos_zenith)
     else:
         tmprat = 0.0
 
     if tmprat > 0.22:
-        fbeam = 6.4 * ( tmprat - 0.22 )**2
+        direct_frac = 6.4 * ( tmprat - 0.22 )**2
 
     if tmprat > 0.35:
-        fbeam = min( 1.66 * tmprat - 0.4728, 1.0 )
+        direct_frac = min( 1.66 * tmprat - 0.4728, 1.0 )
 
     if tmprat > tmpk:
-        fbeam = max( 1.0 - tmpr, 0.0 )
+        direct_frac = max( 1.0 - tmpr, 0.0 )
 
     if cos_zenith < 1.0e-2:
-        fbeam = 0.0
+        direct_frac = 0.0
 
-    diffuse_frac = 1.0 - fbeam
+    diffuse_frac = 1.0 - direct_frac
 
-    return (diffuse_frac, fbeam)
+    return (diffuse_frac, direct_frac)
 
-def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
-                                 diffuse_frac, doy, sw_rad, tair, refl, tau):
+def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
+                                 diffuse_frac, doy, sw_rad, tair):
     """
     Calculate absorded irradiance of sunlit and shaded fractions of
     the canopy.
@@ -116,31 +116,22 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # black-body long-wave radiation
     flpwb = c.SIGMA * tk**4
 
-    # soil emissivity (-), Table 3, Wang and Leuning, 1998
-    emissivity_soil = 0.94
-
-    # leaf emissivity (-), Table 3, Wang and Leuning, 1998
-    emissivity_leaf = 0.96
-
     # air emissivity
     emissivity_air = lw_down / flpwb
 
     # vegetation long-wave radiation (isothermal)
-    flwv = emissivity_leaf * flpwb
+    flwv = p.emissivity_leaf * flpwb
 
     # soil long-wave radiation
-    flws = c.SIGMA * emissivity_soil * tsurf**4
+    flws = c.SIGMA * p.emissivity_soil * tsurf**4
 
     # cos(15 45 75 degrees)
     cos3[0] = np.cos(np.deg2rad(15.0))
     cos3[1] = np.cos(np.deg2rad(45.0))
     cos3[2] = np.cos(np.deg2rad(75.0))
 
-    # empirical param related to the leaf angle dist (= 0 for spherical LAD)
-    chi = 9.99999978E-03
-
     # leaf angle parmameter 1
-    xphi1 = 0.5 - chi * (0.633 + 0.33 * chi)
+    xphi1 = 0.5 - p.chi * (0.633 + 0.33 * p.chi)
 
     # leaf angle parmameter 2
     xphi2 = 0.877 * (1.0 - 2.0 * xphi1)
@@ -177,8 +168,8 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     if direct_frac < c.RAD_THRESH:
         kb = 1.e5
 
-    c1[0] = np.sqrt(1. - tau[0] - refl[0])
-    c1[1] = np.sqrt(1. - tau[1] - refl[1])
+    c1[0] = np.sqrt(1. - p.tau[0] - p.refl[0])
+    c1[1] = np.sqrt(1. - p.tau[1] - p.refl[1])
     c1[2] = 1.0
 
     # Canopy reflection black horiz leaves
@@ -194,16 +185,15 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
                          gauss_w[2] * kbx[2] / (kbx[2] + kd))
 
     # Calculate albedo
-    soil_reflectance = 0.1 # Table 3, Wang and Leuning, 1998
-    if soil_reflectance <= 0.14:
+    if p.soil_reflectance <= 0.14:
         sfact = 0.5
-    elif soil_reflectance > 0.14 and soil_reflectance <= 0.20:
+    elif p.soil_reflectance > 0.14 and p.soil_reflectance <= 0.20:
         sfact = 0.62
     else:
         sfact = 0.68
 
     # soil + snow reflectance (ignoring snow)
-    albsoilsn[c.SHADED] = 2.0 * soil_reflectance / (1. + sfact)
+    albsoilsn[c.SHADED] = 2.0 * p.soil_reflectance / (1. + sfact)
     albsoilsn[c.SUNLIT] = sfact * albsoilsn[c.SHADED]
 
     # Update extinction coefficients and fractional transmittance for
@@ -248,7 +238,7 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
             a2 = psi_func(k_dash_d[b] + kb, lai)
             a3 = Ib * (1.0 - rho_tb[b]) * k_dash_b[b]
             a4 = psi_func(k_dash_b[b] + kb, lai)
-            a5 = Ib * (1.0 - tau[b] - refl[b]) * kb
+            a5 = Ib * (1.0 - p.tau[b] - p.refl[b]) * kb
             a6 = psi_func(kb, lai) - psi_func(2.0 * kb, lai)
             qcan[c.SUNLIT,b] = a1 * a2 + a3 * a4 + a5 * a6
 
@@ -260,10 +250,10 @@ def calculate_absorbed_radiation(par, cos_zenith, lai, direct_frac,
     # Longwave radiation absorbed by sunlit leaves under isothermal conditions
     # B18 Wang and Leuning 1998
     a1 = -kd * c.SIGMA * tk**4
-    a2 = emissivity_leaf * (1.0 - emissivity_air)
+    a2 = p.emissivity_leaf * (1.0 - emissivity_air)
     a3 = psi_func(kb + kd, lai)
-    a4 = 1.0 - emissivity_soil
-    a5 = (emissivity_leaf - emissivity_air)
+    a4 = 1.0 - p.emissivity_soil
+    a5 = (p.emissivity_leaf - emissivity_air)
     a6 = psi_func(2.0 * kd, lai) * psi_func(kb - kd, lai)
     qcan[c.SUNLIT,c.LW] = a1 * (a2 * a3 + a4 * a5 * a6)
 
@@ -299,7 +289,6 @@ def psi_func(z, lai):
     # * Wang and Leuning (1998) AFm, 91, 89-111. Page 106
     # min check avoids floatin underflow issues
     return ( (1.0 - np.exp(-min(z * lai, 30.0))) / z )
-
 
 def calculate_cos_zenith(doy, xslat, hod):
 

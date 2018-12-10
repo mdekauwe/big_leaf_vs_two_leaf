@@ -109,6 +109,12 @@ SW_abs = 0.8 # use canopy absorptance of solar radiation
 # leaf emissivity (-), Table 3, Wang and Leuning, 1998
 emissivity_leaf = 0.96
 
+# soil emissivity (-), Table 3, Wang and Leuning, 1998
+emissivity_soil = 0.94
+
+# Table 3, Wang and Leuning, 1998
+soil_reflectance = 0.1
+
 # light extinction coefficient
 k = 0.5
 
@@ -117,3 +123,6 @@ k = 0.5
 # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
 #kn = 0.3
 kn = 0.001
+
+# empirical param related to the leaf angle dist (= 0 for spherical LAD)
+chi = 9.99999978E-03
