@@ -51,7 +51,9 @@ theta_hyperbol = 0.9995
 theta_J = 0.7
 
 quantum_yield = 0.3
-absorptance = 0.8
+
+absorptance = 1 - refl[0] - tau[0]
+
 # Leaf quantum yield (initial slope of the A-light response curve) [mol mol-1]
 alpha = quantum_yield * absorptance # (Medlyn et al 2002)
 
