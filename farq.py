@@ -128,7 +128,7 @@ class FarquharC3(object):
         if scalex is not None:
             Rd *= scalex
             Vcmax *= scalex
-            Jmax *= Jmax
+            Jmax *= scalex
 
         # Rate of electron transport, which is a function of absorbed PAR
         J = self.calc_electron_transport_rate(p, Par, Jmax)
