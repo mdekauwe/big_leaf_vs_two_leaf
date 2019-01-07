@@ -23,10 +23,11 @@ import xarray as xr
 import constants as c
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
-from radiation import calculate_solar_geometry, spitters
+from radiation import spitters
 from radiation import calculate_absorbed_radiation
-from big_leaf import CoupledModel as BigLeaf
-from two_leaf import CoupledModel as TwoLeaf
+from radiation import calculate_cos_zenith, calc_leaf_to_canopy_scalar
+from big_leaf import Canopy as BigLeaf
+from two_leaf import Canopy as TwoLeaf
 
 __author__  = "Martin De Kauwe"
 __version__ = "1.0 (09.11.2018)"
