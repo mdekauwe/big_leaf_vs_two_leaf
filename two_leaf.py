@@ -49,7 +49,7 @@ class Canopy(object):
         self.gs_model = gs_model
         self.iter_max = iter_max
 
-    def main(self, p, tair, par, vpd, wind, pressure, Ca, doy, hod,
+    def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod,
              lai, rnet=None):
         """
         Parameters:
@@ -106,7 +106,7 @@ class Canopy(object):
 
         (qcan, apar,
          lai_leaf, kb,
-         gradis) = calculate_absorbed_radiation(p, par, cos_zenith, lai,
+         gradis) = calculate_absorbed_radiation(self.p, par, cos_zenith, lai,
                                                 direct_frac, diffuse_frac,
                                                 doy, sw_rad, tair)
 

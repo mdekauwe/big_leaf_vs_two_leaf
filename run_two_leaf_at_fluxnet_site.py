@@ -20,12 +20,10 @@ import math
 import pandas as pd
 import xarray as xr
 
+import parameters as p
 import constants as c
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
-from radiation import spitters
-from radiation import calculate_absorbed_radiation
-from radiation import calculate_cos_zenith, calc_leaf_to_canopy_scalar
 from big_leaf import Canopy as BigLeaf
 from two_leaf import Canopy as TwoLeaf
 
@@ -35,13 +33,13 @@ __email__   = "mdekauwe@gmail.com"
 
 
 def main(met_fn, flx_fn, cab_fn, year_to_run, site):
-    #(site)
+
     fpath = "/Users/mdekauwe/Downloads/"
     fname = "%s_met_and_plant_data_drought_2003.csv" % (site)
     fn = os.path.join(fpath, fname)
     df = pd.read_csv(fn, skiprows=range(1,2))
 
-    (df_cab) = read_cable_file(cab_fn)
+    (df_cab, p.lat, p.lon) = read_cable_file(cab_fn)
     df_cab = df_cab[df_cab.index.year == year_to_run]
 
     (df_flx) = read_obs_file(flx_fn)
@@ -61,37 +59,34 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     #
     ## Parameters
     #
-    g0 = 1E-09
-    g1 = df.g1[0] #4.12
-    D0 = 1.5 # kpa
-    Vcmax25 = df.Vmax25[0]
-    Jmax25 = Vcmax25 * 1.67
+    p.g0 = 1E-09
+    p.g1 = df.g1[0] #4.12
+    p.D0 = 1.5 # kpa
+    p.Vcmax25 = df.Vmax25[0]
+    p.Jmax25 = p.Vcmax25 * 1.67
 
-    Rd25 = 2.0
-    Eaj = 30000.0
-    Eav = 60000.0
-    deltaSj = 650.0
-    deltaSv = 650.0
-    Hdv = 200000.0
-    Hdj = 200000.0
-    Q10 = 2.0
-    leaf_width = 0.02
-    gamma = 0 # doesn't do anything
+    p.Rd25 = 2.0
+    p.Eaj = 30000.0
+    p.Eav = 60000.0
+    p.deltaSj = 650.0
+    p.deltaSv = 650.0
+    p.Hdv = 200000.0
+    p.Hdj = 200000.0
+    p.Q10 = 2.0
+    p.leaf_width = 0.02
 
     # Cambell & Norman, 11.5, pg 178
     # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
     # with canopies (~0.8) from Table 11.2 reveals a surprising difference.
     # The higher absorptivityof canopies arises because of multiple reflections
     # among leaves in a canopy and depends on the architecture of the canopy.
-    SW_abs = 0.8 # use canopy absorptance of solar radiation
+    p.SW_abs = 0.8 # use canopy absorptance of solar radiation
 
     ##
     ### Run 2-leaf
     ##
+    T = TwoLeaf(p, gs_model="medlyn")
 
-    T = TwoLeaf(g0, g1, D0, gamma, Vcmax25, Jmax25, Rd25, Eaj, Eav,
-                     deltaSj, deltaSv, Hdv, Hdj, Q10, leaf_width, SW_abs,
-                     gs_model="medlyn")
 
     ndays = int(len(df_met)/48)
 
@@ -125,7 +120,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     an_conv = c.UMOL_TO_MOL * c.MOL_C_TO_GRAMS_C * 1800.
 
     cnt = 0
-    for doy in range(ndays):
+    for doy in range(ndays-1):
 
 
         Anx = 0.0
@@ -160,31 +155,29 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             if doy < 364:
                 laix = LAI[cnt]
             else:
-                laix = LAI[cnt-1]
+                #print(cnt, len(LAI), LAI[17518])
+                laix = LAI[17518]
 
             hod = float(i)/2. + 1800. / 3600. / 2.
 
+            (An, et, Tcan,
+             apar, lai_leaf) = T.main(tair[cnt], par[cnt], vpd[cnt],
+                                      wind[cnt], pressure[cnt], Ca, doy+1,
+                                      hod, laix)
 
-            (An, gsw,
-             et, tcan,
-             an_sun, an_sha,
-             par_sun, par_sha,
-             lai_sun, lai_sha) = T.main(tair[cnt], par[cnt], vpd[cnt],
-                                        wind[cnt], pressure[cnt], Ca, doy+1, hod,
-                                        lat, lon, laix)
 
             lambda_et = (c.H2OLV0 - 2.365E3 * tair[cnt]) * c.H2OMW
 
-            Anx += An * an_conv
-            anxsun += an_sun * an_conv
-            anxsha += an_sha * an_conv
-            parxsun += par_sun / c.UMOLPERJ / c.MJ_TO_J * 1800.0
-            parxsha += par_sha / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
-            laixsun += lai_sun
-            laixsha += lai_sha
+            Anx += np.sum(An) * an_conv
+            anxsun += An[c.SUNLIT] * an_conv
+            anxsha += An[c.SHADED] * an_conv
+            parxsun += apar[c.SUNLIT] / c.UMOLPERJ / c.MJ_TO_J * 1800.0
+            parxsha += apar[c.SHADED] / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
+            laixsun += lai_leaf[c.SUNLIT]
+            laixsha += lai_leaf[c.SHADED]
 
             Lobsx += laix
-            Ex += et * et_conv
+            Ex += np.sum(et) * et_conv
 
             Anc += df_cab.GPP[cnt] * an_conv
             ancsun += df_cab.GPP_sunlit[cnt] * an_conv
@@ -194,7 +187,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             laicsun += df_cab.LAI_sunlit[cnt]
             laicsha += df_cab.LAI_shaded[cnt]
             Lcabx += df_cab.LAI[cnt]
-            Ec += et * et_conv
+            #Ec += et * et_conv
 
             Aobsx += df_flx.GPP[cnt] * an_conv
             Eobsx += df_flx.Qle[cnt] / lambda_et * et_conv
@@ -357,6 +350,7 @@ def read_met_file(fname):
     ds = xr.open_dataset(fname)
     lat = ds.latitude.values[0][0]
     lon = ds.longitude.values[0][0]
+
     rh_there = False
     # W/m2, deg K, mm/s, kg/kg, m/s, Pa, ppmw
     try:
@@ -419,6 +413,8 @@ def read_obs_file(fname):
 def read_cable_file(fname):
     """ Build a dataframe from the netcdf outputs """
     ds = xr.open_dataset(fname)
+    lat = ds.latitude.values[0][0]
+    lon = ds.longitude.values[0][0]
 
     vars_to_keep = ['GPP','Qle','TVeg','Evap','LAI','GPP_shaded',\
                     'GPP_sunlit','PAR_sunlit','PAR_shaded',\
@@ -443,7 +439,7 @@ def read_cable_file(fname):
     df['year'] = df.index.year
     df['doy'] = df.index.dayofyear
 
-    return df
+    return df, lat, lon
 
 def qair_to_vpd(qair, tair, press):
 
