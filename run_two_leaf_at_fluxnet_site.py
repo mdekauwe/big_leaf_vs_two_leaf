@@ -65,7 +65,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     p.Vcmax25 = df.Vmax25[0]
     p.Jmax25 = p.Vcmax25 * 1.67
 
-    p.Rd25 = 2.0
+    p.Rd25 = None # Vcmax * 0.015
     p.Eaj = 30000.0
     p.Eav = 60000.0
     p.deltaSj = 650.0
@@ -73,14 +73,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     p.Hdv = 200000.0
     p.Hdj = 200000.0
     p.Q10 = 2.0
-    p.leaf_width = 0.02
 
-    # Cambell & Norman, 11.5, pg 178
-    # The solar absorptivities of leaves (-0.5) from Table 11.4 (Gates, 1980)
-    # with canopies (~0.8) from Table 11.2 reveals a surprising difference.
-    # The higher absorptivityof canopies arises because of multiple reflections
-    # among leaves in a canopy and depends on the architecture of the canopy.
-    p.SW_abs = 0.8 # use canopy absorptance of solar radiation
 
     ##
     ### Run 2-leaf
