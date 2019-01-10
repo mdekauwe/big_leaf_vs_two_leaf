@@ -108,6 +108,7 @@ class FarquharC3(object):
         gamma_star = self.arrh(p.gamstar25, p.Eag, Tleaf)
 
         # Calculate temperature dependancies on Vcmax and Jmax
+
         if self.peaked_Vcmax:
             Vcmax = self.peaked_arrh(p.Vcmax25, p.Eav, Tleaf, p.deltaSv, p.Hdv)
         else:

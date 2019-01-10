@@ -96,6 +96,8 @@ class Canopy(object):
         lai_leaf = np.zeros(2)
         sw_rad = np.zeros(2) # VIS, NIR
 
+        XX = np.zeros(2)
+
         (cos_zenith, elevation) = calculate_cos_zenith(doy, p.lat, hod)
 
         sw_rad[c.VIS] = 0.5 * (par * c.PAR_2_SW) # W m-2
@@ -118,7 +120,10 @@ class Canopy(object):
             scalex[0] = 0.
 
         # Is the sun up?
-        if elevation > 0.0 and par > 50.:
+        #print(doy, hod, elevation, par)
+        yes = True
+        if yes:
+        #if elevation > 0.0 and par > 50.:
 
             # sunlit / shaded loop
             for ileaf in range(2):
@@ -142,6 +147,7 @@ class Canopy(object):
                     else:
                         An[ileaf] = 0.0
                         gsc[ileaf] = 0.0
+
 
                     # Calculate new Tleaf, dleaf, Cs
                     (new_tleaf, et[ileaf],

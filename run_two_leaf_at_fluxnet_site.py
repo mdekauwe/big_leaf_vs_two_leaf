@@ -66,14 +66,19 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     p.Jmax25 = p.Vcmax25 * 1.67
 
     p.Rd25 = None # Vcmax * 0.015
-    p.Eaj = 30000.0
-    p.Eav = 60000.0
-    p.deltaSj = 650.0
-    p.deltaSv = 650.0
-    p.Hdv = 200000.0
-    p.Hdj = 200000.0
-    p.Q10 = 2.0
+    #p.Eaj = 30000.0
+    #p.Eav = 60000.0
+    #p.deltaSj = 650.0
+    #p.deltaSv = 650.0
+    #p.Hdv = 200000.0
+    #p.Hdj = 200000.0
 
+    p.Eaj = 50300.0
+    p.Eav = 73637.0
+    p.deltaSj = 495.0
+    p.deltaSv = 486.0
+    p.Hdv = 149252.0
+    p.Hdj = 152044.0
 
     ##
     ### Run 2-leaf
