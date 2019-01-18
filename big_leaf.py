@@ -39,7 +39,7 @@ class Canopy(object):
         self.gs_model = gs_model
         self.iter_max = iter_max
 
-    def main(self, p, tair, par, vpd, wind, pressure, Ca, doy, hod,
+    def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod,
              lai, rnet=None):
         """
         Parameters:
@@ -87,6 +87,7 @@ class Canopy(object):
         dleaf = vpd
         Cs = Ca
         Tleaf = tair
+
         Tleaf_K = Tleaf + c.DEG_2_KELVIN
 
         (cos_zenith, elevation) = calculate_cos_zenith(doy, p.lat, hod)
@@ -99,7 +100,7 @@ class Canopy(object):
 
             iter = 0
             while True:
-                (An, gsc) = F.photosynthesis(p, Cs=Cs, Tleaf=Tleaf_K,
+                (An, gsc) = F.photosynthesis(self.p, Cs=Cs, Tleaf=Tleaf_K,
                                              Par=par, vpd=dleaf)
 
                 # Scale leaf to canopy fluxes, assuming that the photosynthetic
@@ -111,9 +112,9 @@ class Canopy(object):
 
                 # Calculate new Tleaf, dleaf, Cs
                 (new_tleaf, et,
-                 le_et, gbH, gw) = self.calc_leaf_temp(p, PM, Tleaf, tair, gsc,
-                                                       par, vpd, pressure, wind,
-                                                       rnet=rnet)
+                 le_et, gbH, gw) = self.calc_leaf_temp(self.p, PM, Tleaf, tair,
+                                                       gsc, par, vpd, pressure,
+                                                       wind, rnet=rnet)
 
                 gbc = gbH * c.GBH_2_GBC
                 if gbc > 0.0 and An > 0.0:
@@ -267,7 +268,7 @@ if __name__ == "__main__":
 
         hod = float(i)/2. + 1800. / 3600. / 2.
 
-        (An, gsw, et, Tcan) = B.main(p, tair[i], par[i], vpd[i], wind,
+        (An, gsw, et, Tcan) = B.main(tair[i], par[i], vpd[i], wind,
                                      pressure, Ca, doy, hod, lai)
 
         An_bl[i] = An
