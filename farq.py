@@ -100,7 +100,7 @@ class FarquharC3(object):
         gsc : float
             stomatal conductance to CO2 [mol m-2 s-1]
         """
-
+        
         # calculate temp dependancies of MichaelisMenten constants for CO2, O2
         Km = self.calc_michaelis_menten_constants(p, Tleaf)
 

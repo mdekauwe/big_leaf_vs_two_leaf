@@ -333,7 +333,7 @@ if __name__ == "__main__":
         hod = float(i)/2. + 1800. / 3600. / 2.
 
         (An, et, Tcan,
-         apar, lai_leaf) = C.main(p, tair[i], par[i], vpd[i], wind,
+         apar, lai_leaf) = C.main(tair[i], par[i], vpd[i], wind,
                                   pressure, Ca, doy, hod, lai)
 
         sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
