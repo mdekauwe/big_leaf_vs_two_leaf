@@ -106,6 +106,12 @@ class Canopy(object):
         # get diffuse/beam frac, just use VIS as the answer is the same for NIR
         (diffuse_frac, direct_frac) = spitters(doy, sw_rad[0], cos_zenith)
 
+        print(diffuse_frac, direct_frac)
+        #plt.plot(diffuse_frac, "b-")
+        #plt.plot(direct_frac, "r-")
+        #plt.show()
+
+
         (qcan, apar,
          lai_leaf, kb,
          gradis) = calculate_absorbed_radiation(self.p, par, cos_zenith, lai,
