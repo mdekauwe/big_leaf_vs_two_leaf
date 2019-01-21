@@ -100,7 +100,7 @@ class FarquharC3(object):
         gsc : float
             stomatal conductance to CO2 [mol m-2 s-1]
         """
-        
+
         # calculate temp dependancies of MichaelisMenten constants for CO2, O2
         Km = self.calc_michaelis_menten_constants(p, Tleaf)
 
@@ -519,3 +519,19 @@ class FarquharC3(object):
             param *= (Tc - lower_bound) / (upper_bound - lower_bound)
 
         return param
+
+
+if __name__ == "__main__":
+
+    import parameters as p
+    
+    Cs = 400.
+    Tleaf_K = 25.0 + 273.15
+    par = 1800.
+    dleaf = 1.5
+    F = FarquharC3(peaked_Jmax=True, peaked_Vcmax=True, model_Q10=True,
+                   gs_model="medlyn")
+    (An, gsc) = F.photosynthesis(p, Cs=Cs, Tleaf=Tleaf_K,
+                                 Par=par, vpd=dleaf)
+
+    print(An, gsc)
