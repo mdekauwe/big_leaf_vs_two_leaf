@@ -104,7 +104,7 @@ def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
     rhocdf = np.zeros(3)
     albsoilsn = np.zeros(2)
     gradis = np.zeros(2)
-    
+
     tk = tair + c.DEG_2_KELVIN
 
     # surface temperaute - just using air temp

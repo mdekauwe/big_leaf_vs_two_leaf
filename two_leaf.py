@@ -119,7 +119,11 @@ class Canopy(object):
         # see Wang & Leuning 1998 appendix C
         scalex = calc_leaf_to_canopy_scalar(lai, kb=kb, kn=p.kn)
 
+
         if lai_leaf[0] < 1.e-3: # to match line 336 of CABLE radiation
+            scalex[0] = 0.
+
+        if np.sum(sw_rad) < c.RAD_THRESH:
             scalex[0] = 0.
 
         # Is the sun up?
@@ -130,6 +134,7 @@ class Canopy(object):
 
             # sunlit / shaded loop
             for ileaf in range(2):
+
 
                 # initialise values of Tleaf, Cs, dleaf at the leaf surface
                 dleaf = vpd
