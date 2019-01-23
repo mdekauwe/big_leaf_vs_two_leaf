@@ -123,7 +123,7 @@ k = 0.5
 # extinction coefficient of nitrogen in the canopy, assumed to be 0.3 by
 # default which comes half Belinda's head and is supported by fig 10 in
 # Lloyd et al. Biogeosciences, 7, 1833–1859, 2010
-#kn = 0.3
+#kn = 0.7
 kn = 0.001
 
 # empirical param related to the leaf angle dist (= 0 for spherical LAD)
