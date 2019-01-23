@@ -124,7 +124,8 @@ class Canopy(object):
             scalex[0] = 0.
 
         if np.sum(sw_rad) < c.RAD_THRESH:
-            scalex[0] = 0.
+            scalex[0] = 0.0
+            scalex[1] = 0.0
 
         # Is the sun up?
         #print(doy, hod, elevation, par)
@@ -134,6 +135,7 @@ class Canopy(object):
 
             # sunlit / shaded loop
             for ileaf in range(2):
+
 
 
                 # initialise values of Tleaf, Cs, dleaf at the leaf surface
@@ -397,7 +399,7 @@ if __name__ == "__main__":
     ax1.plot(np.arange(48)/2., Aj_tl, label="Anj")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
-    ax1.set_ylim(-2, 18)
+    #ax1.set_ylim(-2, 18)
 
     ax2.plot(np.arange(48)/2., et_tl * c.MOL_TO_MMOL, label="Big leaf")
     ax2.set_ylabel("E (mmol m$^{-2}$ s$^{-1}$)")
