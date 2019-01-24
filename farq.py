@@ -214,7 +214,7 @@ class FarquharC3(object):
             gsc = 0.0
             Ci = Cs
 
-        return (An, Ac-Rd, Aj-Rd, gsc)
+        return (An, gsc)
 
     def calc_electron_transport_rate(self, p, Par, Jmax):
         """

@@ -50,7 +50,7 @@ class Canopy(object):
         self.iter_max = iter_max
 
     def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod,
-             lai, rnet=None):
+             lai, rnet=None, tsoil=None):
         """
         Parameters:
         ----------
@@ -90,8 +90,8 @@ class Canopy(object):
         PM = PenmanMonteith()
 
         An = np.zeros(2)        # sunlit, shaded
-        Ac = np.zeros(2)        # sunlit, shaded
-        Aj = np.zeros(2)        # sunlit, shaded
+        Anc = np.zeros(2)        # sunlit, shaded
+        Anj = np.zeros(2)        # sunlit, shaded
         gsc = np.zeros(2)       # sunlit, shaded
         et = np.zeros(2)        # sunlit, shaded
         Tcan = np.zeros(2)      # sunlit, shaded
@@ -113,7 +113,7 @@ class Canopy(object):
          lai_leaf, kb,
          gradis) = calculate_absorbed_radiation(self.p, par, cos_zenith, lai,
                                                 direct_frac, diffuse_frac,
-                                                doy, sw_rad, tair)
+                                                doy, sw_rad, tair, tsoil)
 
         # Calculate scaling term to go from a single leaf to canopy,
         # see Wang & Leuning 1998 appendix C
@@ -125,7 +125,7 @@ class Canopy(object):
 
         if np.sum(sw_rad) < c.RAD_THRESH:
             scalex[0] = 0.0
-            scalex[1] = 0.0
+            #scalex[1] = 0.0
 
         # Is the sun up?
         #print(doy, hod, elevation, par)
@@ -149,8 +149,6 @@ class Canopy(object):
 
                     if scalex[ileaf] > 0.:
                         (An[ileaf],
-                         Ac[ileaf],
-                         Aj[ileaf],
                          gsc[ileaf]) = F.photosynthesis(p, Cs=Cs,
                                                         Tleaf=Tleaf_K,
                                                         Par=apar[ileaf],
@@ -158,8 +156,6 @@ class Canopy(object):
                                                         scalex=scalex[ileaf])
                     else:
                         An[ileaf] = 0.0
-                        Ac[ileaf] = 0.0
-                        Aj[ileaf] = 0.0
                         gsc[ileaf] = 0.0
 
 
@@ -192,8 +188,6 @@ class Canopy(object):
                     if iter > self.iter_max:
                         #raise Exception('No convergence: %d' % (iter))
                         An[ileaf] = 0.0
-                        Ac[ileaf] = 0.0
-                        Aj[ileaf] = 0.0
                         gsc[ileaf] = 0.0
                         et[ileaf] = 0.0
                         break
@@ -222,7 +216,7 @@ class Canopy(object):
 
                     iter += 1
 
-        return (An, Ac, Aj, et, Tcan, apar, lai_leaf)
+        return (An, et, Tcan, apar, lai_leaf)
 
     def calc_leaf_temp(self, p, PM=None, tleaf=None, tair=None, gsc=None,
                        par=None, vpd=None, pressure=None, wind=None, rnet=None,
@@ -340,25 +334,23 @@ if __name__ == "__main__":
     C = Canopy(p, gs_model="medlyn")
 
     An_tl = np.zeros(48)
-    Ac_tl = np.zeros(48)
-    Aj_tl = np.zeros(48)
     gsw_tl = np.zeros(48)
     et_tl = np.zeros(48)
     tcan_tl = np.zeros(48)
 
+
+    tsoil = np.mean(tair)
     for i in range(48):
 
         hod = float(i)/2. + 1800. / 3600. / 2.
 
-        (An, Ac, Aj, et, Tcan,
+        (An, et, Tcan,
          apar, lai_leaf) = C.main(tair[i], par[i], vpd[i], wind,
-                                  pressure, Ca, doy, hod, lai)
+                                  pressure, Ca, doy, hod, lai, tsoil)
 
         sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
         sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
         An_tl[i] = np.sum(An)
-        Ac_tl[i] = np.sum(Ac)
-        Aj_tl[i] = np.sum(Aj)
         et_tl[i] = np.sum(et)
         tcan_tl[i] = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
 
@@ -395,8 +387,8 @@ if __name__ == "__main__":
     ax3 = fig.add_subplot(133)
 
     ax1.plot(np.arange(48)/2., An_tl, label="An")
-    ax1.plot(np.arange(48)/2., Ac_tl, label="Anc")
-    ax1.plot(np.arange(48)/2., Aj_tl, label="Anj")
+    #ax1.plot(np.arange(48)/2., Ac_tl, label="Anc")
+    #ax1.plot(np.arange(48)/2., Aj_tl, label="Anj")
     ax1.set_ylabel("$A_{\mathrm{n}}$ ($\mathrm{\mu}$mol m$^{-2}$ s$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
     #ax1.set_ylim(-2, 18)

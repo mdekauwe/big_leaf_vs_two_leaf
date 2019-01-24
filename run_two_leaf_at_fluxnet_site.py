@@ -146,8 +146,10 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         Eobsx = 0.0
         Lobsx = 0.0
 
-
-
+        if doy == 0:
+            tsoil = np.mean(tair[cnt:cnt+48])
+        else:
+            tsoil = np.mean(tair[cnt-48:cnt])
         for i in range(48):
 
             if doy < 364:
@@ -158,11 +160,10 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
 
             hod = float(i)/2. + 1800. / 3600. / 2.
 
-            (An, et, Tcan,
+            (An, Ancx, Anjx, et, Tcan,
              apar, lai_leaf) = T.main(tair[cnt], par[cnt], vpd[cnt],
                                       wind[cnt], pressure[cnt], Ca, doy+1,
-                                      hod, laix)
-
+                                      hod, laix, tsoil)
 
             lambda_et = (c.H2OLV0 - 2.365E3 * tair[cnt]) * c.H2OMW
 
@@ -494,6 +495,7 @@ if __name__ == '__main__':
     site = os.path.basename(met_fn).split(".")[0][0:6]
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/runs/FI-Hyy_CMIP6-MOSRS/outputs/"
+    #fpath = "/Users/mdekauwe/Desktop/"
     fname = "%s_out.nc" %  (site)
     cab_fn = os.path.join(fpath, fname)
 

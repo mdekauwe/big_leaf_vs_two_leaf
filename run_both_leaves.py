@@ -60,7 +60,7 @@ def main():
         hod = float(i)/2. + 1800. / 3600. / 2.
 
         (An, gsw, et, Tcan) = B.main(tair[i], par[i], vpd[i], wind,
-                                     pressure, Ca, doy, hod, LAI)
+                                               pressure, Ca, doy, hod, LAI)
 
         An_bl[i] = An
         et_bl[i] = et
@@ -76,11 +76,12 @@ def main():
     tcan_tl = np.zeros(48)
 
     hod = 0
+    tsoil = np.mean(tair)
     for i in range(len(par)):
 
         (An, et, Tcan,
          apar, lai_leaf) = T.main(tair[i], par[i], vpd[i], wind,
-                                  pressure, Ca, doy, hod/2., LAI)
+                                  pressure, Ca, doy, hod/2., LAI, tsoil)
 
         sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
         sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)

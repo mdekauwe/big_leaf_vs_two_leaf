@@ -72,7 +72,7 @@ def spitters(doy, sw_rad, cos_zenith):
     return (diffuse_frac, direct_frac)
 
 def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
-                                 diffuse_frac, doy, sw_rad, tair):
+                                 diffuse_frac, doy, sw_rad, tair, tsoil=None):
     """
     Calculate absorded irradiance of sunlit and shaded fractions of
     the canopy.
@@ -108,7 +108,10 @@ def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
     tk = tair + c.DEG_2_KELVIN
 
     # surface temperaute - just using air temp
-    tsurf = tk
+    if tsoil is None:
+        tsurf = tk
+    else:
+        tsurf = tsoil + c.DEG_2_KELVIN
 
     # Estimate LWdown based on an emprical function of air temperature (K)
     # following Swinbank, W. C. (1963): Long-wave radiation from clear skies,
@@ -296,6 +299,12 @@ def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
         lai_leaf[c.SUNLIT] = 0.0
 
     lai_leaf[c.SHADED] = lai - lai_leaf[c.SUNLIT]
+
+
+    #if doy == 181:
+    #    print(sw_rad[1], sw_rad[1] )
+    #elif doy == 182:
+    #    sys.exit()
 
     return (qcan, apar, lai_leaf, kb, gradis)
 
