@@ -362,7 +362,11 @@ def calc_leaf_to_canopy_scalar(lai, k=None, kn=None, kb=None, big_leaf=False):
       Insert eqn C6 & C7 into B5
     """
     if big_leaf:
-        scalex = (1.0 - np.exp(-k * lai)) / k
+        #scalex = (1.0 - np.exp(-k * lai)) / k
+        # fpar - calculated from the projected leaf area index using Beer's law
+        # (Monsi and Saeki, 1953)
+        # Eqn 4, Haxeltine & Prentice 1996a
+        scalex = 1.0 - np.exp(-k * lai)
     else:
         scalex = np.zeros(2)
         scalex[c.SUNLIT] = (1.0 - np.exp(-kb * lai) * \

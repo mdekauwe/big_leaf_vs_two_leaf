@@ -93,22 +93,19 @@ class Canopy(object):
         (cos_zenith, elevation) = calculate_cos_zenith(doy, p.lat, hod)
 
         # Calculate big-leaf scaling term to go from a single leaf to canopy
-        scalex = calc_leaf_to_canopy_scalar(lai, k=p.k, big_leaf=True)
+        fpar = calc_leaf_to_canopy_scalar(lai, k=p.k, big_leaf=True)
 
         # Is the sun up?
         if elevation > 0.0 and par > 50.0:
 
             iter = 0
             while True:
+                # Scale fractional PAR absorption at plant projective area level
+            	# (FPAR) to fractional absorption at leaf level (APAR)
+            	# Eqn 4, Haxeltine & Prentice 1996a
+                apar = par * fpar
                 (An, gsc) = F.photosynthesis(self.p, Cs=Cs, Tleaf=Tleaf_K,
-                                             Par=par, vpd=dleaf)
-
-                # Scale leaf to canopy fluxes, assuming that the photosynthetic
-                # capacity is assumed to decline exponentially through the
-                # canopy, in proportion to the incident radiation estimated by
-                # Beer’s Law
-                An *= scalex
-                gsc *= scalex
+                                             Par=apar, vpd=dleaf)
 
                 # Calculate new Tleaf, dleaf, Cs
                 (new_tleaf, et,
