@@ -353,7 +353,7 @@ if __name__ == "__main__":
         An_tl[i] = np.sum(An)
         et_tl[i] = np.sum(et)
         tcan_tl[i] = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
-        print(tcan_tl[i])
+        print(tcan_tl[i] + c.DEG_2_KELVIN)
         #print(Tcan[c.SHADED], Tcan[c.SHADED] * sha_frac, sha_frac)
 
 

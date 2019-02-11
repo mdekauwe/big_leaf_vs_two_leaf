@@ -24,7 +24,7 @@ import parameters as p
 import constants as c
 from farq import FarquharC3
 from penman_monteith_leaf import PenmanMonteith
-from big_leaf import Canopy as BigLeaf
+from two_leaf_cable_assumption import Canopy as TwoLeafCable
 from two_leaf import Canopy as TwoLeaf
 
 __author__  = "Martin De Kauwe"
@@ -38,9 +38,6 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     fname = "%s_met_and_plant_data_drought_2003.csv" % (site)
     fn = os.path.join(fpath, fname)
     df = pd.read_csv(fn, skiprows=range(1,2))
-
-    (df_cab, p.lat, p.lon) = read_cable_file(cab_fn)
-    df_cab = df_cab[df_cab.index.year == year_to_run]
 
     (df_flx) = read_obs_file(flx_fn)
     df_flx = df_flx[df_flx.index.year == year_to_run]
@@ -66,31 +63,25 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     p.Jmax25 = p.Vcmax25 * 1.67
 
     p.Rd25 = None # Vcmax * 0.015
-    #p.Eaj = 30000.0
-    #p.Eav = 60000.0
-    #p.deltaSj = 650.0
-    #p.deltaSv = 650.0
-    #p.Hdv = 200000.0
-    #p.Hdj = 200000.0
+    p.Eaj = 30000.0
+    p.Eav = 60000.0
+    p.deltaSj = 650.0
+    p.deltaSv = 650.0
+    p.Hdv = 200000.0
+    p.Hdj = 200000.0
 
-    p.Eaj = 50300.0
-    p.Eav = 73637.0
-    p.deltaSj = 495.0
-    p.deltaSv = 486.0
-    p.Hdv = 149252.0
-    p.Hdj = 152044.0
 
     ##
     ### Run 2-leaf
     ##
     T = TwoLeaf(p, gs_model="medlyn")
-
+    C = TwoLeafCable(p, gs_model="medlyn")
 
     ndays = int(len(df_met)/48)
 
     Anc_store = np.zeros(ndays)
     Ec_store = np.zeros(ndays)
-    LAI_store = np.zeros(ndays)
+
 
     An_store = np.zeros(ndays)
     An_sun_store = np.zeros(ndays)
@@ -100,6 +91,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     lai_sun_store = np.zeros(ndays)
     lai_sha_store = np.zeros(ndays)
     E_store = np.zeros(ndays)
+    Tcan_store = np.zeros(ndays)
 
     Anc_store = np.zeros(ndays)
     Anc_sun_store = np.zeros(ndays)
@@ -109,6 +101,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     laic_sun_store = np.zeros(ndays)
     laic_sha_store = np.zeros(ndays)
     Ec_store = np.zeros(ndays)
+    Tcanc_store = np.zeros(ndays)
 
     gpp_obs = np.zeros(ndays)
     e_obs = np.zeros(ndays)
@@ -129,6 +122,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         parxsha = 0.0
         laixsun = 0.0
         laixsha = 0.0
+        Tcanx = 0.0
 
         Anc = 0.0
         Ec = 0.0
@@ -141,6 +135,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         parcsha = 0.0
         laicsun = 0.0
         laicsha = 0.0
+        Tcancx = 0.0
 
         Aobsx = 0.0
         Eobsx = 0.0
@@ -160,7 +155,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
 
             hod = float(i)/2. + 1800. / 3600. / 2.
 
-            (An, Ancx, Anjx, et, Tcan,
+            (An, et, Tcan,
              apar, lai_leaf) = T.main(tair[cnt], par[cnt], vpd[cnt],
                                       wind[cnt], pressure[cnt], Ca, doy+1,
                                       hod, laix, tsoil)
@@ -174,19 +169,27 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             parxsha += apar[c.SHADED] / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
             laixsun += lai_leaf[c.SUNLIT]
             laixsha += lai_leaf[c.SHADED]
-
+            sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
+            sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
+            Tcanx += (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
             Lobsx += laix
             Ex += np.sum(et) * et_conv
 
-            Anc += df_cab.GPP[cnt] * an_conv
-            ancsun += df_cab.GPP_sunlit[cnt] * an_conv
-            ancsha += df_cab.GPP_shaded[cnt] * an_conv
-            parcsun += df_cab.PAR_sunlit[cnt] / c.UMOLPERJ / c.MJ_TO_J * 1800.0
-            parcsha += df_cab.PAR_shaded[cnt] / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
-            laicsun += df_cab.LAI_sunlit[cnt]
-            laicsha += df_cab.LAI_shaded[cnt]
-            Lcabx += df_cab.LAI[cnt]
-            #Ec += et * et_conv
+
+            (An, et, Tcan,
+             apar, lai_leaf) = C.main(tair[cnt], par[cnt], vpd[cnt],
+                                      wind[cnt], pressure[cnt], Ca, doy+1,
+                                      hod, laix, tsoil)
+
+            Anc += np.sum(An) * an_conv
+            ancsun += An[c.SUNLIT] * an_conv
+            ancsha += An[c.SHADED] * an_conv
+            parcsun += apar[c.SUNLIT] / c.UMOLPERJ / c.MJ_TO_J * 1800.0
+            parcsha += apar[c.SHADED] / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
+            laicsun += lai_leaf[c.SUNLIT]
+            laicsha += lai_leaf[c.SHADED]
+            Tcancx += Tcan
+            Ec += et * et_conv
 
             Aobsx += df_flx.GPP[cnt] * an_conv
             Eobsx += df_flx.Qle[cnt] / lambda_et * et_conv
@@ -204,6 +207,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         lai_sha_store[doy] = laixsha / 48.
         E_store[doy] = Ex
 
+        Tcan_store[doy] = (Tcanx / 48.) + c.DEG_2_KELVIN
+
         Anc_store[doy] = Anc
         Anc_sun_store[doy] = ancsun
         Anc_sha_store[doy] = ancsha
@@ -212,6 +217,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         laic_sun_store[doy] = laicsun / 48.
         laic_sha_store[doy] = laicsha / 48.
         Ec_store[doy] = Ec
+        Tcanc_store[doy] = (Tcancx / 48.) + c.DEG_2_KELVIN
 
         gpp_obs[doy] = Aobsx
         e_obs[doy] = Eobsx
@@ -226,6 +232,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     lai_sun_store = moving_average(lai_sun_store, n=window)
     lai_sha_store = moving_average(lai_sha_store, n=window)
     E_store = moving_average(E_store, n=window)
+    Tcan_store = moving_average(Tcan_store, n=window)
 
     Anc_store = moving_average(Anc_store, n=window)
     Anc_sun_store = moving_average(Anc_sun_store, n=window)
@@ -235,12 +242,13 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     laic_sun_store = moving_average(laic_sun_store, n=window)
     laic_sha_store = moving_average(laic_sha_store, n=window)
     Ec_store = moving_average(Ec_store, n=window)
+    Tcanc_store = moving_average(Tcanc_store, n=window)
 
-    gpp_obs = moving_average(gpp_obs, n=window)
-    e_obs = moving_average(e_obs, n=window)
-    lai_obs = moving_average(lai_obs, n=window)
+    #gpp_obs = moving_average(gpp_obs, n=window)
+    #e_obs = moving_average(e_obs, n=window)
+    #lai_obs = moving_average(lai_obs, n=window)
 
-    fig = plt.figure(figsize=(14,8))
+    fig = plt.figure(figsize=(9,6))
     fig.subplots_adjust(hspace=0.1)
     fig.subplots_adjust(wspace=0.1)
     plt.rcParams['text.usetex'] = False
@@ -252,95 +260,36 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     plt.rcParams['xtick.labelsize'] = 14
     plt.rcParams['ytick.labelsize'] = 14
 
-    ax1 = fig.add_subplot(321)
-    ax2 = fig.add_subplot(322)
-    ax3 = fig.add_subplot(323)
-    ax4 = fig.add_subplot(324)
-    ax5 = fig.add_subplot(325)
-    ax6 = fig.add_subplot(326)
+    ax1 = fig.add_subplot(111)
+    ax2 = fig.add_subplot(112)
+    ax3 = fig.add_subplot(113)
 
-    #ax1.plot(An_store, label="2-leaf - Sun")
-    #ax1.plot(Anc_store, label="2-leaf - CABLE")
 
-    ax1.plot(An_sun_store, label="Me")
-    ax1.plot(Anc_sun_store, label="CABLE")
-    #
-
-    ax1.set_title("Sun")
-    ax2.set_title("Shade")
-
+    ax1.plot(An_store, label="2-leaf - Me")
+    ax1.plot(Anc_store, label="2-leaf - CABLE")
     ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
     ax1.legend(numpoints=1, loc="best")
 
-    ax2.plot(An_sha_store)
-    ax2.plot(Anc_sha_store)
+    ax2.plot(E_store, label="2-leaf - Me")
+    ax2.plot(Ec_store, label="2-leaf - CABLE")
+    ax2.set_ylabel("E (mm d$^{-1}$)")
 
-
-    ax3.plot(par_sun_store)
-    ax3.plot(parc_sun_store)
-    ax3.set_ylabel("PAR (MJ m$^{-2}$ d$^{-1}$)")
-
-    ax4.plot(par_sha_store)
-    ax4.plot(parc_sha_store)
-
-    ax5.plot(lai_sun_store)
-    ax5.plot(laic_sun_store)
-    ax5.set_ylabel("LAI (m$^{2}$ m$^{-2}$)")
-
-    ax6.plot(lai_sha_store)
-    ax6.plot(laic_sha_store)
+    ax3.plot(Tcan_store, label="2-leaf - Me")
+    ax3.plot(Tcanc_store, label="2-leaf - CABLE")
+    ax3.set_ylabel("T$_{canopy}$ (degrees C)")
 
     ax1.locator_params(nbins=6, axis="y")
     ax2.locator_params(nbins=6, axis="y")
     ax3.locator_params(nbins=6, axis="y")
-    ax4.locator_params(nbins=6, axis="y")
-    ax5.locator_params(nbins=6, axis="y")
-    ax6.locator_params(nbins=6, axis="y")
 
-    plt.setp(ax1.get_xticklabels(), visible=False)
-    plt.setp(ax2.get_xticklabels(), visible=False)
-    plt.setp(ax3.get_xticklabels(), visible=False)
-    plt.setp(ax4.get_xticklabels(), visible=False)
+
+    #plt.setp(ax1.get_xticklabels(), visible=False)
+    #plt.setp(ax2.get_xticklabels(), visible=False)
+    #plt.setp(ax3.get_xticklabels(), visible=False)
+    #plt.setp(ax4.get_xticklabels(), visible=False)
 
     plt.show()
 
-
-    #fig = plt.figure(figsize=(16,4))
-    #fig.subplots_adjust(hspace=0.1)
-    #fig.subplots_adjust(wspace=0.3)
-    #plt.rcParams['text.usetex'] = False
-    #plt.rcParams['font.family'] = "sans-serif"
-    #plt.rcParams['font.sans-serif'] = "Helvetica"
-    #plt.rcParams['axes.labelsize'] = 14
-    #plt.rcParams['font.size'] = 14
-    #plt.rcParams['legend.fontsize'] = 14
-    #plt.rcParams['xtick.labelsize'] = 14
-    #plt.rcParams['ytick.labelsize'] = 14
-
-    #ax1 = fig.add_subplot(131)
-    #ax2 = fig.add_subplot(132)
-    #ax3 = fig.add_subplot(133)
-
-    ##ax1.plot(gpp_obs, label="Obs")
-    #ax1.plot(An_store, label="2-leaf")
-    #ax1.plot(Anc_store, label="CABLE")
-    #ax1.set_ylabel("GPP (g C m$^{-2}$ d$^{-1}$)")
-    #ax1.legend(numpoints=1, loc="best")
-
-    ##ax2.plot(e_obs)
-    #ax2.plot(E_store)
-    #ax2.plot(Ec_store, label="CABLE")
-    #ax2.set_ylabel("E (mm d$^{-1}$)")
-    #ax2.set_xlabel("Day of year")
-
-    #ax3.plot(lai_obs, lw=4)
-    #ax3.plot(LAI_store, lw=1, label="CABLE")
-    #ax3.set_ylabel("LAI (m$^{2}$ m$^{-2}$)")
-
-    #ax1.locator_params(nbins=6, axis="y")
-    #ax2.locator_params(nbins=6, axis="y")
-
-    #plt.show()
 
 
 def read_met_file(fname):
