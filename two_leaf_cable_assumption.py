@@ -93,8 +93,7 @@ class Canopy(object):
         Anc = np.zeros(2)        # sunlit, shaded
         Anj = np.zeros(2)        # sunlit, shaded
         gsc = np.zeros(2)       # sunlit, shaded
-        et = np.zeros(2)        # sunlit, shaded
-        Tcan = np.zeros(2)      # sunlit, shaded
+
         lai_leaf = np.zeros(2)
         sw_rad = np.zeros(2) # VIS, NIR
 
@@ -133,24 +132,23 @@ class Canopy(object):
         if yes:
         #if elevation > 0.0 and par > 50.:
 
-            # sunlit / shaded loop
-            for ileaf in range(2):
 
+            # initialise values of Tleaf, Cs, dleaf at the leaf surface
+            dleaf = vpd
+            Cs = Ca
+            Tcanopy = tair
+            Tcanopy_K = Tcanopy + c.DEG_2_KELVIN
 
+            iter = 0
+            while True:
 
-                # initialise values of Tleaf, Cs, dleaf at the leaf surface
-                dleaf = vpd
-                Cs = Ca
-                Tleaf = tair
-                Tleaf_K = Tleaf + c.DEG_2_KELVIN
-
-                iter = 0
-                while True:
+                # sunlit / shaded loop
+                for ileaf in range(2):
 
                     if scalex[ileaf] > 0.:
                         (An[ileaf],
                          gsc[ileaf]) = F.photosynthesis(p, Cs=Cs,
-                                                        Tleaf=Tleaf_K,
+                                                        Tleaf=Tcanopy_K,
                                                         Par=apar[ileaf],
                                                         vpd=dleaf,
                                                         scalex=scalex[ileaf])
@@ -159,64 +157,49 @@ class Canopy(object):
                         gsc[ileaf] = 0.0
 
 
-                    # Calculate new Tleaf, dleaf, Cs
-                    (new_tleaf, et[ileaf],
-                     le_et, gbH, gw) = self.calc_leaf_temp(p, PM, Tleaf, tair,
-                                                           gsc[ileaf],
-                                                           None, vpd,
-                                                           pressure, wind,
-                                                           rnet=qcan[ileaf],
-                                                           lai=lai_leaf[ileaf],
-                                                           gradis=gradis[ileaf])
 
-                    gbc = gbH * c.GBH_2_GBC
-                    if gbc > 0.0 and An[ileaf] > 0.0:
-                        Cs = Ca - An[ileaf] / gbc # boundary layer of leaf
-                    else:
-                        Cs = Ca
 
-                    if np.isclose(et[ileaf], 0.0) or np.isclose(gw, 0.0):
-                        dleaf = vpd
-                    else:
-                        dleaf = (et[ileaf] * pressure / gw) * c.PA_2_KPA # kPa
+                # Calculate new Tleaf, dleaf, Cs
+                (new_tcanopy, et,
+                 le_et, gbH, gw) = self.calc_leaf_temp(p, PM, Tcanopy, tair,
+                                                       np.sum(gsc),
+                                                       None, vpd,
+                                                       pressure, wind,
+                                                       rnet=np.sum(qcan),
+                                                       lai=lai,
+                                                       gradis=np.sum(gradis))
 
-                    # Check for convergence...?
-                    if math.fabs(Tleaf - new_tleaf) < 0.02:
-                        Tcan[ileaf] = Tleaf
-                        break
+                gbc = gbH * c.GBH_2_GBC
+                if gbc > 0.0 and An[ileaf] > 0.0:
+                    Cs = Ca - An[ileaf] / gbc # boundary layer of leaf
+                else:
+                    Cs = Ca
 
-                    if iter > self.iter_max:
-                        #raise Exception('No convergence: %d' % (iter))
-                        An[ileaf] = 0.0
-                        gsc[ileaf] = 0.0
-                        et[ileaf] = 0.0
-                        break
+                if np.isclose(et, 0.0) or np.isclose(gw, 0.0):
+                    dleaf = vpd
+                else:
+                    dleaf = (et * pressure / gw) * c.PA_2_KPA # kPa
 
-                    # Update temperature & do another iteration
-                    Tleaf = new_tleaf
-                    Tleaf_K = Tleaf + c.DEG_2_KELVIN
-                    Tcan[ileaf] = Tleaf
+                # Check for convergence...?
+                if math.fabs(Tcanopy - new_tcanopy) < 0.02:
+                    break
 
-                    """
-                    # Update leaf surface vapour pressure deficit:
-                    tetena = 6.106
-                    tetenb = 17.27
-                    tetenc = 237.3
-                    TFRZ = 273.15
-                    Tair_K = tair + c.DEG_2_KELVIN
+                if iter > self.iter_max:
+                    #raise Exception('No convergence: %d' % (iter))
+                    An[ileaf] = 0.0
+                    gsc[ileaf] = 0.0
+                    et = 0.0
+                    break
 
-                    # d(es)/dT (Pa/K)
-                    a1 = tetena * tetenb * tetenc
-                    a2 = ((Tair_K - TFRZ) + tetenc)**2
-                    a3 = np.exp(tetenb * \
-                                (Tair_K-TFRZ) / ((Tair_K-TFRZ) + tetenc))
-                    dsatdk = 100.0 * a1 / a2 * a3 * c.PA_TO_KPA
-                    dleafx = vpd + dsatdk * (Tleaf_K - Tair_K)
-                    """
+                # Update temperature & do another iteration
+                Tcanopy = new_tcanopy
+                Tcanopy_K = Tcanopy + c.DEG_2_KELVIN
 
-                    iter += 1
 
-        return (An, et, Tcan, apar, lai_leaf)
+
+                iter += 1
+
+        return (An, et, Tcanopy, apar, lai_leaf)
 
     def calc_leaf_temp(self, p, PM=None, tleaf=None, tair=None, gsc=None,
                        par=None, vpd=None, pressure=None, wind=None, rnet=None,
@@ -351,9 +334,9 @@ if __name__ == "__main__":
         sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
         sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
         An_tl[i] = np.sum(An)
-        et_tl[i] = np.sum(et)
-        tcan_tl[i] = (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
-        print(tcan_tl[i])
+        et_tl[i] = et
+        tcan_tl[i] = Tcan
+        
         #print(Tcan[c.SHADED], Tcan[c.SHADED] * sha_frac, sha_frac)
 
 
