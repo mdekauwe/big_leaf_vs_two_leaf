@@ -170,8 +170,8 @@ class Canopy(object):
                                                        gradis=np.sum(gradis))
 
                 gbc = gbH * c.GBH_2_GBC
-                if gbc > 0.0 and An[ileaf] > 0.0:
-                    Cs = Ca - An[ileaf] / gbc # boundary layer of leaf
+                if gbc > 0.0 and np.sum(An) > 0.0:
+                    Cs = Ca - np.sum(An)  / gbc # boundary layer of leaf
                 else:
                     Cs = Ca
 
@@ -336,7 +336,7 @@ if __name__ == "__main__":
         An_tl[i] = np.sum(An)
         et_tl[i] = et
         tcan_tl[i] = Tcan
-        
+
         #print(Tcan[c.SHADED], Tcan[c.SHADED] * sha_frac, sha_frac)
 
 

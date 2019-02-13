@@ -53,6 +53,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     Ca = 400.0
     #LAI = 3.0
     LAI = df.LAI
+
+
     #
     ## Parameters
     #
@@ -102,7 +104,8 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     laic_sha_store = np.zeros(ndays)
     Ec_store = np.zeros(ndays)
     Tcanc_store = np.zeros(ndays)
-
+    Sunc_store = np.zeros(ndays)
+    Shac_store = np.zeros(ndays)
     gpp_obs = np.zeros(ndays)
     e_obs = np.zeros(ndays)
     lai_obs = np.zeros(ndays)
@@ -141,10 +144,15 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         Eobsx = 0.0
         Lobsx = 0.0
 
+        Sun_fracC = 0.0
+        Sha_fracC = 0.0
+
         if doy == 0:
             tsoil = np.mean(tair[cnt:cnt+48])
         else:
             tsoil = np.mean(tair[cnt-48:cnt])
+
+        hr_cnt = 0
         for i in range(48):
 
             if doy < 364:
@@ -171,7 +179,11 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             laixsha += lai_leaf[c.SHADED]
             sun_frac = lai_leaf[c.SUNLIT] / np.sum(lai_leaf)
             sha_frac = lai_leaf[c.SHADED] / np.sum(lai_leaf)
-            Tcanx += (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
+
+            if par[cnt] > 0.0:
+                Tcanx += (Tcan[c.SUNLIT] * sun_frac) + (Tcan[c.SHADED] * sha_frac)
+
+
             Lobsx += laix
             Ex += np.sum(et) * et_conv
 
@@ -188,16 +200,22 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
             parcsha += apar[c.SHADED] / c.UMOLPERJ / c.MJ_TO_J * 1800.0 # MJ m-2 d-1
             laicsun += lai_leaf[c.SUNLIT]
             laicsha += lai_leaf[c.SHADED]
-            Tcancx += Tcan
+
+            if par[cnt] > 0.0:
+                Tcancx += Tcan
             Ec += et * et_conv
+            Sun_fracC += sun_frac
+            Sha_fracC += sha_frac
 
             Aobsx += df_flx.GPP[cnt] * an_conv
             Eobsx += df_flx.Qle[cnt] / lambda_et * et_conv
 
 
             cnt += 1
+            if par[cnt] > 0.0:
+                hr_cnt += 1
 
-
+        
         An_store[doy] = Anx
         An_sun_store[doy] = anxsun
         An_sha_store[doy] = anxsha
@@ -207,7 +225,7 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         lai_sha_store[doy] = laixsha / 48.
         E_store[doy] = Ex
 
-        Tcan_store[doy] = (Tcanx / 48.) + c.DEG_2_KELVIN
+        Tcan_store[doy] = (Tcanx / float(hr_cnt))
 
         Anc_store[doy] = Anc
         Anc_sun_store[doy] = ancsun
@@ -217,7 +235,9 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
         laic_sun_store[doy] = laicsun / 48.
         laic_sha_store[doy] = laicsha / 48.
         Ec_store[doy] = Ec
-        Tcanc_store[doy] = (Tcancx / 48.) + c.DEG_2_KELVIN
+        Tcanc_store[doy] = (Tcancx / float(hr_cnt))
+        Sunc_store[doy] = Sun_fracC / 48.
+        Shac_store[doy] = Sha_fracC / 48.
 
         gpp_obs[doy] = Aobsx
         e_obs[doy] = Eobsx
@@ -242,27 +262,30 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     laic_sun_store = moving_average(laic_sun_store, n=window)
     laic_sha_store = moving_average(laic_sha_store, n=window)
     Ec_store = moving_average(Ec_store, n=window)
+    Sunc_store = moving_average(Sunc_store, n=window)
+    Shac_store = moving_average(Shac_store, n=window)
     Tcanc_store = moving_average(Tcanc_store, n=window)
 
     #gpp_obs = moving_average(gpp_obs, n=window)
     #e_obs = moving_average(e_obs, n=window)
     #lai_obs = moving_average(lai_obs, n=window)
 
-    fig = plt.figure(figsize=(9,6))
-    fig.subplots_adjust(hspace=0.1)
-    fig.subplots_adjust(wspace=0.1)
+    fig = plt.figure(figsize=(9,10))
+    fig.subplots_adjust(hspace=0.3)
+    fig.subplots_adjust(wspace=0.3)
     plt.rcParams['text.usetex'] = False
     plt.rcParams['font.family'] = "sans-serif"
     plt.rcParams['font.sans-serif'] = "Helvetica"
-    plt.rcParams['axes.labelsize'] = 14
-    plt.rcParams['font.size'] = 14
-    plt.rcParams['legend.fontsize'] = 14
-    plt.rcParams['xtick.labelsize'] = 14
-    plt.rcParams['ytick.labelsize'] = 14
+    plt.rcParams['axes.labelsize'] = 12
+    plt.rcParams['font.size'] = 12
+    plt.rcParams['legend.fontsize'] = 12
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 12
 
-    ax1 = fig.add_subplot(111)
-    ax2 = fig.add_subplot(112)
-    ax3 = fig.add_subplot(113)
+    ax1 = fig.add_subplot(411)
+    ax2 = fig.add_subplot(412)
+    ax3 = fig.add_subplot(413)
+    ax4 = fig.add_subplot(414)
 
 
     ax1.plot(An_store, label="2-leaf - Me")
@@ -278,9 +301,18 @@ def main(met_fn, flx_fn, cab_fn, year_to_run, site):
     ax3.plot(Tcanc_store, label="2-leaf - CABLE")
     ax3.set_ylabel("T$_{canopy}$ (degrees C)")
 
+
+    print(np.mean(np.abs(Tcan_store - Tcanc_store)))
+
+    ax4.plot(Sunc_store, label="Sun")
+    ax4.plot(Shac_store, label="Shade")
+    ax4.set_ylabel("Frac (-)")
+    ax4.legend(numpoints=1, loc="best")
+
     ax1.locator_params(nbins=6, axis="y")
     ax2.locator_params(nbins=6, axis="y")
     ax3.locator_params(nbins=6, axis="y")
+    ax4.locator_params(nbins=6, axis="y")
 
 
     #plt.setp(ax1.get_xticklabels(), visible=False)
@@ -430,14 +462,14 @@ def moving_average(a, n=3) :
 if __name__ == '__main__':
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/met_data/fluxnet2015/"
-    fname = "FI-Hyy_1996-2014_FLUXNET2015_Met.nc"
-    #fname = "FR-Pue_2000-2014_FLUXNET2015_Met.nc"
+    #fname = "FI-Hyy_1996-2014_FLUXNET2015_Met.nc"
+    fname = "FR-Pue_2000-2014_FLUXNET2015_Met.nc"
     #fname = "ES-ES1_1999-2006_LaThuile_Met.nc"
     met_fn = os.path.join(fpath, fname)
 
     fpath = "/Users/mdekauwe/research/CABLE_runs/flux_files/fluxnet2015"
-    fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
-    #fname = "FR-Pue_2000-2014_FLUXNET2015_Flux.nc"
+    #fname = "FI-Hyy_1996-2014_FLUXNET2015_Flux.nc"
+    fname = "FR-Pue_2000-2014_FLUXNET2015_Flux.nc"
     #fname = "ES-ES1_1999-2006_LaThuile_Flux.nc"
     flx_fn = os.path.join(fpath, fname)
 
@@ -449,6 +481,6 @@ if __name__ == '__main__':
     cab_fn = os.path.join(fpath, fname)
 
     #year_to_run = 2003
-    year_to_run = 1996 # debugging to get first year
+    year_to_run = 2003 # debugging to get first year
 
     main(met_fn, flx_fn, cab_fn, year_to_run, site)

@@ -154,6 +154,11 @@ def calculate_absorbed_radiation(p, par, cos_zenith, lai, direct_frac,
     else:   # i.e. bare soil
         kb = 0.5
 
+    if kb > 1.0:
+        kb = 1.0
+    elif kb < 0.0:
+        kb = 0.0
+        
     # extinction coefficient of diffuse radiation for a canopy with black
     # leaves, eq 27 Kowalcyk et al. 2006
     if lai > c.LAI_THRESH:  # vegetated
