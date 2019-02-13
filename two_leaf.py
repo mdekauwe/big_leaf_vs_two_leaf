@@ -179,6 +179,8 @@ class Canopy(object):
                         dleaf = vpd
                     else:
                         dleaf = (et[ileaf] * pressure / gw) * c.PA_2_KPA # kPa
+                        if dleaf < 0.05:
+                            dleaf = 0.05
 
                     # Check for convergence...?
                     if math.fabs(Tleaf - new_tleaf) < 0.02:

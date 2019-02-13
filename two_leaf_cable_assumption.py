@@ -133,8 +133,8 @@ class Canopy(object):
         #if elevation > 0.0 and par > 50.:
 
 
-            # initialise values of Tleaf, Cs, dleaf at the leaf surface
-            dleaf = vpd
+            # initialise values of Tleaf, Cs, dcanopy at the leaf surface
+            dcanopy = vpd
             Cs = Ca
             Tcanopy = tair
             Tcanopy_K = Tcanopy + c.DEG_2_KELVIN
@@ -150,7 +150,7 @@ class Canopy(object):
                          gsc[ileaf]) = F.photosynthesis(p, Cs=Cs,
                                                         Tleaf=Tcanopy_K,
                                                         Par=apar[ileaf],
-                                                        vpd=dleaf,
+                                                        vpd=dcanopy,
                                                         scalex=scalex[ileaf])
                     else:
                         An[ileaf] = 0.0
@@ -159,7 +159,7 @@ class Canopy(object):
 
 
 
-                # Calculate new Tleaf, dleaf, Cs
+                # Calculate new Tcanopy, dcanopy, Cs
                 (new_tcanopy, et,
                  le_et, gbH, gw) = self.calc_leaf_temp(p, PM, Tcanopy, tair,
                                                        np.sum(gsc),
@@ -171,17 +171,20 @@ class Canopy(object):
 
                 gbc = gbH * c.GBH_2_GBC
                 if gbc > 0.0 and np.sum(An) > 0.0:
-                    Cs = Ca - np.sum(An)  / gbc # boundary layer of leaf
+                    Cs = Ca - np.sum(An) / gbc # boundary layer of leaf
                 else:
                     Cs = Ca
 
                 if np.isclose(et, 0.0) or np.isclose(gw, 0.0):
-                    dleaf = vpd
+                    dcanopy = vpd
                 else:
-                    dleaf = (et * pressure / gw) * c.PA_2_KPA # kPa
+                    dcanopy = (et * pressure / gw) * c.PA_2_KPA # kPa
+                    if dcanopy < 0.05:
+                        dcanopy = 0.05
 
                 # Check for convergence...?
                 if math.fabs(Tcanopy - new_tcanopy) < 0.02:
+                    Tcanopy = new_tcanopy
                     break
 
                 if iter > self.iter_max:
@@ -194,7 +197,6 @@ class Canopy(object):
                 # Update temperature & do another iteration
                 Tcanopy = new_tcanopy
                 Tcanopy_K = Tcanopy + c.DEG_2_KELVIN
-
 
 
                 iter += 1
