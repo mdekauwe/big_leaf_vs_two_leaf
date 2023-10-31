@@ -36,7 +36,7 @@ def main():
     ea = rh / 100. * esat
     vpd = (esat - ea) * c.PA_2_KPA
     vpd = np.where(vpd < 0.05, 0.05, vpd)
-    
+
     #
     ##  Fixed met stuff
     #
@@ -48,7 +48,7 @@ def main():
     ##
     ### Run Big-leaf
     ##
-    B = BigLeaf(p, gs_model="medlyn", gs_vpd_sens=1.2)
+    B = BigLeaf(p, gs_model="medlyn", gs_vpd_sens=0.5)
 
     An_bl = np.zeros(48)
     gsw_bl = np.zeros(48)
@@ -69,7 +69,7 @@ def main():
     ##
     ### Run 2-leaf
     ##
-    T = TwoLeaf(p, gs_model="medlyn")
+    T = TwoLeaf(p, gs_model="medlyn", gs_vpd_sens=0.5)
 
     An_tl = np.zeros(48)
     et_tl = np.zeros(48)
