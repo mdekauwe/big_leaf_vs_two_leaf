@@ -29,7 +29,7 @@ class Canopy(object):
     """
 
     def __init__(self, p, peaked_Jmax=True, peaked_Vcmax=True, model_Q10=True,
-                 gs_model=None, iter_max=100):
+                 gs_model=None, gs_vpd_sens=0.5, iter_max=100):
 
         self.p = p
 
@@ -37,6 +37,7 @@ class Canopy(object):
         self.peaked_Vcmax = peaked_Vcmax
         self.model_Q10 = model_Q10
         self.gs_model = gs_model
+        self.gs_vpd_sens = gs_vpd_sens
         self.iter_max = iter_max
 
     def main(self, tair, par, vpd, wind, pressure, Ca, doy, hod,

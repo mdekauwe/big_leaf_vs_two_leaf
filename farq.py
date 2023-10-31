@@ -52,7 +52,7 @@ class FarquharC3(object):
 
     def __init__(self, peaked_Jmax=False, peaked_Vcmax=False,
                  model_Q10=False, gs_model=None,
-                 adjust_for_low_temp=False):
+                 adjust_for_low_temp=False, gs_vpd_sens=0.5):
         """
         Parameters
         ----------
@@ -72,6 +72,7 @@ class FarquharC3(object):
         self.model_Q10 = model_Q10
         self.gs_model = gs_model
         self.adjust_for_low_temp = adjust_for_low_temp
+        self.gs_vpd_sens = gs_vpd_sens
 
     def photosynthesis(self, p, Cs=None, Tleaf=None, Par=None, vpd=None,
                        mult=None, scalex=None):
@@ -162,8 +163,10 @@ class FarquharC3(object):
             if np.isclose(Cs, 0.0):
                 gs_over_a = 0.0
             else:
-                gs_over_a = (1.0 + p.g1 / math.sqrt(vpd)) / Cs
-            ci_over_ca = p.g1 / (p.g1 + math.sqrt(vpd))
+                gs_over_a = (1.0 + p.g1 / vpd**self.gs_vpd_sens) / Cs
+                #gs_over_a = (1.0 + p.g1 / math.sqrt(vpd)) / Cs
+            #ci_over_ca = p.g1 / (p.g1 + math.sqrt(vpd))
+            ci_over_ca = p.g1 / (p.g1 + vpd**self.gs_vpd_sens)
 
         elif self.gs_model == "user_defined":
             g0 = p.g0 / c.GSC_2_GSW
